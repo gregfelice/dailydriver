@@ -65,9 +65,7 @@ class ShortcutsBackend(ABC):
         ...
 
     @abstractmethod
-    def find_conflicts(
-        self, binding: KeyBinding, exclude_id: str | None = None
-    ) -> list[Shortcut]:
+    def find_conflicts(self, binding: KeyBinding, exclude_id: str | None = None) -> list[Shortcut]:
         """Find shortcuts that conflict with a given binding.
 
         Args:
@@ -91,9 +89,7 @@ class ShortcutsBackend(ABC):
         ...
 
     @abstractmethod
-    def add_custom_keybinding(
-        self, name: str, command: str, binding: str
-    ) -> str | None:
+    def add_custom_keybinding(self, name: str, command: str, binding: str) -> str | None:
         """Add a new custom keybinding.
 
         Args:

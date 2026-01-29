@@ -421,10 +421,7 @@ def _get_shortcut_group(key: str) -> str:
         return "System"
 
     # Accessibility
-    if any(
-        x in key
-        for x in ("magnifier", "screenreader", "text-size", "contrast", "keyboard")
-    ):
+    if any(x in key for x in ("magnifier", "screenreader", "text-size", "contrast", "keyboard")):
         return "Accessibility"
 
     # Input source
@@ -446,8 +443,7 @@ def _get_key_category(key: str) -> str:
     if any(key.startswith(p) for p in ["toggle-", "show-"]):
         return "shell"
     if any(
-        key.startswith(p)
-        for p in ["begin-", "maximize", "minimize", "close", "raise", "lower"]
+        key.startswith(p) for p in ["begin-", "maximize", "minimize", "close", "raise", "lower"]
     ):
         return "window-management"
 
@@ -458,12 +454,8 @@ class GnomeShortcutsBackend(ShortcutsBackend):
     """GNOME shortcuts backend using GSettings/dconf."""
 
     CUSTOM_SCHEMA = "org.gnome.settings-daemon.plugins.media-keys"
-    CUSTOM_BINDING_SCHEMA = (
-        "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
-    )
-    CUSTOM_PATH_PREFIX = (
-        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
-    )
+    CUSTOM_BINDING_SCHEMA = "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
+    CUSTOM_PATH_PREFIX = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
 
     def __init__(self) -> None:
         self._settings_cache: dict[str, Gio.Settings] = {}
@@ -536,9 +528,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
 
         return True
 
-    def _get_default_bindings(
-        self, schema: Gio.SettingsSchema, key: str
-    ) -> list[KeyBinding]:
+    def _get_default_bindings(self, schema: Gio.SettingsSchema, key: str) -> list[KeyBinding]:
         """Get default bindings for a key."""
         key_obj = schema.get_key(key)
         if not key_obj:
@@ -609,9 +599,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 key_obj = schema.get_key(key)
                 description = key_obj.get_description() if key_obj else ""
 
-                allow_multiple = (
-                    current_value and current_value.get_type_string() == "as"
-                )
+                allow_multiple = current_value and current_value.get_type_string() == "as"
 
                 name = _humanize_key_name(key)
                 if not name:
@@ -717,9 +705,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         settings.set_value(shortcut.key, value)
         return True
 
-    def find_conflicts(
-        self, binding: KeyBinding, exclude_id: str | None = None
-    ) -> list[Shortcut]:
+    def find_conflicts(self, binding: KeyBinding, exclude_id: str | None = None) -> list[Shortcut]:
         """Find shortcuts that conflict with a binding."""
         conflicts = []
         all_shortcuts = self.load_all_shortcuts()
@@ -781,9 +767,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
 
         return result
 
-    def add_custom_keybinding(
-        self, name: str, command: str, binding: str
-    ) -> str | None:
+    def add_custom_keybinding(self, name: str, command: str, binding: str) -> str | None:
         """Add a custom keybinding."""
         settings = self._get_settings(self.CUSTOM_SCHEMA)
         if not settings:
@@ -1055,9 +1039,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 )
                 results["terminal"] = f"Updated: {terminal}"
             else:
-                path = self.add_custom_keybinding(
-                    "Launch Terminal", terminal, "<Super>Return"
-                )
+                path = self.add_custom_keybinding("Launch Terminal", terminal, "<Super>Return")
                 results["terminal"] = f"Added: {terminal}" if path else "Failed to add"
         else:
             results["terminal"] = "No terminal found"
@@ -1072,12 +1054,8 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 )
                 results["file_manager"] = f"Updated: {file_manager}"
             else:
-                path = self.add_custom_keybinding(
-                    "Launch Files", file_manager, "<Super>e"
-                )
-                results["file_manager"] = (
-                    f"Added: {file_manager}" if path else "Failed to add"
-                )
+                path = self.add_custom_keybinding("Launch Files", file_manager, "<Super>e")
+                results["file_manager"] = f"Added: {file_manager}" if path else "Failed to add"
         else:
             results["file_manager"] = "No file manager found"
 
@@ -1086,9 +1064,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         if browser:
             existing = self.find_custom_keybinding_by_type("browser")
             if existing:
-                self.update_custom_keybinding(
-                    existing["path"], command=browser, binding="<Super>b"
-                )
+                self.update_custom_keybinding(existing["path"], command=browser, binding="<Super>b")
                 results["browser"] = f"Updated: {browser}"
             else:
                 path = self.add_custom_keybinding("Launch Browser", browser, "<Super>b")
@@ -1101,9 +1077,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         if music:
             existing = self.find_custom_keybinding_by_type("music")
             if existing:
-                self.update_custom_keybinding(
-                    existing["path"], command=music, binding="<Super>p"
-                )
+                self.update_custom_keybinding(existing["path"], command=music, binding="<Super>p")
                 results["music"] = f"Updated: {music}"
             else:
                 path = self.add_custom_keybinding("Launch Music", music, "<Super>p")
@@ -1124,9 +1098,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 path = self.add_custom_keybinding(
                     "Keyboard Cheat Sheet", dailydriver, "<Alt><Super>slash"
                 )
-                results["cheat_sheet"] = (
-                    f"Added: {dailydriver}" if path else "Failed to add"
-                )
+                results["cheat_sheet"] = f"Added: {dailydriver}" if path else "Failed to add"
         else:
             results["cheat_sheet"] = "DailyDriver not found"
 

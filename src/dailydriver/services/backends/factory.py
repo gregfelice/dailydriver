@@ -45,8 +45,7 @@ def get_shortcuts_backend() -> ShortcutsBackend:
         # Default to GNOME for now - many GNOME-based desktops
         # (Budgie, Cinnamon, etc.) use gsettings
         logger.warning(
-            f"Unknown desktop environment ({desktop.name}), "
-            "falling back to GNOME backend"
+            f"Unknown desktop environment ({desktop.name}), falling back to GNOME backend"
         )
         from dailydriver.services.backends.gnome import GnomeShortcutsBackend
 

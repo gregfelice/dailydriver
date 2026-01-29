@@ -95,7 +95,9 @@ class ProfileService:
 
         return profile
 
-    def apply_profile(self, profile: Profile, clean_slate: bool | None = None) -> dict[str, Shortcut]:
+    def apply_profile(
+        self, profile: Profile, clean_slate: bool | None = None
+    ) -> dict[str, Shortcut]:
         """Apply a profile, returning shortcuts that were changed.
 
         Args:

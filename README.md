@@ -82,7 +82,6 @@ cd dailydriver
 | **Hyprland Style** | Keyboard-centric workflow with vim-like navigation. Super+Q close, Super+hjkl tiling, Super+1-0 workspaces. |
 | **GNOME + Tiling** | Standard GNOME with Tiling Assistant snap zones. Alt+F4 close, Super+arrows for tiling. |
 | **Vanilla GNOME** | Pure GNOME Shell defaults without tiling extensions. |
-| **Minimal** | Clean slate with only essential shortcuts enabled. |
 
 ## How It Works
 

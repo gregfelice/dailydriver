@@ -311,9 +311,7 @@ class KDEShortcutsBackend(ShortcutsBackend):
             return True
         return False
 
-    def find_conflicts(
-        self, binding: KeyBinding, exclude_id: str | None = None
-    ) -> list[Shortcut]:
+    def find_conflicts(self, binding: KeyBinding, exclude_id: str | None = None) -> list[Shortcut]:
         """Find shortcuts that conflict with a binding."""
         conflicts = []
         all_shortcuts = self.load_all_shortcuts()
@@ -359,9 +357,7 @@ class KDEShortcutsBackend(ShortcutsBackend):
 
         return result
 
-    def add_custom_keybinding(
-        self, name: str, command: str, binding: str
-    ) -> str | None:
+    def add_custom_keybinding(self, name: str, command: str, binding: str) -> str | None:
         """Add a custom keybinding.
 
         Note: Full custom keybinding support in KDE requires editing

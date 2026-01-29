@@ -8,10 +8,15 @@
 
 DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated presets, and see all your shortcuts at a glance with a keyboard cheat sheet.
 
-![DailyDriver - Shortcuts View](data/screenshots/main-window.png)
+![DailyDriver - Keyboard Visualization](data/screenshots/keyboard-view.png)
 
 <details>
 <summary>More screenshots</summary>
+
+### Shortcuts List
+Browse and edit shortcuts by category
+
+![Shortcuts View](data/screenshots/main-window.png)
 
 ### Cheat Sheet
 Quick reference overlay showing all active shortcuts (Alt+Super+/)

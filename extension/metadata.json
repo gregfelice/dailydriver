@@ -1,0 +1,9 @@
+{
+  "name": "DailyDriver Cheat Sheet",
+  "description": "Quick keyboard shortcut reference overlay",
+  "uuid": "dailydriver-cheatsheet@gregfelice.github.io",
+  "version": 1,
+  "shell-version": ["45", "46", "47"],
+  "url": "https://github.com/gregfelice/dailydriver",
+  "settings-schema": "org.gnome.shell.extensions.dailydriver-cheatsheet"
+}

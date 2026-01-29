@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.dailydriver-cheatsheet"
+          path="/org/gnome/shell/extensions/dailydriver-cheatsheet/">
+
+    <key name="toggle-cheatsheet" type="as">
+      <default><![CDATA[['<Alt><Super>slash']]]></default>
+      <summary>Toggle cheat sheet</summary>
+      <description>Keybinding to show/hide the keyboard shortcut cheat sheet</description>
+    </key>
+
+  </schema>
+</schemalist>

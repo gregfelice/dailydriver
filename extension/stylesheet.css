@@ -1,0 +1,61 @@
+/* DailyDriver Cheat Sheet - Extension Styles */
+
+.cheatsheet-overlay {
+    background-color: rgba(30, 30, 30, 0.95);
+    border-radius: 12px;
+    padding: 24px;
+    min-width: 800px;
+    max-width: 1200px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.cheatsheet-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.cheatsheet-columns {
+    spacing: 32px;
+}
+
+.cheatsheet-column {
+    spacing: 16px;
+    min-width: 250px;
+}
+
+.cheatsheet-category {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.cheatsheet-category-header {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ff7043;
+    margin-bottom: 8px;
+}
+
+.cheatsheet-row {
+    spacing: 12px;
+    margin-bottom: 4px;
+}
+
+.cheatsheet-binding {
+    font-family: monospace;
+    font-size: 12px;
+    color: #81c784;
+    min-width: 120px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+.cheatsheet-label {
+    font-size: 12px;
+    color: #b0b0b0;
+}

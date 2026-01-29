@@ -1,0 +1,176 @@
+# Hyprland-style keyboard shortcuts for GNOME
+# Keyboard-centric workflow with vim-like navigation
+
+[profile]
+name = "hyprland-style"
+description = "Keyboard-centric shortcuts inspired by Hyprland window manager"
+author = "DailyDriver"
+version = "1.0"
+
+[metadata]
+preset = true
+category = "power-user"
+philosophy = "keyboard-centric"
+
+# =============================================================================
+# WINDOW MANAGEMENT
+# =============================================================================
+
+[shortcuts]
+# Close window: Super+Q (Hyprland standard)
+"org.gnome.desktop.wm.keybindings.close" = ["<Super>q"]
+
+# Fullscreen toggle: Super+F
+"org.gnome.desktop.wm.keybindings.toggle-fullscreen" = ["<Super>f"]
+
+# Maximize toggle: Super+M (disable conflicting message-tray)
+"org.gnome.desktop.wm.keybindings.toggle-maximized" = ["<Super>m"]
+"org.gnome.shell.keybindings.toggle-message-tray" = ["<Super>v"]
+
+# Minimize: Super+N (disable conflicting focus-notification)
+"org.gnome.desktop.wm.keybindings.minimize" = ["<Super>n"]
+"org.gnome.shell.keybindings.focus-active-notification" = ["<Super><Shift>n"]
+
+# Begin move/resize with keyboard
+"org.gnome.desktop.wm.keybindings.begin-move" = ["<Super><Shift>m"]
+"org.gnome.desktop.wm.keybindings.begin-resize" = ["<Super><Shift>r"]
+
+# =============================================================================
+# WINDOW FOCUS
+# =============================================================================
+
+# Window cycling: Alt+Tab
+"org.gnome.desktop.wm.keybindings.cycle-windows" = ["<Alt>Tab"]
+"org.gnome.desktop.wm.keybindings.cycle-windows-backward" = ["<Alt><Shift>Tab"]
+
+# Disable conflicting switch-windows (use cycle instead)
+"org.gnome.desktop.wm.keybindings.switch-windows" = []
+"org.gnome.desktop.wm.keybindings.switch-windows-backward" = []
+
+# Disable switch-applications (use cycle instead)
+"org.gnome.desktop.wm.keybindings.switch-applications" = []
+"org.gnome.desktop.wm.keybindings.switch-applications-backward" = []
+
+# =============================================================================
+# WORKSPACE NAVIGATION (Super + Number)
+# =============================================================================
+
+# Go to workspace (Super+Number, Super+0 = workspace 10)
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-1" = ["<Super>1"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-2" = ["<Super>2"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-3" = ["<Super>3"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-4" = ["<Super>4"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-5" = ["<Super>5"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-6" = ["<Super>6"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-7" = ["<Super>7"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-8" = ["<Super>8"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-9" = ["<Super>9"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-10" = ["<Super>0"]
+
+# Disable dock app switching (conflicts with workspace switching)
+"org.gnome.shell.keybindings.switch-to-application-1" = []
+"org.gnome.shell.keybindings.switch-to-application-2" = []
+"org.gnome.shell.keybindings.switch-to-application-3" = []
+"org.gnome.shell.keybindings.switch-to-application-4" = []
+"org.gnome.shell.keybindings.switch-to-application-5" = []
+"org.gnome.shell.keybindings.switch-to-application-6" = []
+"org.gnome.shell.keybindings.switch-to-application-7" = []
+"org.gnome.shell.keybindings.switch-to-application-8" = []
+"org.gnome.shell.keybindings.switch-to-application-9" = []
+
+# Disable dock new window shortcuts (Ctrl+Super+Number)
+"org.gnome.shell.keybindings.open-new-window-application-1" = []
+"org.gnome.shell.keybindings.open-new-window-application-2" = []
+"org.gnome.shell.keybindings.open-new-window-application-3" = []
+"org.gnome.shell.keybindings.open-new-window-application-4" = []
+"org.gnome.shell.keybindings.open-new-window-application-5" = []
+"org.gnome.shell.keybindings.open-new-window-application-6" = []
+"org.gnome.shell.keybindings.open-new-window-application-7" = []
+"org.gnome.shell.keybindings.open-new-window-application-8" = []
+"org.gnome.shell.keybindings.open-new-window-application-9" = []
+
+# Send window to workspace (Shift+Super+Number, Shift+Super+0 = workspace 10)
+"org.gnome.desktop.wm.keybindings.move-to-workspace-1" = ["<Super><Shift>1"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-2" = ["<Super><Shift>2"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-3" = ["<Super><Shift>3"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-4" = ["<Super><Shift>4"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-5" = ["<Super><Shift>5"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-6" = ["<Super><Shift>6"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-7" = ["<Super><Shift>7"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-8" = ["<Super><Shift>8"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-9" = ["<Super><Shift>9"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-10" = ["<Super><Shift>0"]
+
+# Workspace cycling: Super+Tab style
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-right" = ["<Super>bracketright"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-left" = ["<Super>bracketleft"]
+
+# =============================================================================
+# TILING (Hyprland uses dwindle/master, we adapt for manual tiling)
+# =============================================================================
+
+# Tile halves with Super+Ctrl+Arrow (Hyprland uses Super+Arrow for focus)
+"org.gnome.shell.extensions.tiling-assistant.tile-left-half" = ["<Super><Ctrl>Left", "<Super>h"]
+"org.gnome.shell.extensions.tiling-assistant.tile-right-half" = ["<Super><Ctrl>Right", "<Super>l"]
+"org.gnome.shell.extensions.tiling-assistant.tile-top-half" = ["<Super><Ctrl>Up", "<Super>k"]
+"org.gnome.shell.extensions.tiling-assistant.tile-bottom-half" = ["<Super><Ctrl>Down", "<Super>j"]
+
+# Tile quarters with Super+Ctrl+hjkl combos
+"org.gnome.shell.extensions.tiling-assistant.tile-topleft-quarter" = ["<Super><Ctrl>u"]
+"org.gnome.shell.extensions.tiling-assistant.tile-topright-quarter" = ["<Super><Ctrl>i"]
+"org.gnome.shell.extensions.tiling-assistant.tile-bottomleft-quarter" = ["<Super><Ctrl>n"]
+"org.gnome.shell.extensions.tiling-assistant.tile-bottomright-quarter" = ["<Super><Ctrl>m"]
+
+# Maximize and restore
+"org.gnome.shell.extensions.tiling-assistant.tile-maximize" = ["<Super><Ctrl>f"]
+"org.gnome.shell.extensions.tiling-assistant.restore-window" = ["<Super><Ctrl>r"]
+"org.gnome.shell.extensions.tiling-assistant.center-window" = ["<Super>c"]
+
+# =============================================================================
+# SHELL & LAUNCHERS
+# =============================================================================
+
+# Activities/Overview: Super (default) + Super+A
+"org.gnome.shell.keybindings.toggle-overview" = ["<Super>a"]
+
+# App Grid: Super+D (like Hyprland's rofi launcher)
+"org.gnome.shell.keybindings.toggle-application-view" = ["<Super>d"]
+
+# =============================================================================
+# SCREENSHOTS (Super+Shift+S style - avoids workspace conflicts)
+# =============================================================================
+
+# Screenshot UI: Super+Shift+S (like Windows Snipping Tool)
+"org.gnome.shell.keybindings.show-screenshot-ui" = ["<Super><Shift>s"]
+
+# Full screen screenshot: Ctrl+Super+Shift+S
+"org.gnome.shell.keybindings.screenshot" = ["<Control><Super><Shift>s"]
+
+# Window screenshot: Alt+Super+Shift+S
+"org.gnome.shell.keybindings.screenshot-window" = ["<Alt><Super><Shift>s"]
+
+# =============================================================================
+# MEDIA CONTROLS (Ctrl+Super - works on any keyboard)
+# =============================================================================
+
+# Play/Pause: Ctrl+Super+Space
+"org.gnome.settings-daemon.plugins.media-keys.play" = ["<Ctrl><Super>space"]
+
+# Previous Track: Ctrl+Super+Comma
+"org.gnome.settings-daemon.plugins.media-keys.previous" = ["<Ctrl><Super>comma"]
+
+# Next Track: Ctrl+Super+Period
+"org.gnome.settings-daemon.plugins.media-keys.next" = ["<Ctrl><Super>period"]
+
+# =============================================================================
+# SYSTEM
+# =============================================================================
+
+# Disable display switcher (Super+P used for music player)
+"org.gnome.mutter.keybindings.switch-monitor" = ["XF86Display"]
+
+# Lock screen: Ctrl+Alt+L (Hyprland standard)
+"org.gnome.settings-daemon.plugins.media-keys.screensaver" = ["<Ctrl><Alt>l"]
+
+# Disable logout shortcut (dangerous)
+"org.gnome.settings-daemon.plugins.media-keys.logout" = []

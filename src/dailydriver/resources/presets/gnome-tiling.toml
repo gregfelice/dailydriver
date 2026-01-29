@@ -1,0 +1,192 @@
+# GNOME + Tiling Assistant standard shortcuts
+# Mouse-friendly with visual snap zones
+
+[profile]
+name = "gnome-tiling"
+description = "Standard GNOME shortcuts with Tiling Assistant snap zones"
+author = "DailyDriver"
+version = "1.0"
+
+[metadata]
+preset = true
+category = "standard"
+philosophy = "mouse-friendly"
+
+# =============================================================================
+# WINDOW MANAGEMENT (Standard GNOME)
+# =============================================================================
+
+[shortcuts]
+# Close window: Alt+F4 (GNOME standard)
+"org.gnome.desktop.wm.keybindings.close" = ["<Alt>F4"]
+
+# Maximize: Super+Up
+"org.gnome.desktop.wm.keybindings.maximize" = ["<Super>Up"]
+
+# Unmaximize/Restore: Super+Down
+"org.gnome.desktop.wm.keybindings.unmaximize" = ["<Super>Down"]
+
+# Minimize: Super+H (GNOME standard)
+"org.gnome.desktop.wm.keybindings.minimize" = ["<Super>h"]
+
+# Fullscreen: F11 (app-controlled) + Super+F11
+"org.gnome.desktop.wm.keybindings.toggle-fullscreen" = ["F11", "<Super>F11"]
+
+# Move/resize
+"org.gnome.desktop.wm.keybindings.begin-move" = ["<Alt>F7"]
+"org.gnome.desktop.wm.keybindings.begin-resize" = ["<Alt>F8"]
+
+# =============================================================================
+# TILING (Super+Arrow = Snap, Numpad = Corners)
+# =============================================================================
+
+# Tile halves: Super+Left/Right (standard snap behavior)
+"org.gnome.shell.extensions.tiling-assistant.tile-left-half" = ["<Super>Left"]
+"org.gnome.shell.extensions.tiling-assistant.tile-right-half" = ["<Super>Right"]
+
+# Top/Bottom halves (less common but useful)
+"org.gnome.shell.extensions.tiling-assistant.tile-top-half" = ["<Super><Shift>Up"]
+"org.gnome.shell.extensions.tiling-assistant.tile-bottom-half" = ["<Super><Shift>Down"]
+
+# Tile quarters: Numpad layout (KP7=top-left, KP9=top-right, etc.)
+"org.gnome.shell.extensions.tiling-assistant.tile-topleft-quarter" = ["<Super>KP_7", "<Super><Alt>Left"]
+"org.gnome.shell.extensions.tiling-assistant.tile-topright-quarter" = ["<Super>KP_9", "<Super><Alt>Right"]
+"org.gnome.shell.extensions.tiling-assistant.tile-bottomleft-quarter" = ["<Super>KP_1", "<Super><Shift><Alt>Left"]
+"org.gnome.shell.extensions.tiling-assistant.tile-bottomright-quarter" = ["<Super>KP_3", "<Super><Shift><Alt>Right"]
+
+# Center and maximize
+"org.gnome.shell.extensions.tiling-assistant.tile-maximize" = ["<Super>KP_5"]
+"org.gnome.shell.extensions.tiling-assistant.center-window" = ["<Super><Alt>c"]
+"org.gnome.shell.extensions.tiling-assistant.restore-window" = ["<Super>KP_0"]
+
+# Tile editing mode (for resizing tiled windows)
+"org.gnome.shell.extensions.tiling-assistant.tile-edit-mode" = ["<Super>e"]
+
+# =============================================================================
+# WINDOW SWITCHING (Alt+Tab standard)
+# =============================================================================
+
+# Switch applications: Alt+Tab (groups by app)
+"org.gnome.desktop.wm.keybindings.switch-applications" = ["<Alt>Tab"]
+"org.gnome.desktop.wm.keybindings.switch-applications-backward" = ["<Alt><Shift>Tab"]
+
+# Switch windows: Super+Tab (all windows)
+"org.gnome.desktop.wm.keybindings.switch-windows" = ["<Super>Tab"]
+"org.gnome.desktop.wm.keybindings.switch-windows-backward" = ["<Super><Shift>Tab"]
+
+# Switch within app group
+"org.gnome.desktop.wm.keybindings.switch-group" = ["<Alt>grave"]
+"org.gnome.desktop.wm.keybindings.switch-group-backward" = ["<Alt><Shift>grave"]
+
+# =============================================================================
+# WORKSPACE NAVIGATION
+# =============================================================================
+
+# Switch workspace: Super+PgUp/PgDown
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-up" = ["<Super>Page_Up"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-down" = ["<Super>Page_Down"]
+
+# Go to workspace (Super+Number, Super+0 = workspace 10)
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-1" = ["<Super>1"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-2" = ["<Super>2"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-3" = ["<Super>3"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-4" = ["<Super>4"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-5" = ["<Super>5"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-6" = ["<Super>6"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-7" = ["<Super>7"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-8" = ["<Super>8"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-9" = ["<Super>9"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-10" = ["<Super>0"]
+
+# Disable dock app switching (conflicts with workspace switching)
+"org.gnome.shell.keybindings.switch-to-application-1" = []
+"org.gnome.shell.keybindings.switch-to-application-2" = []
+"org.gnome.shell.keybindings.switch-to-application-3" = []
+"org.gnome.shell.keybindings.switch-to-application-4" = []
+"org.gnome.shell.keybindings.switch-to-application-5" = []
+"org.gnome.shell.keybindings.switch-to-application-6" = []
+"org.gnome.shell.keybindings.switch-to-application-7" = []
+"org.gnome.shell.keybindings.switch-to-application-8" = []
+"org.gnome.shell.keybindings.switch-to-application-9" = []
+
+# Disable dock new window shortcuts (Ctrl+Super+Number)
+"org.gnome.shell.keybindings.open-new-window-application-1" = []
+"org.gnome.shell.keybindings.open-new-window-application-2" = []
+"org.gnome.shell.keybindings.open-new-window-application-3" = []
+"org.gnome.shell.keybindings.open-new-window-application-4" = []
+"org.gnome.shell.keybindings.open-new-window-application-5" = []
+"org.gnome.shell.keybindings.open-new-window-application-6" = []
+"org.gnome.shell.keybindings.open-new-window-application-7" = []
+"org.gnome.shell.keybindings.open-new-window-application-8" = []
+"org.gnome.shell.keybindings.open-new-window-application-9" = []
+
+# Send window to workspace (Shift+Super+PgUp/PgDown)
+"org.gnome.desktop.wm.keybindings.move-to-workspace-up" = ["<Super><Shift>Page_Up"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-down" = ["<Super><Shift>Page_Down"]
+
+"org.gnome.desktop.wm.keybindings.move-to-workspace-1" = ["<Super><Shift>1"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-2" = ["<Super><Shift>2"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-3" = ["<Super><Shift>3"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-4" = ["<Super><Shift>4"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-5" = ["<Super><Shift>5"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-6" = ["<Super><Shift>6"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-7" = ["<Super><Shift>7"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-8" = ["<Super><Shift>8"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-9" = ["<Super><Shift>9"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-10" = ["<Super><Shift>0"]
+
+# Move to monitor
+"org.gnome.desktop.wm.keybindings.move-to-monitor-left" = ["<Super><Shift>Left"]
+"org.gnome.desktop.wm.keybindings.move-to-monitor-right" = ["<Super><Shift>Right"]
+
+# =============================================================================
+# SHELL & LAUNCHERS
+# =============================================================================
+
+# Activities overview: Super key (handled by GNOME)
+"org.gnome.shell.keybindings.toggle-overview" = ["<Super>s"]
+
+# Application grid: Super+A
+"org.gnome.shell.keybindings.toggle-application-view" = ["<Super>a"]
+
+# Notifications: Super+V (like system tray)
+"org.gnome.shell.keybindings.toggle-message-tray" = ["<Super>v"]
+
+# =============================================================================
+# SCREENSHOTS (Super+Shift+S style - avoids workspace conflicts)
+# =============================================================================
+
+# Screenshot UI: Super+Shift+S (like Windows Snipping Tool)
+"org.gnome.shell.keybindings.show-screenshot-ui" = ["<Super><Shift>s"]
+
+# Full screen screenshot: Ctrl+Super+Shift+S
+"org.gnome.shell.keybindings.screenshot" = ["<Control><Super><Shift>s"]
+
+# Window screenshot: Alt+Super+Shift+S
+"org.gnome.shell.keybindings.screenshot-window" = ["<Alt><Super><Shift>s"]
+
+# =============================================================================
+# MEDIA CONTROLS (Ctrl+Super - works on any keyboard)
+# =============================================================================
+
+# Play/Pause: Ctrl+Super+Space
+"org.gnome.settings-daemon.plugins.media-keys.play" = ["<Ctrl><Super>space"]
+
+# Previous Track: Ctrl+Super+Comma
+"org.gnome.settings-daemon.plugins.media-keys.previous" = ["<Ctrl><Super>comma"]
+
+# Next Track: Ctrl+Super+Period
+"org.gnome.settings-daemon.plugins.media-keys.next" = ["<Ctrl><Super>period"]
+
+# =============================================================================
+# SYSTEM
+# =============================================================================
+
+# Disable display switcher (Super+P used for music player)
+"org.gnome.mutter.keybindings.switch-monitor" = ["XF86Display"]
+
+# Lock screen: Super+L (GNOME standard)
+"org.gnome.settings-daemon.plugins.media-keys.screensaver" = ["<Super>l"]
+
+# Disable logout shortcut (dangerous)
+"org.gnome.settings-daemon.plugins.media-keys.logout" = []

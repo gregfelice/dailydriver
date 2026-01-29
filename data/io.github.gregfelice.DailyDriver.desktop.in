@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Daily Driver
+Comment=Visual keyboard configuration for GNOME
+Exec=dailydriver
+Icon=io.github.gregfelice.DailyDriver
+Terminal=false
+Type=Application
+Categories=Settings;HardwareSettings;GTK;
+Keywords=keyboard;shortcuts;keybindings;hotkeys;
+StartupNotify=true

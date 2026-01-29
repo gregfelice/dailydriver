@@ -1,0 +1,157 @@
+# Vanilla GNOME shortcuts (no tiling extensions)
+# Pure GNOME Shell experience
+
+[profile]
+name = "vanilla-gnome"
+description = "Pure GNOME Shell defaults without tiling extensions"
+author = "DailyDriver"
+version = "1.0"
+
+[metadata]
+preset = true
+category = "minimal"
+philosophy = "gnome-native"
+
+# =============================================================================
+# WINDOW MANAGEMENT
+# =============================================================================
+
+[shortcuts]
+# Close: Alt+F4
+"org.gnome.desktop.wm.keybindings.close" = ["<Alt>F4"]
+
+# Maximize/Restore: Super+Up/Down
+"org.gnome.desktop.wm.keybindings.maximize" = ["<Super>Up"]
+"org.gnome.desktop.wm.keybindings.unmaximize" = ["<Super>Down"]
+
+# Minimize: Super+H
+"org.gnome.desktop.wm.keybindings.minimize" = ["<Super>h"]
+
+# Fullscreen
+"org.gnome.desktop.wm.keybindings.toggle-fullscreen" = []
+
+# Native GNOME tiling (half-screen only)
+"org.gnome.mutter.keybindings.toggle-tiled-left" = ["<Super>Left"]
+"org.gnome.mutter.keybindings.toggle-tiled-right" = ["<Super>Right"]
+
+# Move/resize
+"org.gnome.desktop.wm.keybindings.begin-move" = ["<Alt>F7"]
+"org.gnome.desktop.wm.keybindings.begin-resize" = ["<Alt>F8"]
+
+# =============================================================================
+# WINDOW SWITCHING
+# =============================================================================
+
+# Switch applications (grouped by app)
+"org.gnome.desktop.wm.keybindings.switch-applications" = ["<Alt>Tab"]
+"org.gnome.desktop.wm.keybindings.switch-applications-backward" = ["<Alt><Shift>Tab"]
+
+# Switch windows (all windows flat)
+"org.gnome.desktop.wm.keybindings.switch-windows" = []
+"org.gnome.desktop.wm.keybindings.switch-windows-backward" = []
+
+# Switch within app
+"org.gnome.desktop.wm.keybindings.switch-group" = ["<Alt>grave"]
+"org.gnome.desktop.wm.keybindings.switch-group-backward" = ["<Alt><Shift>grave"]
+
+# =============================================================================
+# WORKSPACES
+# =============================================================================
+
+# Navigate workspaces
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-up" = ["<Super>Page_Up"]
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-down" = ["<Super>Page_Down"]
+
+# Go to workspace (disabled by default in vanilla GNOME)
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-1" = []
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-2" = []
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-3" = []
+"org.gnome.desktop.wm.keybindings.switch-to-workspace-4" = []
+
+# Send window to workspace
+"org.gnome.desktop.wm.keybindings.move-to-workspace-up" = ["<Super><Shift>Page_Up"]
+"org.gnome.desktop.wm.keybindings.move-to-workspace-down" = ["<Super><Shift>Page_Down"]
+
+"org.gnome.desktop.wm.keybindings.move-to-workspace-1" = []
+"org.gnome.desktop.wm.keybindings.move-to-workspace-2" = []
+"org.gnome.desktop.wm.keybindings.move-to-workspace-3" = []
+"org.gnome.desktop.wm.keybindings.move-to-workspace-4" = []
+
+# Move to monitor
+"org.gnome.desktop.wm.keybindings.move-to-monitor-left" = ["<Super><Shift>Left"]
+"org.gnome.desktop.wm.keybindings.move-to-monitor-right" = ["<Super><Shift>Right"]
+
+# Disable dock new window shortcuts (Ctrl+Super+Number - rarely used)
+"org.gnome.shell.keybindings.open-new-window-application-1" = []
+"org.gnome.shell.keybindings.open-new-window-application-2" = []
+"org.gnome.shell.keybindings.open-new-window-application-3" = []
+"org.gnome.shell.keybindings.open-new-window-application-4" = []
+"org.gnome.shell.keybindings.open-new-window-application-5" = []
+"org.gnome.shell.keybindings.open-new-window-application-6" = []
+"org.gnome.shell.keybindings.open-new-window-application-7" = []
+"org.gnome.shell.keybindings.open-new-window-application-8" = []
+"org.gnome.shell.keybindings.open-new-window-application-9" = []
+
+# =============================================================================
+# SHELL
+# =============================================================================
+
+# Overview: Super key only
+"org.gnome.shell.keybindings.toggle-overview" = []
+
+# App grid: Super+A
+"org.gnome.shell.keybindings.toggle-application-view" = ["<Super>a"]
+
+# Notifications
+"org.gnome.shell.keybindings.toggle-message-tray" = ["<Super>v"]
+
+# =============================================================================
+# SCREENSHOTS
+# =============================================================================
+
+# Screenshots: Super+Shift (Mac-friendly, no Print key needed)
+"org.gnome.shell.keybindings.show-screenshot-ui" = ["<Super><Shift>5"]
+"org.gnome.shell.keybindings.screenshot" = ["<Super><Shift>3"]
+"org.gnome.shell.keybindings.screenshot-window" = ["<Super><Shift>4"]
+
+# =============================================================================
+# MEDIA CONTROLS (Ctrl+Super - works on any keyboard)
+# =============================================================================
+
+# Play/Pause: Ctrl+Super+Space
+"org.gnome.settings-daemon.plugins.media-keys.play" = ["<Ctrl><Super>space"]
+
+# Previous Track: Ctrl+Super+Comma
+"org.gnome.settings-daemon.plugins.media-keys.previous" = ["<Ctrl><Super>comma"]
+
+# Next Track: Ctrl+Super+Period
+"org.gnome.settings-daemon.plugins.media-keys.next" = ["<Ctrl><Super>period"]
+
+# =============================================================================
+# SYSTEM
+# =============================================================================
+
+# Disable display switcher (Super+P used for music player)
+"org.gnome.mutter.keybindings.switch-monitor" = ["XF86Display"]
+
+"org.gnome.settings-daemon.plugins.media-keys.screensaver" = ["<Super>l"]
+
+# Disable logout shortcut (dangerous)
+"org.gnome.settings-daemon.plugins.media-keys.logout" = []
+
+# =============================================================================
+# TILING ASSISTANT (all disabled for vanilla)
+# =============================================================================
+
+"org.gnome.shell.extensions.tiling-assistant.tile-left-half" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-right-half" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-top-half" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-bottom-half" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-topleft-quarter" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-topright-quarter" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-bottomleft-quarter" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-bottomright-quarter" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-maximize" = []
+"org.gnome.shell.extensions.tiling-assistant.center-window" = []
+"org.gnome.shell.extensions.tiling-assistant.restore-window" = []
+"org.gnome.shell.extensions.tiling-assistant.tile-edit-mode" = []

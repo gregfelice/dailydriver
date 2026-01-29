@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/github/gregfelice/DailyDriver">
+    <file preprocess="xml-stripblanks">window.ui</file>
+    <file preprocess="xml-stripblanks">shortcut-editor.ui</file>
+    <file>style.css</file>
+  </gresource>
+</gresources>

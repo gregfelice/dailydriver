@@ -1,0 +1,80 @@
+/* Daily Driver - Custom Styles */
+
+/* Keyboard visualization */
+.keyboard-view {
+  background-color: @card_bg_color;
+  border-radius: 12px;
+  border: 1px solid @borders;
+}
+
+.keyboard-key {
+  background-color: @card_bg_color;
+  border-radius: 4px;
+  border: 1px solid @borders;
+}
+
+.keyboard-key:hover {
+  background-color: @accent_bg_color;
+}
+
+.keyboard-key.active {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+
+.keyboard-key.has-shortcut {
+  background-color: alpha(@accent_bg_color, 0.3);
+}
+
+/* Shortcut capture dialog */
+.shortcut-capture {
+  font-size: 1.5em;
+  padding: 12px 24px;
+  background-color: @card_bg_color;
+  border-radius: 8px;
+  border: 2px dashed @borders;
+}
+
+.shortcut-capture:focus {
+  border-color: @accent_bg_color;
+  border-style: solid;
+}
+
+/* Category list */
+.category-row {
+  padding: 8px 12px;
+}
+
+.category-row .count-badge {
+  background-color: alpha(@accent_bg_color, 0.2);
+  color: @accent_fg_color;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.8em;
+}
+
+/* Shortcut row */
+.shortcut-row {
+  padding: 8px 0;
+}
+
+.shortcut-row .shortcut-keys {
+  font-family: monospace;
+  background-color: @card_bg_color;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+/* Profile indicator */
+.profile-indicator {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.8em;
+}
+
+.profile-indicator.modified {
+  background-color: @warning_bg_color;
+  color: @warning_fg_color;
+}

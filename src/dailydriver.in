@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+# dailydriver - Visual keyboard configuration for GNOME/Wayland
+#
+# Copyright 2025 Greg Felice
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+import os
+import sys
+import signal
+import locale
+import gettext
+
+# Configure dconf/GIO for Flatpak BEFORE any gi imports
+if "FLATPAK_ID" in os.environ:
+    home = os.environ.get("HOME", os.path.expanduser("~"))
+    os.environ["XDG_CONFIG_HOME"] = f"{home}/.config"
+    os.environ.setdefault("GIO_EXTRA_MODULES", "/app/lib/gio/modules")
+
+VERSION = '@VERSION@'
+pkgdatadir = '@PKGDATA_DIR@'
+localedir = '@localedir@'
+
+sys.path.insert(1, pkgdatadir)
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+locale.bindtextdomain('dailydriver', localedir)
+locale.textdomain('dailydriver')
+gettext.install('dailydriver', localedir)
+
+if __name__ == '__main__':
+    import gi
+    gi.require_version('Gtk', '4.0')
+    gi.require_version('Adw', '1')
+
+    from gi.repository import Gio
+    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'dailydriver.gresource'))
+    resource._register()
+
+    from dailydriver import application
+    sys.exit(application.main(VERSION))

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="ShortcutEditorDialog" parent="AdwDialog">
+    <property name="title" translatable="yes">Set Shortcut</property>
+    <property name="content-width">400</property>
+    <property name="content-height">300</property>
+    <child>
+      <object class="AdwToolbarView">
+        <child type="top">
+          <object class="AdwHeaderBar">
+            <property name="show-end-title-buttons">false</property>
+            <property name="show-start-title-buttons">false</property>
+            <child type="start">
+              <object class="GtkButton" id="cancel_button">
+                <property name="label" translatable="yes">Cancel</property>
+              </object>
+            </child>
+            <child type="end">
+              <object class="GtkButton" id="set_button">
+                <property name="label" translatable="yes">Set</property>
+                <property name="sensitive">false</property>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="spacing">24</property>
+            <property name="margin-start">24</property>
+            <property name="margin-end">24</property>
+            <property name="margin-top">24</property>
+            <property name="margin-bottom">24</property>
+            <property name="valign">center</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="GtkLabel" id="shortcut_name_label">
+                <property name="label">Shortcut Name</property>
+                <style>
+                  <class name="title-2"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="instruction_label">
+                <property name="label" translatable="yes">Press a key combination or press Backspace to clear</property>
+                <style>
+                  <class name="dim-label"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutLabel" id="shortcut_label">
+                <property name="accelerator"></property>
+                <property name="halign">center</property>
+                <style>
+                  <class name="shortcut-capture"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="conflict_revealer">
+                <property name="reveal-child">false</property>
+                <property name="transition-type">slide-down</property>
+                <child>
+                  <object class="AdwBanner" id="conflict_banner">
+                    <property name="title" translatable="yes">This shortcut is already in use</property>
+                    <property name="button-label" translatable="yes">Replace</property>
+                    <property name="revealed">true</property>
+                    <style>
+                      <class name="warning"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

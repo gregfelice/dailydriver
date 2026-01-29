@@ -1,0 +1,7 @@
+data/io.github.gregfelice.DailyDriver.desktop.in
+data/io.github.gregfelice.DailyDriver.metainfo.xml.in
+data/io.github.gregfelice.DailyDriver.gschema.xml
+src/dailydriver/application.py
+src/dailydriver/window.py
+src/dailydriver/views/shortcut_list.py
+src/dailydriver/views/shortcut_editor.py

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="dailydriver">
+  <schema id="io.github.gregfelice.DailyDriver" path="/io/github/gregfelice/DailyDriver/">
+    <key name="window-width" type="i">
+      <default>1100</default>
+      <summary>Window width</summary>
+    </key>
+    <key name="window-height" type="i">
+      <default>750</default>
+      <summary>Window height</summary>
+    </key>
+    <key name="window-maximized" type="b">
+      <default>false</default>
+      <summary>Window maximized state</summary>
+    </key>
+    <key name="active-profile" type="s">
+      <default>''</default>
+      <summary>Currently active profile name</summary>
+    </key>
+    <key name="show-advanced" type="b">
+      <default>false</default>
+      <summary>Show advanced options</summary>
+    </key>
+    <key name="keyboard-type" type="s">
+      <default>'ansi-104'</default>
+      <summary>Physical keyboard type</summary>
+      <description>The type of keyboard hardware: ansi-104, ansi-87, iso-105, mac-ansi, mac-iso</description>
+    </key>
+    <key name="tiling-setup-dismissed" type="b">
+      <default>false</default>
+      <summary>Tiling setup banner dismissed</summary>
+    </key>
+    <key name="tiling-enabled" type="b">
+      <default>true</default>
+      <summary>Show tiling shortcuts</summary>
+      <description>Whether to show tiling shortcuts in the category list</description>
+    </key>
+    <key name="show-unbound" type="b">
+      <default>false</default>
+      <summary>Show unbound shortcuts</summary>
+      <description>Whether to show shortcuts without key bindings</description>
+    </key>
+    <key name="current-preset" type="s">
+      <default>'gnome-tiling'</default>
+      <summary>Current preset</summary>
+      <description>The currently selected preset: vanilla-gnome, gnome-tiling, or hyprland-style</description>
+    </key>
+  </schema>
+</schemalist>

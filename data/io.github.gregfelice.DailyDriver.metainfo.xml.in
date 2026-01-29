@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.gregfelice.DailyDriver</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Daily Driver</name>
+  <summary>Visual keyboard configuration for GNOME</summary>
+  <description>
+    <p>
+      Daily Driver provides a videogame-like options UI for keyboard configuration.
+      Easily customize your keyboard shortcuts, create profiles, and configure
+      Mac keyboards on Linux.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Visual keyboard display with shortcut overlay</li>
+      <li>Profile system for saving and sharing configurations</li>
+      <li>Built-in presets (Vanilla GNOME, Mac-like, Hyprland-style)</li>
+      <li>Mac keyboard support (hid-apple configuration)</li>
+      <li>Conflict detection and resolution</li>
+      <li>Tiling Assistant integration</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.gregfelice.DailyDriver.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/gregfelice/dailydriver/main/data/screenshots/main-window.png</image>
+      <caption>Main window with visual keyboard layout</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/gregfelice/dailydriver/main/data/screenshots/shortcut-editor.png</image>
+      <caption>Shortcut editor showing keybinding configuration</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/gregfelice/dailydriver/main/data/screenshots/presets.png</image>
+      <caption>Built-in preset profiles</caption>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://github.com/gregfelice/dailydriver</url>
+  <url type="bugtracker">https://github.com/gregfelice/dailydriver/issues</url>
+  <url type="vcs-browser">https://github.com/gregfelice/dailydriver</url>
+
+  <developer id="io.github.gregfelice">
+    <name>Greg Felice</name>
+  </developer>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#62a0ea</color>
+    <color type="primary" scheme_preference="dark">#1c71d8</color>
+  </branding>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.1.0" date="2026-01-28">
+      <description>
+        <p>Initial release with core features:</p>
+        <ul>
+          <li>GSettings shortcut management for GNOME, apps, and extensions</li>
+          <li>Visual keyboard display with shortcut overlay</li>
+          <li>Profile system for saving and sharing configurations</li>
+          <li>Built-in presets: Vanilla GNOME, Mac-like, Hyprland-style</li>
+          <li>Mac keyboard support with hid-apple configuration</li>
+          <li>Tiling Assistant integration</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+
+  <categories>
+    <category>Settings</category>
+    <category>HardwareSettings</category>
+  </categories>
+
+  <keywords>
+    <keyword>keyboard</keyword>
+    <keyword>shortcuts</keyword>
+    <keyword>keybindings</keyword>
+    <keyword>hotkeys</keyword>
+    <keyword>gnome</keyword>
+    <keyword>configuration</keyword>
+  </keywords>
+</component>

@@ -1,0 +1,115 @@
+[project]
+name = "dailydriver"
+version = "0.1.0"
+description = "Visual keyboard configuration for GNOME/Wayland"
+readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Greg Felice" }]
+requires-python = ">=3.11"
+keywords = ["gnome", "keyboard", "shortcuts", "gtk4", "libadwaita"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Desktop Environment :: Gnome",
+]
+dependencies = [
+    "PyGObject>=3.44",
+    "pydantic>=2.0",
+    "tomli>=2.0;python_version<'3.11'",
+    "tomli-w>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.0",
+    "python-dbusmock>=0.31",
+    "mypy>=1.0",
+    "ruff>=0.1",
+]
+evdev = [
+    "evdev>=1.6",  # Hardware keyboard detection
+]
+
+[project.scripts]
+dailydriver = "dailydriver.application:main"
+
+[project.urls]
+Homepage = "https://github.com/gregfelice/dailydriver"
+Repository = "https://github.com/gregfelice/dailydriver"
+Issues = "https://github.com/gregfelice/dailydriver/issues"
+
+[build-system]
+requires = ["meson-python>=0.13", "meson>=0.62"]
+build-backend = "mesonpy"
+
+# Note: --prefix is set by the build system (pip, Flatpak, etc.)
+# [tool.meson-python.args]
+# setup = ["--prefix=/usr"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E501",   # Line too long
+    "SIM102", # Nested if - sometimes clearer
+    "SIM105", # contextlib.suppress - explicit try/except often clearer
+    "SIM118", # dict.keys() - explicit sometimes clearer
+    "C401",   # Generator vs comprehension - style preference
+]
+
+[tool.ruff.lint.per-file-ignores]
+# GTK/GI apps require gi.require_version() before imports from gi.repository
+"src/dailydriver/__main__.py" = ["E402"]
+"src/dailydriver/application.py" = ["E402"]
+"src/dailydriver/window.py" = ["E402"]
+"src/dailydriver/models/shortcut.py" = ["E402"]
+"src/dailydriver/models/keyboard.py" = ["E402"]
+"src/dailydriver/services/*.py" = ["E402"]
+"src/dailydriver/views/*.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dailydriver"]
+# Allow gi imports to be grouped separately due to require_version() requirements
+force-single-line = false
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --cov=dailydriver --cov-report=term-missing"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests (require GNOME environment)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["dailydriver"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

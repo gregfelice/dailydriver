@@ -4,7 +4,7 @@
 
 [![Tests](https://github.com/gregfelice/dailydriver/actions/workflows/test.yml/badge.svg)](https://github.com/gregfelice/dailydriver/actions/workflows/test.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Alpha](https://img.shields.io/badge/Status-Alpha-orange.svg)](https://github.com/gregfelice/dailydriver/releases)
+[![AUR](https://img.shields.io/aur/version/dailydriver)](https://aur.archlinux.org/packages/dailydriver)
 
 DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated presets, and see all your shortcuts at a glance with a keyboard cheat sheet.
 
@@ -42,19 +42,29 @@ Choose from curated shortcut profiles
 
 ## Installation
 
-### Alpha Release (Current)
+### Arch Linux (AUR)
+
+```bash
+yay -S dailydriver
+# or
+paru -S dailydriver
+```
+
+### Flathub (Coming Soon)
+
+Flathub submission is [pending review](https://github.com/flathub/flathub/pull/7735). Once approved:
+
+```bash
+flatpak install flathub io.github.gregfelice.DailyDriver
+```
+
+### Flatpak Bundle (Manual)
 
 Download the Flatpak bundle from [Releases](https://github.com/gregfelice/dailydriver/releases):
 
 ```bash
-# Download dailydriver-0.1.0-alpha.flatpak from releases, then:
-flatpak install dailydriver-0.1.0-alpha.flatpak
-
-# Run
+flatpak install dailydriver-0.1.0.flatpak
 flatpak run io.github.gregfelice.DailyDriver
-
-# Cheat sheet mode (popup overlay)
-flatpak run io.github.gregfelice.DailyDriver --cheat-sheet
 ```
 
 ### From Source
@@ -62,7 +72,9 @@ flatpak run io.github.gregfelice.DailyDriver --cheat-sheet
 ```bash
 git clone https://github.com/gregfelice/dailydriver.git
 cd dailydriver
-./run-dev.sh
+meson setup build
+meson compile -C build
+meson install -C build
 ```
 
 ## Platform Support
@@ -124,7 +136,9 @@ Tests run on every push:
 ## Roadmap
 
 - [x] Screenshots for README
-- [ ] Flathub submission
+- [x] AUR package
+- [ ] Flathub ([pending review](https://github.com/flathub/flathub/pull/7735))
+- [ ] COPR (Fedora)
 - [ ] KDE Plasma backend
 - [ ] Hyprland backend
 - [ ] Custom shortcut editor (create new shortcuts)
@@ -132,7 +146,7 @@ Tests run on every push:
 
 ## Feedback & Contributing
 
-This is alpha software - your feedback helps!
+Your feedback helps make DailyDriver better!
 
 - **Bug reports**: [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=bug&title=Bug:%20)
 - **Feature requests**: [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=enhancement&title=Feature:%20)

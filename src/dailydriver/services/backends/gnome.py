@@ -1003,6 +1003,54 @@ class GnomeShortcutsBackend(ShortcutsBackend):
 
         return None
 
+    # --- Workspace Management ---
+
+    def get_workspace_count(self) -> int:
+        """Get the current number of workspaces."""
+        settings = self._get_settings("org.gnome.desktop.wm.preferences")
+        if settings:
+            return settings.get_int("num-workspaces")
+        return 4  # GNOME default
+
+    def set_workspace_count(self, count: int) -> bool:
+        """Set the number of workspaces."""
+        settings = self._get_settings("org.gnome.desktop.wm.preferences")
+        if settings:
+            settings.set_int("num-workspaces", count)
+            return True
+        return False
+
+    def is_dynamic_workspaces(self) -> bool:
+        """Check if dynamic workspaces mode is enabled."""
+        settings = self._get_settings("org.gnome.mutter")
+        if settings:
+            return settings.get_boolean("dynamic-workspaces")
+        return True  # GNOME default
+
+    def set_dynamic_workspaces(self, enabled: bool) -> bool:
+        """Enable or disable dynamic workspaces."""
+        settings = self._get_settings("org.gnome.mutter")
+        if settings:
+            settings.set_boolean("dynamic-workspaces", enabled)
+            return True
+        return False
+
+    def setup_workspaces_for_hyprland(self) -> bool:
+        """Configure 10 fixed workspaces for Hyprland-style preset."""
+        success = self.set_dynamic_workspaces(False)
+        success = self.set_workspace_count(10) and success
+        return success
+
+    def restore_default_workspaces(self) -> bool:
+        """Restore GNOME default workspace settings (4 dynamic)."""
+        success = self.set_workspace_count(4)
+        success = self.set_dynamic_workspaces(True) and success
+        return success
+
+    def has_hyprland_workspace_setup(self) -> bool:
+        """Check if workspaces are configured for Hyprland-style (10 fixed)."""
+        return self.get_workspace_count() == 10 and not self.is_dynamic_workspaces()
+
     def detect_dailydriver(self) -> str | None:
         """Detect DailyDriver installation."""
         try:

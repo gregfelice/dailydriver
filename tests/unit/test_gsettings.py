@@ -1411,3 +1411,241 @@ class TestLoadAllShortcuts:
                 shortcuts = service.load_all_shortcuts()
 
                 assert "custom:/path/custom0/" in shortcuts
+
+
+class TestWorkspaceManagement:
+    """Tests for workspace management methods."""
+
+    def test_get_workspace_count(self) -> None:
+        """Test getting the current workspace count."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_settings.get_int.return_value = 6
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            count = service.get_workspace_count()
+
+            assert count == 6
+            mock_settings.get_int.assert_called_once_with("num-workspaces")
+
+    def test_get_workspace_count_returns_default_on_missing_schema(self) -> None:
+        """Test that get_workspace_count returns 4 when schema is missing."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_source.lookup.return_value = None
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            service = GSettingsService()
+            count = service.get_workspace_count()
+
+            assert count == 4  # GNOME default
+
+    def test_set_workspace_count(self) -> None:
+        """Test setting the workspace count."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.set_workspace_count(10)
+
+            assert result is True
+            mock_settings.set_int.assert_called_once_with("num-workspaces", 10)
+
+    def test_set_workspace_count_returns_false_on_missing_schema(self) -> None:
+        """Test that set_workspace_count returns False when schema is missing."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_source.lookup.return_value = None
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            service = GSettingsService()
+            result = service.set_workspace_count(10)
+
+            assert result is False
+
+    def test_is_dynamic_workspaces(self) -> None:
+        """Test checking if dynamic workspaces is enabled."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_settings.get_boolean.return_value = False
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.is_dynamic_workspaces()
+
+            assert result is False
+            mock_settings.get_boolean.assert_called_once_with("dynamic-workspaces")
+
+    def test_is_dynamic_workspaces_returns_default_on_missing_schema(self) -> None:
+        """Test that is_dynamic_workspaces returns True when schema is missing."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_source.lookup.return_value = None
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            service = GSettingsService()
+            result = service.is_dynamic_workspaces()
+
+            assert result is True  # GNOME default
+
+    def test_set_dynamic_workspaces(self) -> None:
+        """Test setting dynamic workspaces mode."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.set_dynamic_workspaces(False)
+
+            assert result is True
+            mock_settings.set_boolean.assert_called_once_with("dynamic-workspaces", False)
+
+    def test_set_dynamic_workspaces_returns_false_on_missing_schema(self) -> None:
+        """Test that set_dynamic_workspaces returns False when schema is missing."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_source.lookup.return_value = None
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            service = GSettingsService()
+            result = service.set_dynamic_workspaces(False)
+
+            assert result is False
+
+    def test_setup_workspaces_for_hyprland(self) -> None:
+        """Test setting up 10 fixed workspaces for Hyprland-style."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.setup_workspaces_for_hyprland()
+
+            assert result is True
+            mock_settings.set_boolean.assert_called_with("dynamic-workspaces", False)
+            mock_settings.set_int.assert_called_with("num-workspaces", 10)
+
+    def test_restore_default_workspaces(self) -> None:
+        """Test restoring default workspace settings."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.restore_default_workspaces()
+
+            assert result is True
+            mock_settings.set_int.assert_called_with("num-workspaces", 4)
+            mock_settings.set_boolean.assert_called_with("dynamic-workspaces", True)
+
+    def test_has_hyprland_workspace_setup_true(self) -> None:
+        """Test detecting Hyprland-style workspace setup (10 fixed)."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_settings.get_int.return_value = 10
+            mock_settings.get_boolean.return_value = False  # dynamic = False
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.has_hyprland_workspace_setup()
+
+            assert result is True
+
+    def test_has_hyprland_workspace_setup_false_wrong_count(self) -> None:
+        """Test that has_hyprland_workspace_setup returns False for non-10 count."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_settings.get_int.return_value = 4  # Not 10
+            mock_settings.get_boolean.return_value = False
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.has_hyprland_workspace_setup()
+
+            assert result is False
+
+    def test_has_hyprland_workspace_setup_false_dynamic_enabled(self) -> None:
+        """Test that has_hyprland_workspace_setup returns False when dynamic is True."""
+        from dailydriver.services.gsettings_service import GSettingsService
+
+        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_settings = MagicMock()
+            mock_settings.get_int.return_value = 10
+            mock_settings.get_boolean.return_value = True  # dynamic = True
+            mock_gio.Settings.new_full.return_value = mock_settings
+
+            service = GSettingsService()
+            result = service.has_hyprland_workspace_setup()
+
+            assert result is False

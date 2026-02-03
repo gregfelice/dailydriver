@@ -211,10 +211,57 @@ class PresetSelector(Adw.Dialog):
         if not self._selected_preset:
             return
 
+        is_hyprland = self._selected_preset.name == "hyprland-style"
+        has_hyprland_workspaces = self._gsettings_service.has_hyprland_workspace_setup()
+
+        # Check if we're switching away from hyprland-style workspace setup
+        if has_hyprland_workspaces and not is_hyprland:
+            self._show_workspace_restore_dialog(button)
+        else:
+            self._do_apply(button, setup_hyprland_workspaces=is_hyprland)
+
+    def _show_workspace_restore_dialog(self, apply_button: Gtk.Button) -> None:
+        """Show confirmation dialog for restoring default workspaces."""
+        dialog = Adw.AlertDialog()
+        dialog.set_heading("Restore Default Workspaces?")
+        dialog.set_body(
+            "You currently have 10 workspaces configured for Hyprland-style shortcuts.\n\n"
+            "Do you want to restore the default 4 workspaces?"
+        )
+        dialog.add_response("keep", "Keep 10 Workspaces")
+        dialog.add_response("restore", "Restore to 4")
+        dialog.set_response_appearance("restore", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("restore")
+        dialog.set_close_response("keep")
+
+        dialog.connect("response", self._on_workspace_dialog_response, apply_button)
+        dialog.present(self)
+
+    def _on_workspace_dialog_response(
+        self, dialog: Adw.AlertDialog, response: str, apply_button: Gtk.Button
+    ) -> None:
+        """Handle workspace restore dialog response."""
+        restore_workspaces = response == "restore"
+        self._do_apply(apply_button, restore_workspaces=restore_workspaces)
+
+    def _do_apply(
+        self,
+        button: Gtk.Button,
+        setup_hyprland_workspaces: bool = False,
+        restore_workspaces: bool = False,
+    ) -> None:
+        """Actually apply the preset with optional workspace changes."""
         button.set_sensitive(False)
         button.set_label("Applying...")
 
         def apply():
+            # Apply workspace changes first
+            if setup_hyprland_workspaces:
+                self._gsettings_service.setup_workspaces_for_hyprland()
+            elif restore_workspaces:
+                self._gsettings_service.restore_default_workspaces()
+
+            # Apply the profile shortcuts
             changed = self._profile_service.apply_profile(self._selected_preset)
             GLib.idle_add(self._on_apply_complete, changed)
 

@@ -172,14 +172,6 @@ class Shortcut:
         """Set a single binding, replacing existing."""
         self.bindings = [binding] if binding else []
 
-    def add_binding(self, binding: KeyBinding) -> None:
-        """Add an additional binding (if multiple allowed)."""
-        if self.allow_multiple:
-            if binding not in self.bindings:
-                self.bindings.append(binding)
-        else:
-            self.bindings = [binding]
-
     def remove_binding(self, binding: KeyBinding) -> None:
         """Remove a specific binding."""
         if binding in self.bindings:
@@ -188,11 +180,3 @@ class Shortcut:
     def reset(self) -> None:
         """Reset to default bindings."""
         self.bindings = list(self.default_bindings)
-
-    def conflicts_with(self, other: Shortcut) -> bool:
-        """Check if this shortcut conflicts with another."""
-        if self.id == other.id:
-            return False
-        my_bindings = set(self.bindings)
-        other_bindings = set(other.bindings)
-        return bool(my_bindings & other_bindings)

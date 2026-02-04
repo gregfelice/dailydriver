@@ -338,7 +338,3 @@ class ShortcutListView(Gtk.Box):
         if shortcut.id in self._rows:
             self._rows[shortcut.id].shortcut = shortcut
             self._rows[shortcut.id].update_display()
-
-    def get_shortcut(self, shortcut_id: str) -> Shortcut | None:
-        """Get a shortcut by ID."""
-        return self._shortcuts.get(shortcut_id)

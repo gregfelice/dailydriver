@@ -52,19 +52,6 @@ class XKBOptions:
     compose_key: str = ""  # e.g., "compose:ralt"
     numpad_behavior: str = ""  # e.g., "numpad:mac"
 
-    def to_xkb_options(self) -> list[str]:
-        """Convert to XKB options list."""
-        options = []
-        if self.caps_lock_behavior:
-            options.append(self.caps_lock_behavior)
-        if self.alt_win_behavior:
-            options.append(self.alt_win_behavior)
-        if self.compose_key:
-            options.append(self.compose_key)
-        if self.numpad_behavior:
-            options.append(self.numpad_behavior)
-        return options
-
 
 @dataclass
 class Profile:
@@ -202,8 +189,3 @@ class Profile:
         """Set shortcut binding(s)."""
         storage_key = self.get_shortcut_key(schema, key)
         self.shortcuts[storage_key] = accelerators
-
-    def get_shortcut(self, schema: str, key: str) -> list[str] | None:
-        """Get shortcut binding(s), or None if not in profile."""
-        storage_key = self.get_shortcut_key(schema, key)
-        return self.shortcuts.get(storage_key)

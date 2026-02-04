@@ -17,7 +17,6 @@ class ProfileService:
         self._gsettings = gsettings_service or GSettingsService()
         self._profiles_dir = self._get_profiles_dir()
         self._presets_dir = self._get_presets_dir()
-        self._active_profile: Profile | None = None
 
     def _get_profiles_dir(self) -> Path:
         """Get the user profiles directory."""
@@ -74,26 +73,6 @@ class ProfileService:
         path = self._profiles_dir / f"{profile.name}.toml"
         profile.to_toml(path)
         return path
-
-    def delete_profile(self, name: str) -> bool:
-        """Delete a user profile."""
-        path = self._profiles_dir / f"{name}.toml"
-        if path.exists():
-            path.unlink()
-            return True
-        return False
-
-    def create_from_current(self, name: str, description: str = "") -> Profile:
-        """Create a profile from current GSettings state."""
-        shortcuts = self._gsettings.load_all_shortcuts()
-
-        profile = Profile(name=name, description=description)
-
-        for shortcut in shortcuts.values():
-            if shortcut.bindings:
-                profile.set_shortcut(shortcut.schema, shortcut.key, shortcut.accelerators)
-
-        return profile
 
     def apply_profile(
         self, profile: Profile, clean_slate: bool | None = None
@@ -162,7 +141,6 @@ class ProfileService:
                 if self._gsettings.save_shortcut(shortcut):
                     changed[shortcut_id] = shortcut
 
-        self._active_profile = profile
         return changed
 
     def _normalize_accelerator(self, accel: str) -> str:
@@ -212,10 +190,6 @@ class ProfileService:
 
         return profile
 
-    def export_profile(self, profile: Profile, path: Path) -> None:
-        """Export a profile to an external file."""
-        profile.to_toml(path)
-
     def reset_orphaned_shortcuts(self, old_profile: Profile, new_profile: Profile) -> int:
         """
         Reset shortcuts that were in old_profile but not in new_profile to GNOME defaults.
@@ -242,11 +216,6 @@ class ProfileService:
                     reset_count += 1
 
         return reset_count
-
-    @property
-    def active_profile(self) -> Profile | None:
-        """Get the currently active profile."""
-        return self._active_profile
 
     def get_user_modifications(
         self, base_preset_name: str
@@ -287,42 +256,6 @@ class ProfileService:
                     diff[shortcut_id] = (shortcut.accelerators, default_accels)
 
         return diff
-
-    def create_modifications_profile(
-        self, base_preset_name: str, name: str = "", description: str = ""
-    ) -> Profile | None:
-        """
-        Create a profile containing only user modifications from a base preset.
-
-        Returns None if there are no modifications.
-        """
-        diff = self.get_user_modifications(base_preset_name)
-        if not diff:
-            return None
-
-        if not name:
-            from datetime import datetime
-
-            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-            name = f"user-mods-{base_preset_name}-{timestamp}"
-
-        if not description:
-            description = f"User modifications from {base_preset_name} preset"
-
-        profile = Profile(
-            name=name,
-            description=description,
-            metadata={"base_preset": base_preset_name, "type": "user-modifications"},
-        )
-
-        # Only include the modified shortcuts (current values, not preset values)
-        for shortcut_id, (current_accels, _preset_accels) in diff.items():
-            parts = shortcut_id.rsplit(".", 1)
-            if len(parts) == 2:
-                schema, key = parts
-                profile.set_shortcut(schema, key, current_accels)
-
-        return profile
 
     def export_and_clear_modifications(self, base_preset_name: str) -> tuple[Path | None, int]:
         """

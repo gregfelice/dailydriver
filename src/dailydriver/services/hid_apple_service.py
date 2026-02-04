@@ -21,22 +21,6 @@ class HidAppleService:
         """Check if hid-apple module is currently loaded."""
         return self.MODULE_PARAMS_PATH.exists()
 
-    def is_available(self) -> bool:
-        """Check if hid-apple module is available (may not be loaded)."""
-        if self.is_module_loaded():
-            return True
-
-        # Check if module exists in kernel modules
-        try:
-            result = subprocess.run(
-                ["modinfo", self.MODULE_NAME],
-                capture_output=True,
-                text=True,
-            )
-            return result.returncode == 0
-        except FileNotFoundError:
-            return False
-
     def get_current_config(self) -> MacKeyboardConfig | None:
         """Read current hid-apple configuration from sysfs."""
         if not self.is_module_loaded():
@@ -132,74 +116,4 @@ class HidAppleService:
             )
             return result.returncode == 0
         except FileNotFoundError:
-            return False
-
-    def _write_modprobe_config(self, config: MacKeyboardConfig) -> bool:
-        """Write configuration to modprobe.d for persistence (standalone)."""
-        params = config.to_modprobe_options()
-        options_line = " ".join(f"{k}={v}" for k, v in params.items())
-        content = f"options {self.MODULE_NAME} {options_line}\n"
-
-        script = f'echo "{content.strip()}" > "{self.MODPROBE_CONF_PATH}"'
-        return self._run_as_root(script)
-
-    def get_persistent_config(self) -> MacKeyboardConfig | None:
-        """Read persistent configuration from modprobe.d."""
-        if not self.MODPROBE_CONF_PATH.exists():
-            return None
-
-        try:
-            content = self.MODPROBE_CONF_PATH.read_text()
-
-            # Parse options line
-            config = MacKeyboardConfig()
-
-            for line in content.splitlines():
-                line = line.strip()
-                if line.startswith(f"options {self.MODULE_NAME}"):
-                    options = line.split()[2:]  # Skip "options hid_apple"
-                    for opt in options:
-                        if "=" in opt:
-                            key, value = opt.split("=", 1)
-                            self._apply_option(config, key, value)
-
-            return config
-
-        except (OSError, ValueError):
-            return None
-
-    def _apply_option(self, config: MacKeyboardConfig, key: str, value: str) -> None:
-        """Apply a single option to config."""
-        try:
-            int_value = int(value)
-        except ValueError:
-            return
-
-        if key == "fnmode":
-            config.fn_mode = {
-                0: FnMode.DISABLED,
-                1: FnMode.FKEYS,
-                2: FnMode.MEDIA,
-            }.get(int_value, FnMode.MEDIA)
-        elif key == "swap_opt_cmd":
-            config.swap_opt_cmd = int_value == 1
-        elif key == "swap_fn_leftctrl":
-            config.swap_fn_leftctrl = int_value == 1
-        elif key == "iso_layout":
-            config.iso_layout = int_value == 1
-
-    def reload_module(self) -> bool:
-        """Reload hid-apple module to apply changes."""
-        try:
-            # This requires root and will disconnect any Apple keyboards temporarily
-            subprocess.run(
-                ["pkexec", "modprobe", "-r", self.MODULE_NAME],
-                check=True,
-            )
-            subprocess.run(
-                ["pkexec", "modprobe", self.MODULE_NAME],
-                check=True,
-            )
-            return True
-        except (subprocess.CalledProcessError, FileNotFoundError):
             return False

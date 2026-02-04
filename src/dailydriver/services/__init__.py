@@ -16,7 +16,6 @@ from dailydriver.services.keyboard_config_service import (
     ModifierConfig,
 )
 from dailydriver.services.profile_service import ProfileService
-from dailydriver.services.tiling_service import TilingInfo, TilingService, TilingStatus
 
 __all__ = [
     # Backends (new cross-desktop API)
@@ -30,9 +29,6 @@ __all__ = [
     "GSettingsService",
     # Other services
     "ProfileService",
-    "TilingService",
-    "TilingStatus",
-    "TilingInfo",
     "KeyboardConfigService",
     "CapsLockBehavior",
     "ModifierConfig",

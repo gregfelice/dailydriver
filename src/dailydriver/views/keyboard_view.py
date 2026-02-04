@@ -622,9 +622,6 @@ ANSI_60_DATA = {
     ],
 }
 
-# Default alias for backwards compatibility
-DEFAULT_LAYOUT_DATA = ANSI_87_DATA
-
 
 # Mac ANSI layout data (embedded for reliable loading)
 # Compact Magic Keyboard style - all rows align to 14.5 width
@@ -1116,14 +1113,4 @@ class KeyboardView(Gtk.DrawingArea):
                 self._shortcut_keys[65505] = shortcut  # Left Shift
                 self._shortcut_keys[65506] = shortcut  # Right Shift
 
-        self.queue_draw()
-
-    def clear_highlights(self) -> None:
-        """Clear all shortcut highlights."""
-        self._shortcut_keys.clear()
-        self.queue_draw()
-
-    def set_active_keys(self, keyvals: set[int]) -> None:
-        """Set which keys are currently active/pressed."""
-        self._active_keys = keyvals
         self.queue_draw()

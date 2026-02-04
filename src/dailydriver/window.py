@@ -878,10 +878,6 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         else:
             self._show_toast(f"Preset not found: {preset_key}")
 
-    def _on_choose_preset(self, action: Gio.SimpleAction, param: GLib.Variant | None) -> None:
-        """Show the preset selector dialog (from menu)."""
-        self._show_preset_selector()
-
     def _show_preset_selector(self) -> None:
         """Show the preset selector dialog."""
         dialog = PresetSelector()

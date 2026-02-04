@@ -3,7 +3,6 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Self
 
 from gi.repository import Gio
 
@@ -53,32 +52,6 @@ class ModifierConfig:
 
     # Function key mode (for Apple keyboards)
     fn_keys_primary: bool = False  # F1-F12 are primary (not media keys)
-
-    def to_dict(self) -> dict:
-        """Serialize to dict for storage."""
-        return {
-            "swap_cmd_opt": self.swap_cmd_opt,
-            "swap_fn_ctrl": self.swap_fn_ctrl,
-            "caps_lock": self.caps_lock.value,
-            "fn_keys_primary": self.fn_keys_primary,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> Self:
-        """Deserialize from dict."""
-        caps_value = data.get("caps_lock", "default")
-        caps_lock = CapsLockBehavior.CAPS_LOCK
-        for behavior in CapsLockBehavior:
-            if behavior.value == caps_value:
-                caps_lock = behavior
-                break
-
-        return cls(
-            swap_cmd_opt=data.get("swap_cmd_opt", False),
-            swap_fn_ctrl=data.get("swap_fn_ctrl", False),
-            caps_lock=caps_lock,
-            fn_keys_primary=data.get("fn_keys_primary", False),
-        )
 
 
 class KeyboardConfigService:
@@ -191,56 +164,3 @@ class KeyboardConfigService:
                 return int(f.read().strip())
         except (FileNotFoundError, PermissionError, ValueError):
             return 2  # Default: media keys
-
-    # --- Modifier Config Application ---
-
-    def apply_modifier_config(self, config: ModifierConfig) -> bool:
-        """Apply a modifier configuration."""
-        success = True
-
-        # Apply Caps Lock behavior
-        if not self.set_caps_lock_behavior(config.caps_lock):
-            success = False
-
-        # Apple keyboard settings require root/polkit - handled by hid_apple_service
-        # We just return whether the xkb part succeeded
-
-        return success
-
-    def get_current_modifier_config(self) -> ModifierConfig:
-        """Get the current modifier configuration from system state."""
-        return ModifierConfig(
-            swap_cmd_opt=self.get_apple_swap_cmd_opt(),
-            swap_fn_ctrl=False,  # Would need to read from hid_apple
-            caps_lock=self.get_caps_lock_behavior(),
-            fn_keys_primary=self.get_apple_fn_mode() == 1,
-        )
-
-    # --- Presets ---
-
-    @staticmethod
-    def get_preset_configs() -> dict[str, ModifierConfig]:
-        """Get preset modifier configurations."""
-        return {
-            "default": ModifierConfig(),
-            "mac-native": ModifierConfig(
-                swap_cmd_opt=False,
-                caps_lock=CapsLockBehavior.CAPS_LOCK,
-                fn_keys_primary=False,
-            ),
-            "mac-to-pc": ModifierConfig(
-                swap_cmd_opt=True,  # Cmd becomes Alt, Opt becomes Super
-                caps_lock=CapsLockBehavior.CAPS_LOCK,
-                fn_keys_primary=False,
-            ),
-            "developer": ModifierConfig(
-                swap_cmd_opt=False,
-                caps_lock=CapsLockBehavior.CTRL,
-                fn_keys_primary=True,
-            ),
-            "vim": ModifierConfig(
-                swap_cmd_opt=False,
-                caps_lock=CapsLockBehavior.ESCAPE,
-                fn_keys_primary=True,
-            ),
-        }

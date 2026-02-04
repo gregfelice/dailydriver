@@ -5,7 +5,6 @@ services_sources = [
   'hid_apple_service.py',
   'keyboard_config_service.py',
   'profile_service.py',
-  'tiling_service.py',
 ]
 
 install_data(services_sources, install_dir: moduledir / 'services')

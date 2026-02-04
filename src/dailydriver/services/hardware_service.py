@@ -236,7 +236,3 @@ class HardwareService:
             return "apple" in name or "fn" in name
         except (OSError, PermissionError):
             return False
-
-    def get_mac_keyboards(self) -> list[DetectedKeyboard]:
-        """Get all detected Apple/Mac keyboards."""
-        return [kb for kb in self.list_keyboards() if kb.is_mac]

@@ -1,11 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Keyboard layout and hardware models."""
 
-import json
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Self
 
 
 class KeyboardType(Enum):
@@ -36,12 +33,6 @@ class KeyboardType(Enum):
         """Check if this is an Apple keyboard type."""
         return self in (KeyboardType.MAC_ANSI, KeyboardType.MAC_ISO)
 
-    @property
-    def is_iso(self) -> bool:
-        """Check if this is an ISO layout."""
-        return self in (KeyboardType.ISO_105, KeyboardType.MAC_ISO)
-
-
 @dataclass
 class Key:
     """A single key on the keyboard."""
@@ -60,18 +51,6 @@ class Key:
 
     # Visual properties
     row: int = 0  # Row number for styling
-    is_modifier: bool = False
-    is_special: bool = False  # Enter, Backspace, etc.
-
-    @property
-    def center_x(self) -> float:
-        """Get center X position."""
-        return self.x + self.width / 2
-
-    @property
-    def center_y(self) -> float:
-        """Get center Y position."""
-        return self.y + self.height / 2
 
 
 @dataclass
@@ -87,59 +66,10 @@ class KeyboardLayout:
     width: float = 0.0
     height: float = 0.0
 
-    @classmethod
-    def from_json(cls, path: Path) -> Self:
-        """Load layout from JSON file."""
-        with open(path) as f:
-            data = json.load(f)
-
-        layout_type = KeyboardType(data.get("type", "ansi-104"))
-        keys = []
-
-        for key_data in data.get("keys", []):
-            keys.append(
-                Key(
-                    x=key_data["x"],
-                    y=key_data["y"],
-                    width=key_data.get("width", 1.0),
-                    height=key_data.get("height", 1.0),
-                    keycode=key_data.get("keycode", 0),
-                    keyval=key_data.get("keyval", 0),
-                    label=key_data.get("label", ""),
-                    secondary_label=key_data.get("secondary", ""),
-                    row=key_data.get("row", 0),
-                    is_modifier=key_data.get("modifier", False),
-                    is_special=key_data.get("special", False),
-                )
-            )
-
-        return cls(
-            id=data.get("id", path.stem),
-            name=data.get("name", path.stem),
-            type=layout_type,
-            keys=keys,
-            width=data.get("width", 0),
-            height=data.get("height", 0),
-        )
-
     def get_key_at(self, x: float, y: float) -> Key | None:
         """Find key at given position (in key units)."""
         for key in self.keys:
             if key.x <= x < key.x + key.width and key.y <= y < key.y + key.height:
-                return key
-        return None
-
-    def get_key_by_keycode(self, keycode: int) -> Key | None:
-        """Find key by Linux keycode."""
-        for key in self.keys:
-            if key.keycode == keycode:
-                return key
-        return None
-
-    def get_key_by_keyval(self, keyval: int) -> Key | None:
-        """Find key by GDK keyval."""
-        for key in self.keys:
-            if key.keyval == keyval:
                 return key
         return None
 

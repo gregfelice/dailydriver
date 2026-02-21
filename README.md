@@ -6,7 +6,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![AUR](https://img.shields.io/aur/version/dailydriver)](https://aur.archlinux.org/packages/dailydriver)
 
-DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated presets, and see all your shortcuts at a glance with a keyboard cheat sheet.
+DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated presets, and see all your shortcuts at a glance with a keyboard cheat sheet. There's presets to instantly give you HYPR-style keymaps too.
 
 ![DailyDriver - Keyboard Visualization](data/screenshots/keyboard-view.png)
 

@@ -38,7 +38,7 @@ class DailyDriverApplication(Adw.Application):
             None,
         )
 
-        # Setup actions
+        # aSetup actions
         self._setup_actions()
 
     def _setup_actions(self) -> None:
@@ -72,8 +72,7 @@ class DailyDriverApplication(Adw.Application):
         # Show cheat sheet if requested
         if self._show_cheat_sheet:
             self._window.show_cheat_sheet()
-            self._show_cheat_sheet = False  # Reset for next activation
-
+            self._show_cheat_sheet = False  # Reset for next acti
         self._window.present()
 
     def do_shutdown(self) -> None:

@@ -97,7 +97,6 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         menu_button.set_menu_model(self._create_menu())
         menu_button.set_tooltip_text("Main Menu")
         header.pack_end(menu_button)
-
         toolbar_view.add_top_bar(header)
 
         # View stack

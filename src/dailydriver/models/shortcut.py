@@ -99,13 +99,12 @@ class KeyBinding:
         from gi.repository import Gtk
 
         return Gtk.accelerator_get_label(self.keyval, self.modifiers.to_gtk())
-
     @property
     def key_name(self) -> str:
         """Get the key name without modifiers."""
         from gi.repository import Gdk
 
-        return Gdk.keyval_name(self.keyval) or ""
+        return Gdk.keyval_name(self.keyval) or ""y
 
 
 @dataclass

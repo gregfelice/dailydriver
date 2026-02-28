@@ -127,6 +127,8 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "python-dbusmock" },
     { name = "ruff" },
 ]
 evdev = [
@@ -141,11 +143,19 @@ requires-dist = [
     { name = "pygobject", specifier = ">=3.44" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
+    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.0" },
+    { name = "python-dbusmock", marker = "extra == 'dev'", specifier = ">=0.31" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0" },
     { name = "tomli-w", specifier = ">=1.0" },
 ]
 provides-extras = ["dev", "evdev"]
+
+[[package]]
+name = "dbus-python"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/24/63118050c7dd7be04b1ccd60eab53fef00abe844442e1b6dec92dae505d6/dbus-python-1.4.0.tar.gz", hash = "sha256:991666e498f60dbf3e49b8b7678f5559b8a65034fdf61aae62cdecdb7d89c770", size = 232490, upload-time = "2025-03-13T19:57:54.212Z" }
 
 [[package]]
 name = "evdev"
@@ -481,6 +491,27 @@ sdist = { url = "https://files.pythonhosted.org/packages/5e/f7/c933acc76f5208b3b
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/49/1377b49de7d0c1ce41292161ea0f721913fa8722c19fb9c1e3aa0367eecb/pytest_cov-7.0.0-py3-none-any.whl", hash = "sha256:3b8e9558b16cc1479da72058bdecf8073661c7f57f7d3c5f22a1c23507f2d861", size = 22424, upload-time = "2025-09-09T10:57:00.695Z" },
 ]
+
+[[package]]
+name = "pytest-mock"
+version = "3.15.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+]
+
+[[package]]
+name = "python-dbusmock"
+version = "0.38.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dbus-python" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7b/56/fb685394b46925ea4bd0ff09ad2d772820734bdf96583468c5cf0f767ca0/python_dbusmock-0.38.1.tar.gz", hash = "sha256:221b65e1c2e48de9fd11bf7e8c165adaf91648f49a11f390d086a498386f2984", size = 108144, upload-time = "2026-01-30T14:47:45.301Z" }
 
 [[package]]
 name = "ruff"

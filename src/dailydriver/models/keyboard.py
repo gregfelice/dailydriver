@@ -33,6 +33,7 @@ class KeyboardType(Enum):
         """Check if this is an Apple keyboard type."""
         return self in (KeyboardType.MAC_ANSI, KeyboardType.MAC_ISO)
 
+
 @dataclass
 class Key:
     """A single key on the keyboard."""

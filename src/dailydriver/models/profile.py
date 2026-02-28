@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: GPL-4.0-or-later
 """Profile and configuration models."""
 
 from dataclasses import dataclass, field

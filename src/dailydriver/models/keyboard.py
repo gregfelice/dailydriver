@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 
 
 class KeyboardType(Enum):
@@ -33,6 +34,11 @@ class KeyboardType(Enum):
         """Check if this is an Apple keyboard type."""
         return self in (KeyboardType.MAC_ANSI, KeyboardType.MAC_ISO)
 
+    @property
+    def is_iso(self) -> bool:
+        """Check if this is an ISO keyboard type."""
+        return self in (KeyboardType.ISO_105, KeyboardType.MAC_ISO)
+
 
 @dataclass
 class Key:
@@ -49,9 +55,21 @@ class Key:
     keyval: int = 0  # GDK keyval for default binding
     label: str = ""  # Display label
     secondary_label: str = ""  # Shift label
+    is_modifier: bool = False
+    is_special: bool = False
 
     # Visual properties
     row: int = 0  # Row number for styling
+
+    @property
+    def center_x(self) -> float:
+        """Get center X position."""
+        return self.x + (self.width / 2.0)
+
+    @property
+    def center_y(self) -> float:
+        """Get center Y position."""
+        return self.y + (self.height / 2.0)
 
 
 @dataclass
@@ -67,10 +85,52 @@ class KeyboardLayout:
     width: float = 0.0
     height: float = 0.0
 
+    @classmethod
+    def from_json(cls, path: str | Path) -> "KeyboardLayout":
+        """Load keyboard layout from JSON file."""
+        import json
+
+        with open(path) as f:
+            data = json.load(f)
+
+        keys = []
+        for k in data.get("keys", []):
+            keys.append(
+                Key(
+                    x=k.get("x", 0.0),
+                    y=k.get("y", 0.0),
+                    width=k.get("width", 1.0),
+                    height=k.get("height", 1.0),
+                    keycode=k.get("keycode", 0),
+                    keyval=k.get("keyval", 0),
+                    label=k.get("label", ""),
+                    secondary_label=k.get("secondary_label", ""),
+                    is_modifier=k.get("is_modifier", False),
+                    is_special=k.get("is_special", False),
+                    row=k.get("row", 0),
+                )
+            )
+
+        return cls(
+            id=data.get("id", ""),
+            name=data.get("name", ""),
+            type=KeyboardType(data.get("type", "ansi-104")),
+            keys=keys,
+            width=data.get("width", 0.0),
+            height=data.get("height", 0.0),
+        )
+
     def get_key_at(self, x: float, y: float) -> Key | None:
         """Find key at given position (in key units)."""
         for key in self.keys:
             if key.x <= x < key.x + key.width and key.y <= y < key.y + key.height:
+                return key
+        return None
+
+    def get_key_by_keycode(self, keycode: int) -> Key | None:
+        """Find key by Linux keycode."""
+        for key in self.keys:
+            if key.keycode == keycode:
                 return key
         return None
 

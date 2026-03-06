@@ -1,6 +1,6 @@
 # Maintainer: Greg Felice <greg@gregfelice.com>
 pkgname=dailydriver
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="Visual keyboard shortcut configuration for GNOME"
 arch=('any')

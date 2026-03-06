@@ -5,7 +5,7 @@
 
 app-id: io.github.gregfelice.DailyDriver
 runtime: org.gnome.Platform
-runtime-version: '48'
+runtime-version: '47'
 sdk: org.gnome.Sdk
 command: dailydriver
 

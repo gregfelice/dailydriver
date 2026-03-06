@@ -59,6 +59,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.0" date="2026-03-05">
+      <description>
+        <p>revised update with bug fixes</p>
+      </description>
+    </release>
+    <release version="0.2.0" date="2026-03-04">
+      <description>
+        <p>Major update: Fixed core logic, restored test suite, and added Snap/Flatpak distribution tooling.</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-01-28">
       <description>
         <p>Initial release with core features:</p>

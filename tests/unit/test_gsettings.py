@@ -268,20 +268,20 @@ class TestGSettingsServiceInit:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
 
             # First call should create settings
             result1 = service._get_settings("org.gnome.test")
             assert result1 is mock_settings
-            mock_gio.Settings.new_full.assert_called_once()
+            mock_gio.Settings.new.assert_called_once()
 
             # Second call should return cached
             result2 = service._get_settings("org.gnome.test")
             assert result2 is mock_settings
             # Still only called once
-            mock_gio.Settings.new_full.assert_called_once()
+            mock_gio.Settings.new.assert_called_once()
 
     def test_get_settings_returns_none_for_missing_schema(self) -> None:
         """Test that _get_settings returns None for missing schemas."""
@@ -485,7 +485,7 @@ class TestSaveShortcut:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
 
@@ -526,7 +526,7 @@ class TestSaveShortcut:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             # Mock GLib.Variant
             with patch("dailydriver.services.backends.gnome.GLib") as mock_glib:
@@ -692,7 +692,7 @@ class TestResetShortcut:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
 
@@ -771,7 +771,7 @@ class TestCustomKeybindingOperations:
                 "binding": "<Super>Return",
             }.get(key, "")
 
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = mock_binding_settings
 
             service = GSettingsService()
@@ -797,7 +797,7 @@ class TestCustomKeybindingOperations:
 
             mock_binding_settings = MagicMock()
 
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = mock_binding_settings
 
             service = GSettingsService()
@@ -826,7 +826,7 @@ class TestCustomKeybindingOperations:
                 "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/",
             ]
 
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = MagicMock()
 
             service = GSettingsService()
@@ -876,7 +876,7 @@ class TestCustomKeybindingOperations:
 
             mock_binding_settings = MagicMock()
 
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = mock_binding_settings
 
             service = GSettingsService()
@@ -903,7 +903,7 @@ class TestCustomKeybindingOperations:
             mock_main_settings = MagicMock()
             mock_main_settings.get_strv.return_value = []  # No bindings
 
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
 
             service = GSettingsService()
             result = service.delete_custom_keybinding("/nonexistent/path/")
@@ -930,7 +930,7 @@ class TestCustomKeybindingOperations:
                 "binding": "<Super>Return",
             }.get(key, "")
 
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = mock_binding_settings
 
             service = GSettingsService()
@@ -973,7 +973,7 @@ class TestCustomKeybindingOperations:
             mock_binding_settings = MagicMock()
             mock_binding_settings.get_string.side_effect = get_string_side_effect
 
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = mock_binding_settings
 
             service = GSettingsService()
@@ -1216,7 +1216,7 @@ class TestSetupDefaultCustomShortcuts:
 
             mock_main_settings = MagicMock()
             mock_main_settings.get_strv.return_value = []
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = MagicMock()
 
             service = GSettingsService()
@@ -1251,7 +1251,7 @@ class TestSetupDefaultCustomShortcuts:
 
             mock_main_settings = MagicMock()
             mock_main_settings.get_strv.return_value = []
-            mock_gio.Settings.new_full.return_value = mock_main_settings
+            mock_gio.Settings.new.return_value = mock_main_settings
             mock_gio.Settings.new_with_path.return_value = MagicMock()
 
             service = GSettingsService()
@@ -1365,7 +1365,7 @@ class TestLoadAllShortcuts:
             mock_settings.get_value.return_value = MagicMock(
                 get_type_string=lambda: "as", unpack=lambda: ["<Alt>F4"]
             )
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             shortcuts = service.load_all_shortcuts()
@@ -1428,7 +1428,7 @@ class TestWorkspaceManagement:
 
             mock_settings = MagicMock()
             mock_settings.get_int.return_value = 6
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             count = service.get_workspace_count()
@@ -1461,7 +1461,7 @@ class TestWorkspaceManagement:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.set_workspace_count(10)
@@ -1495,7 +1495,7 @@ class TestWorkspaceManagement:
 
             mock_settings = MagicMock()
             mock_settings.get_boolean.return_value = False
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.is_dynamic_workspaces()
@@ -1528,7 +1528,7 @@ class TestWorkspaceManagement:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.set_dynamic_workspaces(False)
@@ -1561,7 +1561,7 @@ class TestWorkspaceManagement:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.setup_workspaces_for_hyprland()
@@ -1581,7 +1581,7 @@ class TestWorkspaceManagement:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.restore_default_workspaces()
@@ -1603,7 +1603,7 @@ class TestWorkspaceManagement:
             mock_settings = MagicMock()
             mock_settings.get_int.return_value = 10
             mock_settings.get_boolean.return_value = False  # dynamic = False
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.has_hyprland_workspace_setup()
@@ -1623,7 +1623,7 @@ class TestWorkspaceManagement:
             mock_settings = MagicMock()
             mock_settings.get_int.return_value = 4  # Not 10
             mock_settings.get_boolean.return_value = False
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.has_hyprland_workspace_setup()
@@ -1643,7 +1643,7 @@ class TestWorkspaceManagement:
             mock_settings = MagicMock()
             mock_settings.get_int.return_value = 10
             mock_settings.get_boolean.return_value = True  # dynamic = True
-            mock_gio.Settings.new_full.return_value = mock_settings
+            mock_gio.Settings.new.return_value = mock_settings
 
             service = GSettingsService()
             result = service.has_hyprland_workspace_setup()

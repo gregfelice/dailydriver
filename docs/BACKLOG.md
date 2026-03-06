@@ -6,20 +6,20 @@ Prioritized bugs, features, and improvements for DailyDriver development.
 
 ## P0 - Critical
 
-- [ ] Update `ShortcutGrabberService` to detect GNOME and skip portal attempt (cleaner logs, no error spam)
-- [ ] Capture screenshots and finalize AppStream metainfo for Flathub submission
 - [ ] Screenshots for hypr / apple presets don't work - should show equivalent of apple keys
 - [ ] `<D-/>` shortcut bug (slash key with Super modifier)
 - [ ] Fix 6 failing custom keybinding tests (mock setup refinement needed)
 
 **Completed:**
 - [x] Test compositor shortcut grabs on a live GNOME Wayland session (tested, doesn't work - GNOME limitation)
+- [x] Update `ShortcutGrabberService` to detect GNOME and skip portal attempt (`services/backends/detection.py`)
+- [x] Capture screenshots and finalize AppStream metainfo for Flathub submission (`data/io.github.gregfelice.DailyDriver.metainfo.xml.in`)
 
 ---
 
 ## P1 - Next Sprint
 
-- [ ] Flathub beta channel submission
+- [ ] Flathub beta channel submission (PR #7735 pending review)
 - [ ] Research GNOME Shell extension approach for global shortcuts (extension exposes GrabAccelerator to DailyDriver via custom D-Bus interface)
 - [ ] Background daemon mode (`dailydriver --daemon`) for persistent shortcut grabs (useful when GlobalShortcuts works)
 - [ ] Make detection methods on GSettingsService public API (`_detect_terminal` etc.)

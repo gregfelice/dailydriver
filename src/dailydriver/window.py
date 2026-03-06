@@ -45,16 +45,28 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._setup_actions()
 
         # Load settings
-        self._settings = Gio.Settings.new("io.github.gregfelice.DailyDriver")
+        self._settings = self._get_app_settings()
         self._restore_window_state()
 
         # Load filter settings BEFORE loading shortcuts
-        self._tiling_enabled = self._settings.get_boolean("tiling-enabled")
-        self._show_unbound = self._settings.get_boolean("show-unbound")
+        if self._settings:
+            self._tiling_enabled = self._settings.get_boolean("tiling-enabled")
+            self._show_unbound = self._settings.get_boolean("show-unbound")
 
         # Load shortcuts (uses tiling/unbound settings)
         GLib.idle_add(self._load_shortcuts)
         GLib.idle_add(self._load_config_state)
+
+    def _get_app_settings(self) -> Gio.Settings | None:
+        """Safely get application GSettings."""
+        schema_id = "io.github.gregfelice.DailyDriver"
+        schema_source = Gio.SettingsSchemaSource.get_default()
+        if schema_source and schema_source.lookup(schema_id, True):
+            try:
+                return Gio.Settings.new(schema_id)
+            except Exception:
+                pass
+        return None
 
     def _detect_keyboard(self):
         """Detect connected keyboard."""

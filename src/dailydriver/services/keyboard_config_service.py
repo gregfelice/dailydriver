@@ -53,6 +53,32 @@ class ModifierConfig:
     # Function key mode (for Apple keyboards)
     fn_keys_primary: bool = False  # F1-F12 are primary (not media keys)
 
+    def to_dict(self) -> dict:
+        """Convert to dictionary for storage."""
+        return {
+            "swap_cmd_opt": self.swap_cmd_opt,
+            "swap_fn_ctrl": self.swap_fn_ctrl,
+            "caps_lock": self.caps_lock.value,
+            "fn_keys_primary": self.fn_keys_primary,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ModifierConfig":
+        """Create from dictionary."""
+        caps_lock_val = data.get("caps_lock", "default")
+        caps_lock = CapsLockBehavior.CAPS_LOCK
+        for behavior in CapsLockBehavior:
+            if behavior.value == caps_lock_val:
+                caps_lock = behavior
+                break
+
+        return cls(
+            swap_cmd_opt=data.get("swap_cmd_opt", False),
+            swap_fn_ctrl=data.get("swap_fn_ctrl", False),
+            caps_lock=caps_lock,
+            fn_keys_primary=data.get("fn_keys_primary", False),
+        )
+
 
 class KeyboardConfigService:
     """Service for managing keyboard hardware and modifier configuration."""
@@ -77,6 +103,45 @@ class KeyboardConfigService:
         # System input settings for xkb options
         if self._schema_source.lookup(self.INPUT_SOURCES_SCHEMA, True):
             self._input_settings = Gio.Settings.new(self.INPUT_SOURCES_SCHEMA)
+
+    def get_current_modifier_config(self) -> ModifierConfig:
+        """Get the current active modifier configuration."""
+        return ModifierConfig(
+            caps_lock=self.get_caps_lock_behavior(),
+            swap_cmd_opt=self.get_apple_swap_cmd_opt(),
+            # Simplified for now
+            swap_fn_ctrl=False,
+            fn_keys_primary=self.get_apple_fn_mode() == 1,
+        )
+
+    def apply_modifier_config(self, config: ModifierConfig) -> bool:
+        """Apply a modifier configuration to the system."""
+        success = self.set_caps_lock_behavior(config.caps_lock)
+        # Apply Apple-specific settings if available
+        from dailydriver.services.hid_apple_service import HidAppleService
+        from dailydriver.models.profile import FnMode, MacKeyboardConfig
+
+        hid_apple = HidAppleService()
+        if hid_apple.is_available():
+            mac_config = MacKeyboardConfig(
+                fn_mode=FnMode.FKEYS if config.fn_keys_primary else FnMode.MEDIA,
+                swap_opt_cmd=config.swap_cmd_opt,
+                swap_fn_leftctrl=config.swap_fn_ctrl,
+            )
+            success = hid_apple.apply_config(mac_config) and success
+
+        return success
+
+    @staticmethod
+    def get_preset_configs() -> dict[str, ModifierConfig]:
+        """Get predefined modifier configurations."""
+        return {
+            "default": ModifierConfig(),
+            "vim": ModifierConfig(caps_lock=CapsLockBehavior.ESCAPE, fn_keys_primary=True),
+            "developer": ModifierConfig(caps_lock=CapsLockBehavior.CTRL, fn_keys_primary=True),
+            "mac-to-pc": ModifierConfig(swap_cmd_opt=True),
+            "mac-native": ModifierConfig(fn_keys_primary=True),
+        }
 
     # --- Global Keyboard Type ---
 

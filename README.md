@@ -6,7 +6,8 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![AUR](https://img.shields.io/aur/version/dailydriver)](https://aur.archlinux.org/packages/dailydriver)
 
-DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated presets, and see all your shortcuts at a glance with a keyboard cheat sheet. There's presets to instantly give you HYPR-style keymaps too.
+DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated presets, and see all your shortcuts at a
+glance with a keyboard cheat sheet. There's presets to instantly give you HYPR-style keymaps too.
 
 ![DailyDriver - Keyboard Visualization](data/screenshots/keyboard-view.png)
 
@@ -14,16 +15,19 @@ DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated 
 <summary>More screenshots</summary>
 
 ### Shortcuts List
+
 Browse and edit shortcuts by category
 
 ![Shortcuts View](data/screenshots/main-window.png)
 
 ### Cheat Sheet
+
 Quick reference overlay showing all active shortcuts (Alt+Super+/)
 
 ![Cheat Sheet](data/screenshots/cheat-sheet.png)
 
 ### Preset Selection
+
 Choose from curated shortcut profiles
 
 ![Presets](data/screenshots/presets.png)
@@ -79,12 +83,12 @@ meson install -C build
 
 ## Platform Support
 
-| Platform | Version | Status |
-|----------|---------|--------|
-| GNOME on Wayland | 45, 46, 47 | Tested in CI |
-| GNOME on X11 | 45+ | Should work (untested) |
-| KDE Plasma | - | Planned |
-| Hyprland | - | Planned |
+| Platform         | Version    | Status                 |
+| ---------------- | ---------- | ---------------------- |
+| GNOME on Wayland | 45, 46, 47 | Tested in CI           |
+| GNOME on X11     | 45+        | Should work (untested) |
+| KDE Plasma       | -          | Planned                |
+| Hyprland         | -          | Planned                |
 
 ### Requirements
 
@@ -94,11 +98,11 @@ meson install -C build
 
 ## Built-in Presets
 
-| Preset | Description |
-|--------|-------------|
+| Preset             | Description                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
 | **Hyprland Style** | Keyboard-centric workflow with vim-like navigation. Super+Q close, Super+hjkl tiling, Super+1-0 workspaces. |
-| **GNOME + Tiling** | Standard GNOME with Tiling Assistant snap zones. Alt+F4 close, Super+arrows for tiling. |
-| **Vanilla GNOME** | Pure GNOME Shell defaults without tiling extensions. |
+| **GNOME + Tiling** | Standard GNOME with Tiling Assistant snap zones. Alt+F4 close, Super+arrows for tiling.                     |
+| **Vanilla GNOME**  | Pure GNOME Shell defaults without tiling extensions.                                                        |
 
 ## How It Works
 
@@ -108,7 +112,8 @@ When you apply a preset, DailyDriver:
 2. **Applies only what's defined** - Sets exactly the shortcuts in your preset file
 3. **Preserves custom launchers** - Your Terminal/Browser/Files shortcuts stay intact
 
-This "clean slate" approach means your cheat sheet shows exactly what's in your config - no inherited GNOME defaults cluttering things up.
+This "clean slate" approach means your cheat sheet shows exactly what's in your config - no inherited GNOME defaults
+cluttering things up.
 
 ## Development
 
@@ -127,6 +132,7 @@ flatpak-builder --force-clean --user --install build-dir io.github.gregfelice.Da
 ## CI/CD
 
 Tests run on every push:
+
 - **Lint** - ruff check and format
 - **Unit Tests** - pytest with coverage
 - **Integration Tests** - Real GNOME Shell on Fedora 39/40/41 (GNOME 45/46/47)
@@ -149,8 +155,10 @@ Tests run on every push:
 Your feedback helps make DailyDriver better!
 
 - **Bug reports**: [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=bug&title=Bug:%20)
-- **Feature requests**: [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=enhancement&title=Feature:%20)
-- **Questions**: [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=question&title=Question:%20)
+- **Feature requests**:
+  [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=enhancement&title=Feature:%20)
+- **Questions**:
+  [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=question&title=Question:%20)
 
 ## License
 

@@ -21,6 +21,22 @@ class HidAppleService:
         """Check if hid-apple module is currently loaded."""
         return self.MODULE_PARAMS_PATH.exists()
 
+    def is_available(self) -> bool:
+        """Check if hid-apple module is available on the system."""
+        if self.is_module_loaded():
+            return True
+
+        # Check if module exists in the system
+        try:
+            result = subprocess.run(
+                ["modinfo", self.MODULE_NAME],
+                capture_output=True,
+                text=True,
+            )
+            return result.returncode == 0
+        except FileNotFoundError:
+            return False
+
     def get_current_config(self) -> MacKeyboardConfig | None:
         """Read current hid-apple configuration from sysfs."""
         if not self.is_module_loaded():
@@ -59,6 +75,46 @@ class HidAppleService:
 
         except (OSError, ValueError):
             return None
+
+    def get_persistent_config(self) -> MacKeyboardConfig | None:
+        """Read hid-apple configuration from modprobe.d."""
+        if not self.MODPROBE_CONF_PATH.exists():
+            return None
+
+        try:
+            content = self.MODPROBE_CONF_PATH.read_text().strip()
+            if not content.startswith(f"options {self.MODULE_NAME}"):
+                return None
+
+            config = MacKeyboardConfig()
+            parts = content.split()
+            for part in parts[2:]:  # Skip 'options' and 'hid_apple'
+                if "=" in part:
+                    key, value = part.split("=", 1)
+                    if key == "fnmode":
+                        config.fn_mode = {
+                            "0": FnMode.DISABLED,
+                            "1": FnMode.FKEYS,
+                            "2": FnMode.MEDIA,
+                        }.get(value, FnMode.MEDIA)
+                    elif key == "swap_opt_cmd":
+                        config.swap_opt_cmd = value == "1"
+                    elif key == "swap_fn_leftctrl":
+                        config.swap_fn_leftctrl = value == "1"
+                    elif key == "iso_layout":
+                        config.iso_layout = value == "1"
+
+            return config
+        except (OSError, ValueError):
+            return None
+
+    def reload_module(self) -> bool:
+        """Reload the hid-apple module to apply persistent changes."""
+        # Tests expect separate calls
+        success1 = self._run_as_root(f"modprobe -r {self.MODULE_NAME}")
+        if not success1:
+            return False
+        return self._run_as_root(f"modprobe {self.MODULE_NAME}")
 
     def apply_config(self, config: MacKeyboardConfig, persistent: bool = True) -> bool:
         """
@@ -115,5 +171,5 @@ class HidAppleService:
                 text=True,
             )
             return result.returncode == 0
-        except FileNotFoundError:
+        except (FileNotFoundError, subprocess.CalledProcessError):
             return False

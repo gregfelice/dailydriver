@@ -74,6 +74,58 @@ class ProfileService:
         profile.to_toml(path)
         return path
 
+    def delete_profile(self, name: str) -> bool:
+        """Delete a user profile."""
+        path = self._profiles_dir / f"{name}.toml"
+        if path.exists():
+            path.unlink()
+            return True
+        return False
+
+    @property
+    def active_profile(self) -> Profile | None:
+        """Get the currently active profile based on GSettings."""
+        name = self._get_active_profile_name()
+        if not name:
+            return None
+        return self.get_profile(name)
+
+    def _get_active_profile_name(self) -> str | None:
+        """Get the name of the active profile from GSettings."""
+        from gi.repository import Gio
+
+        settings = Gio.Settings.new("io.github.gregfelice.DailyDriver")
+        return settings.get_string("current-preset")
+
+    def export_profile(self, profile: Profile, path: Path) -> None:
+        """Export a profile to a specific path."""
+        profile.to_toml(path)
+
+    def create_modifications_profile(self, base_preset_name: str) -> Profile | None:
+        """Create a profile containing user modifications from a base preset."""
+        user_mods = self.get_user_modifications(base_preset_name)
+        if not user_mods:
+            return None
+
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        name = f"user-mods-{base_preset_name}-{timestamp}"
+
+        profile = Profile(
+            name=name,
+            description=f"User modifications exported from {base_preset_name} preset",
+            metadata={"base_preset": base_preset_name, "type": "user-modifications"},
+        )
+
+        for shortcut_id, (current_accels, _) in user_mods.items():
+            parts = shortcut_id.rsplit(".", 1)
+            if len(parts) == 2:
+                schema, key = parts
+                profile.set_shortcut(schema, key, current_accels)
+
+        return profile
+
     def apply_profile(
         self, profile: Profile, clean_slate: bool | None = None
     ) -> dict[str, Shortcut]:
@@ -117,7 +169,9 @@ class ProfileService:
 
             # Find matching shortcut
             shortcut_id = f"{schema}.{key}"
+            print(f"DEBUG: Processing storage_key={storage_key}, id={shortcut_id}")
             if shortcut_id not in current_shortcuts:
+                print(f"DEBUG: {shortcut_id} not in current_shortcuts: {list(current_shortcuts.keys())}")
                 continue
 
             shortcut = current_shortcuts[shortcut_id]
@@ -130,8 +184,10 @@ class ProfileService:
                 if (b := KeyBinding.from_accelerator(accel))
             )
 
+            print(f"DEBUG: old={set(old_accelerators)}, new={normalized_profile}")
             # Check if different (in clean_slate mode, old_accelerators is [] so always apply)
             if set(old_accelerators) != normalized_profile:
+                print("DEBUG: Accelerators differ, applying...")
                 # Update bindings
                 shortcut.bindings = [
                     b for accel in accelerators if (b := KeyBinding.from_accelerator(accel))
@@ -139,7 +195,10 @@ class ProfileService:
 
                 # Save to GSettings
                 if self._gsettings.save_shortcut(shortcut):
+                    print(f"DEBUG: Saved {shortcut_id}")
                     changed[shortcut_id] = shortcut
+                else:
+                    print(f"DEBUG: Failed to save {shortcut_id}")
 
         return changed
 

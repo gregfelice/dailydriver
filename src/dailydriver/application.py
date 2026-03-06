@@ -22,7 +22,7 @@ class DailyDriverApplication(Adw.Application):
     def __init__(self, version: str) -> None:
         super().__init__(
             application_id="io.github.gregfelice.DailyDriver",
-            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.NON_UNIQUE,
         )
         self.version = version
         self._window: DailyDriverWindow | None = None
@@ -38,7 +38,7 @@ class DailyDriverApplication(Adw.Application):
             None,
         )
 
-        # aSetup actions
+        # Setup actions
         self._setup_actions()
 
     def _setup_actions(self) -> None:

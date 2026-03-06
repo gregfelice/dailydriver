@@ -59,6 +59,10 @@ class HardwareService:
             if device and self._is_keyboard(event_dir):
                 yield device
 
+    def get_mac_keyboards(self) -> list[DetectedKeyboard]:
+        """Get a list of all detected Mac keyboards."""
+        return [kb for kb in self.list_keyboards() if kb.is_mac]
+
     def _parse_device(self, event_dir: Path) -> DetectedKeyboard | None:
         """Parse device information from sysfs."""
         device_dir = event_dir / "device"

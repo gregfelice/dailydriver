@@ -56,6 +56,27 @@ def bump_version(new_version: str):
         f"version: '{new_version}'"
     )
 
+    # 5. flake.nix
+    update_file(
+        Path("flake.nix"),
+        r'version = "0\.[0-9]+\.[0-9]+"',
+        f'version = "{new_version}"'
+    )
+
+    # 6. debian/changelog (prepend new entry)
+    deb_path = Path("debian/changelog")
+    if deb_path.exists():
+        date_str = datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000")
+        entry = f"""dailydriver ({new_version}-1) unstable; urgency=low
+
+  * New release: {new_version}
+
+ -- Greg Felice <greg@gregfelice.com>  {date_str}
+
+"""
+        deb_path.write_text(entry + deb_path.read_text())
+        print(f"Updated {deb_path}")
+
 def add_changelog_entry(new_version: str, description: str):
     """Add a release entry to AppStream metainfo."""
     path = Path("data/io.github.gregfelice.DailyDriver.metainfo.xml.in")

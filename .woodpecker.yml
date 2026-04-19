@@ -1,0 +1,33 @@
+# .woodpecker.yml
+# Continuous Delivery Pipeline for DailyDriver
+
+pipeline:
+  test:
+    image: python:3.13
+    commands:
+      - pip install uv
+      - uv pip install --system .[dev] pytest-cov pytest-mock tomli tomli-w pydantic
+      - pytest tests/unit/
+
+  build_flatpak:
+    image: alpine:latest
+    commands:
+      - apk add --no-cache flatpak-builder bash
+      # Note: This requires the runner to have flatpak-builder installed or 
+      # use an image that includes it. For a local runner, it's often 
+      # better to run the script directly on the host or use a specialized image.
+      - ./scripts/build-all.sh
+    when:
+      event: [push, tag]
+
+  build_debian:
+    image: ubuntu:24.04
+    commands:
+      - apt-get update && apt-get install -y meson ninja-build pkg-config python3-gi python3-pydantic python3-tomli-w libgtk-4-dev libadwaita-1-dev
+      - ./scripts/build-all.sh # This will generate the .deb if the logic is updated to do so
+    when:
+      event: [tag]
+
+  # For Snap and AppImage, local Woodpecker runners usually need 
+  # 'privileged: true' or to run directly on the host because of 
+  # container-nesting (LXD/FUSE) requirements.

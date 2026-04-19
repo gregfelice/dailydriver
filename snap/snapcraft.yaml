@@ -1,6 +1,7 @@
 name: dailydriver
-base: core24
+base: core22
 version: '0.2.0'
+
 summary: Visual keyboard shortcut configuration for GNOME
 description: |
   Daily Driver provides a videogame-like options UI for keyboard configuration.

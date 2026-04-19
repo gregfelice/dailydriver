@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python3 --buildsystem=meson
+
+override_dh_auto_configure:
+	dh_auto_configure -- -Dprefix=/usr

@@ -4,6 +4,8 @@ Visual keyboard shortcut configuration tool for GNOME/Wayland with presets, chea
 
 ## Quick Reference
 
+project_type: tool
+
 ```bash
 # Dev environment
 cd /home/gregf/development/dailydriver-standalone
@@ -85,3 +87,11 @@ Key patterns:
 - Known platform limitation: GNOME does not implement xdg-desktop-portal GlobalShortcuts
 
 See `docs/BACKLOG.md` for current priorities.
+
+## Platform Compliance
+
+Per `~/operations-archive-archive/docs/sdlc/platform-compliance.md` (tool type — build + release only).
+
+- [x] CI via GitHub Actions (lint, test, Flatpak build)
+- [ ] Migrate CI to Woodpecker
+- [ ] Release to Forgejo Releases on tag

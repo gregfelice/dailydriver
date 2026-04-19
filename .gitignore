@@ -33,6 +33,21 @@ coverage.xml
 .ruff_cache/
 .mypy_cache/
 
+# AppImage build artifacts + downloaded tooling
+*.AppImage
+*.AppDir/
+linuxdeploy-*
+
+# Snap build artifacts (snapcraft writes to parts/stage/prime at build time)
+parts/
+stage/
+prime/
+*.snap
+
+# Scratch/debug output
+app_log*.txt
+final_check.txt
+
 # Misc
 *.log
 .DS_Store

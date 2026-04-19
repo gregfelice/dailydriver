@@ -1,0 +1,33 @@
+Source: dailydriver
+Section: utils
+Priority: optional
+Maintainer: Greg Felice <greg@gregfelice.com>
+Build-Depends: debhelper-compat (= 13),
+               meson,
+               ninja-build,
+               pkg-config,
+               python3-all,
+               python3-setuptools,
+               libgtk-4-dev,
+               libadwaita-1-dev,
+               gobject-introspection,
+               libgirepository1.0-dev
+Standards-Version: 4.6.2
+Homepage: https://github.com/gregfelice/dailydriver
+Rules-Requires-Root: no
+
+Package: dailydriver
+Architecture: any
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         ${gir:Depends},
+         python3-gi,
+         python3-pydantic,
+         python3-tomli-w,
+         dconf-gsettings-backend | dconf-service,
+         gir1.2-gtk-4.0,
+         gir1.2-adw-1
+Description: Visual keyboard shortcut configuration for GNOME
+ Daily Driver provides a videogame-like options UI for keyboard configuration.
+ Easily customize your keyboard shortcuts, create profiles, and configure
+ Mac keyboards on Linux.

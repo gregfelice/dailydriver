@@ -33,7 +33,14 @@ fi
 
 # Set up environment
 export PYTHONPATH="$SRC_DIR:${PYTHONPATH:-}"
-export GSETTINGS_SCHEMA_DIR="$SCHEMA_DIR:${GSETTINGS_SCHEMA_DIR:-}"
+
+# Build GSETTINGS_SCHEMA_DIR: include app schema dir + any GNOME extension schemas
+GSETTINGS_SCHEMA_DIR="$SCHEMA_DIR"
+EXT_BASE="$HOME/.local/share/gnome-shell/extensions"
+for schema_dir in "$EXT_BASE"/*/schemas; do
+    [[ -d "$schema_dir" ]] && GSETTINGS_SCHEMA_DIR="$GSETTINGS_SCHEMA_DIR:$schema_dir"
+done
+export GSETTINGS_SCHEMA_DIR
 
 # Run the application directly (no gresource needed for dev)
 echo "Starting Daily Driver..."

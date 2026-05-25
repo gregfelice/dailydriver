@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import glob
+import os
 import shutil
 import subprocess
 
@@ -459,7 +461,22 @@ class GnomeShortcutsBackend(ShortcutsBackend):
 
     def __init__(self) -> None:
         self._settings_cache: dict[str, Gio.Settings] = {}
-        self._schema_source = Gio.SettingsSchemaSource.get_default()
+        self._schema_source = self._build_schema_source()
+
+    @staticmethod
+    def _build_schema_source() -> Gio.SettingsSchemaSource:
+        """Build a schema source that includes GNOME extension schemas."""
+        source = Gio.SettingsSchemaSource.get_default()
+        ext_base = os.path.expanduser("~/.local/share/gnome-shell/extensions")
+        for schema_dir in sorted(glob.glob(f"{ext_base}/*/schemas")):
+            if os.path.isdir(schema_dir):
+                try:
+                    source = Gio.SettingsSchemaSource.new_from_directory(
+                        schema_dir, source, False
+                    )
+                except Exception:
+                    pass
+        return source
 
     def _get_settings(self, schema_id: str, path: str | None = None) -> Gio.Settings | None:
         """Get or create GSettings for a schema, optionally with a path for relocatable schemas."""
@@ -467,17 +484,17 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         if cache_key in self._settings_cache:
             return self._settings_cache[cache_key]
 
-        # Check if schema exists first
-        if not self._schema_source or not self._schema_source.lookup(schema_id, True):
+        # Check if schema exists in our composite source (includes extension schemas)
+        if not self._schema_source:
+            return None
+        schema = self._schema_source.lookup(schema_id, True)
+        if not schema:
             return None
 
         try:
-            if path:
-                # Tests expect new_with_path
-                settings = Gio.Settings.new_with_path(schema_id, path)
-            else:
-                settings = Gio.Settings.new(schema_id)
-
+            # Use new_full so we honour our composite source (covers extension schemas
+            # that Gio.Settings.new() can't find via the default source alone)
+            settings = Gio.Settings.new_full(schema, None, path)
             if settings:
                 self._settings_cache[cache_key] = settings
             return settings

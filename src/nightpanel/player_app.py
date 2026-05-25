@@ -17,14 +17,16 @@ PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
 _PREFERRED  = 'org.mpris.MediaPlayer2.spotify'
 _NP_ACTIVE  = Path.home() / '.config' / 'nightpanel' / 'nightpanel-active'
 
-# Always active: Inter Light header title with wide kerning.
+# Always active: Inter Light header title (green) + green controls.
 _PLAYER_CSS = b"""
 .np-header-title {
     font-family: 'Inter', sans-serif;
     font-weight: 300;
     letter-spacing: 3px;
     font-size: 11pt;
+    color: #26DE81;
 }
+.np-control { color: #26DE81; }
 """
 
 # Applied when nightpanel is active: green for title, amber for artist.
@@ -137,6 +139,9 @@ class PlayerWindow(Adw.ApplicationWindow):
         self._prev_btn = self._icon_btn('media-skip-backward-symbolic',  self._on_prev)
         self._play_btn = self._icon_btn('media-playback-start-symbolic', self._on_play)
         self._next_btn = self._icon_btn('media-skip-forward-symbolic',   self._on_next)
+
+        for btn in (self._prev_btn, self._play_btn, self._next_btn):
+            btn.add_css_class('np-control')
 
         ctrl.append(self._prev_btn)
         ctrl.append(self._play_btn)

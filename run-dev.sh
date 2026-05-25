@@ -44,4 +44,4 @@ export GSETTINGS_SCHEMA_DIR
 
 # Run the application directly (no gresource needed for dev)
 echo "Starting Daily Driver..."
-exec $PYTHON -u "$SRC_DIR/dailydriver/__main__.py" "$@"
+exec $PYTHON -u "$SRC_DIR/nightpanel/__main__.py" "$@"

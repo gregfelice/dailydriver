@@ -1,15 +1,15 @@
 # Use MODULE_DIR from parent meson.build (purelib path for mesonpy)
 moduledir = MODULE_DIR
 
-dailydriver_sources = [
-  'dailydriver/__init__.py',
-  'dailydriver/application.py',
-  'dailydriver/window.py',
+nightpanel_sources = [
+  'nightpanel/__init__.py',
+  'nightpanel/application.py',
+  'nightpanel/window.py',
 ]
 
-install_data(dailydriver_sources, install_dir: moduledir)
+install_data(nightpanel_sources, install_dir: moduledir)
 
-subdir('dailydriver/models')
-subdir('dailydriver/services')
-subdir('dailydriver/views')
-subdir('dailydriver/resources')
+subdir('nightpanel/models')
+subdir('nightpanel/services')
+subdir('nightpanel/views')
+subdir('nightpanel/resources')

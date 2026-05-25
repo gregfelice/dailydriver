@@ -1,6 +1,6 @@
 desktop_file = i18n.merge_file(
-  input: 'io.github.gregfelice.DailyDriver.desktop.in',
-  output: 'io.github.gregfelice.DailyDriver.desktop',
+  input: 'io.github.gregfelice.Nightpanel.desktop.in',
+  output: 'io.github.gregfelice.Nightpanel.desktop',
   type: 'desktop',
   po_dir: '../po',
   install: true,
@@ -13,8 +13,8 @@ if desktop_utils.found()
 endif
 
 appstream_file = i18n.merge_file(
-  input: 'io.github.gregfelice.DailyDriver.metainfo.xml.in',
-  output: 'io.github.gregfelice.DailyDriver.metainfo.xml',
+  input: 'io.github.gregfelice.Nightpanel.metainfo.xml.in',
+  output: 'io.github.gregfelice.Nightpanel.metainfo.xml',
   po_dir: '../po',
   install: true,
   install_dir: get_option('datadir') / 'metainfo'
@@ -26,7 +26,7 @@ if appstreamcli.found()
     args: ['validate', '--no-net', '--explain', appstream_file])
 endif
 
-install_data('io.github.gregfelice.DailyDriver.gschema.xml',
+install_data('io.github.gregfelice.Nightpanel.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas'
 )
 

@@ -1,5 +1,5 @@
 [project]
-name = "dailydriver"
+name = "nightpanel"
 version = "0.2.0"
 description = "Visual keyboard configuration for GNOME/Wayland"
 readme = "README.md"
@@ -38,12 +38,12 @@ evdev = [
 ]
 
 [project.scripts]
-dailydriver = "dailydriver.application:main"
+nightpanel = "nightpanel.application:main"
 
 [project.urls]
-Homepage = "https://github.com/gregfelice/dailydriver"
-Repository = "https://github.com/gregfelice/dailydriver"
-Issues = "https://github.com/gregfelice/dailydriver/issues"
+Homepage = "https://github.com/gregfelice/nightpanel"
+Repository = "https://github.com/gregfelice/nightpanel"
+Issues = "https://github.com/gregfelice/nightpanel/issues"
 
 [build-system]
 requires = ["meson-python>=0.13", "meson>=0.62"]
@@ -69,16 +69,16 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # GTK/GI apps require gi.require_version() before imports from gi.repository
-"src/dailydriver/__main__.py" = ["E402"]
-"src/dailydriver/application.py" = ["E402"]
-"src/dailydriver/window.py" = ["E402"]
-"src/dailydriver/models/shortcut.py" = ["E402"]
-"src/dailydriver/models/keyboard.py" = ["E402"]
-"src/dailydriver/services/*.py" = ["E402"]
-"src/dailydriver/views/*.py" = ["E402"]
+"src/nightpanel/__main__.py" = ["E402"]
+"src/nightpanel/application.py" = ["E402"]
+"src/nightpanel/window.py" = ["E402"]
+"src/nightpanel/models/shortcut.py" = ["E402"]
+"src/nightpanel/models/keyboard.py" = ["E402"]
+"src/nightpanel/services/*.py" = ["E402"]
+"src/nightpanel/views/*.py" = ["E402"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["dailydriver"]
+known-first-party = ["nightpanel"]
 # Allow gi imports to be grouped separately due to require_version() requirements
 force-single-line = false
 
@@ -91,7 +91,7 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "-v --cov=dailydriver --cov-report=term-missing"
+addopts = "-v --cov=nightpanel --cov-report=term-missing"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests (require GNOME environment)",
@@ -101,7 +101,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["dailydriver"]
+source = ["nightpanel"]
 omit = [
     "*/tests/*",
     "*/__pycache__/*",

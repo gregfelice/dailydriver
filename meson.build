@@ -1,4 +1,4 @@
-project('dailydriver',
+project('nightpanel',
   version: '0.2.0',
   meson_version: '>= 0.62.0',
   default_options: ['warning_level=2', 'werror=false'],
@@ -14,10 +14,10 @@ dependency('glib-2.0')
 dependency('gtk4', version: '>= 4.10')
 dependency('libadwaita-1', version: '>= 1.4')
 
-APPLICATION_ID = 'io.github.gregfelice.DailyDriver'
+APPLICATION_ID = 'io.github.gregfelice.Nightpanel'
 PKGDATA_DIR = get_option('prefix') / get_option('datadir') / meson.project_name()
 # Use Python's purelib for module installation (mesonpy compatible)
-MODULE_DIR = py_installation.get_install_dir() / 'dailydriver'
+MODULE_DIR = py_installation.get_install_dir() / 'nightpanel'
 
 conf = configuration_data()
 conf.set('APPLICATION_ID', APPLICATION_ID)
@@ -26,10 +26,10 @@ conf.set('PKGDATA_DIR', PKGDATA_DIR)
 conf.set('localedir', get_option('prefix') / get_option('localedir'))
 conf.set('pythondir', py_installation.get_install_dir())
 
-# Launcher script - configured at root to avoid build dir conflicts with src/dailydriver/
+# Launcher script - configured at root to avoid build dir conflicts with src/nightpanel/
 configure_file(
-  input: 'src/dailydriver.in',
-  output: 'dailydriver',
+  input: 'src/nightpanel.in',
+  output: 'nightpanel',
   configuration: conf,
   install: true,
   install_dir: get_option('bindir'),

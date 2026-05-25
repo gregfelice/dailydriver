@@ -4,17 +4,24 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Adw, GLib, Gio, Gtk
+from gi.repository import Adw, Gdk, GLib, Gio, Gtk
 
 MPRIS_PATH   = '/org/mpris/MediaPlayer2'
 PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
 
-# Prefer spotify; fall back to scanning for any MPRIS player
-_PREFERRED = 'org.mpris.MediaPlayer2.spotify'
+_PREFERRED  = 'org.mpris.MediaPlayer2.spotify'
+_NP_ACTIVE  = Path.home() / '.config' / 'nightpanel' / 'nightpanel-active'
+
+# Applied when nightpanel is active: green for title, amber for artist.
+_NP_CSS = b"""
+.np-title  { color: #26DE81; }
+.np-artist { color: #FFB300; }
+"""
 
 
 def _find_mpris_players() -> list[str]:
@@ -51,9 +58,14 @@ class PlayerWindow(Adw.ApplicationWindow):
         self._proxy: Gio.DBusProxy | None = None
         self._bus_name: str | None = None
         self._playing = False
+        self._np_active: bool | None = None
+
+        self._np_provider = Gtk.CssProvider()
+        self._np_provider.load_from_data(_NP_CSS)
 
         self._build_ui()
         self._reconnect()
+        self._sync_np_colors()
         GLib.timeout_add(1500, self._poll)
 
     # ── UI ────────────────────────────────────────────────────────
@@ -83,12 +95,13 @@ class PlayerWindow(Adw.ApplicationWindow):
         self._title_lbl.set_halign(Gtk.Align.START)
         self._title_lbl.set_ellipsize(3)
         self._title_lbl.add_css_class('title-4')
+        self._title_lbl.add_css_class('np-title')
 
         self._artist_lbl = Gtk.Label(label='')
         self._artist_lbl.set_halign(Gtk.Align.START)
         self._artist_lbl.set_ellipsize(3)
         self._artist_lbl.add_css_class('caption')
-        self._artist_lbl.set_opacity(0.7)
+        self._artist_lbl.add_css_class('np-artist')
 
         info.append(self._title_lbl)
         info.append(self._artist_lbl)
@@ -117,6 +130,26 @@ class PlayerWindow(Adw.ApplicationWindow):
         btn.connect('clicked', handler)
         return btn
 
+    # ── nightpanel color sync ─────────────────────────────────────
+
+    def _sync_np_colors(self) -> None:
+        active = _NP_ACTIVE.exists()
+        if active == self._np_active:
+            return
+        self._np_active = active
+        display = Gdk.Display.get_default()
+        if active:
+            Gtk.StyleContext.add_provider_for_display(
+                display, self._np_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+            self._artist_lbl.set_opacity(1.0)
+        else:
+            Gtk.StyleContext.remove_provider_for_display(
+                display, self._np_provider,
+            )
+            self._artist_lbl.set_opacity(0.7)
+
     # ── Controls ──────────────────────────────────────────────────
 
     def _on_prev(self, _):  self._call('Previous')
@@ -143,6 +176,8 @@ class PlayerWindow(Adw.ApplicationWindow):
         return bool(self._proxy)
 
     def _poll(self) -> bool:
+        self._sync_np_colors()
+
         if not self._proxy:
             self._reconnect()
 

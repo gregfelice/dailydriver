@@ -169,9 +169,7 @@ class ProfileService:
 
             # Find matching shortcut
             shortcut_id = f"{schema}.{key}"
-            print(f"DEBUG: Processing storage_key={storage_key}, id={shortcut_id}")
             if shortcut_id not in current_shortcuts:
-                print(f"DEBUG: {shortcut_id} not in current_shortcuts: {list(current_shortcuts.keys())}")
                 continue
 
             shortcut = current_shortcuts[shortcut_id]

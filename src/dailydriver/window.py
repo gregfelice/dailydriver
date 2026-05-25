@@ -9,9 +9,11 @@ from dailydriver.models import Shortcut, ShortcutCategory
 from dailydriver.services.gsettings_service import GSettingsService
 from dailydriver.services.hardware_service import HardwareService
 from dailydriver.services.keyboard_config_service import CapsLockBehavior, KeyboardConfigService
+from dailydriver.services.tiling_service import TilingService
 from dailydriver.views.cheatsheet import CheatSheetView
 from dailydriver.views.keyboard_view import KeyboardView
 from dailydriver.views.preset_selector import PresetSelector
+from dailydriver.views.setup_view import SetupView
 from dailydriver.views.shortcut_editor import ShortcutEditorDialog
 from dailydriver.views.shortcut_list import ShortcutListView
 
@@ -28,6 +30,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._gsettings_service = GSettingsService()
         self._hardware = HardwareService()
         self._kbd_config = KeyboardConfigService()
+        self._tiling_service = TilingService()
         self._shortcuts: dict[str, Shortcut] = {}
         self._shortcut_views: dict[str, ShortcutListView] = {}
         self._current_category: str | None = None
@@ -38,14 +41,15 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # Detect keyboard
         self._detected_keyboard = self._detect_keyboard()
 
+        # Load settings before building UI (setup view needs them at construction)
+        self._settings = self._get_app_settings()
+
         # Build UI
         self._build_ui()
 
         # Setup window actions
         self._setup_actions()
 
-        # Load settings
-        self._settings = self._get_app_settings()
         self._restore_window_state()
 
         # Load filter settings BEFORE loading shortcuts
@@ -116,7 +120,16 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._view_switcher.set_stack(self._view_stack)
         toolbar_view.set_content(self._view_stack)
 
-        # === SHORTCUTS VIEW (main view) ===
+        # === SETUP VIEW (landing page) ===
+        self._setup_view = self._build_setup_view()
+        self._view_stack.add_titled_with_icon(
+            self._setup_view,
+            "setup",
+            "Setup",
+            "preferences-system-symbolic",
+        )
+
+        # === SHORTCUTS VIEW ===
         shortcuts_page = self._build_shortcuts_view()
         self._view_stack.add_titled_with_icon(
             shortcuts_page,
@@ -130,6 +143,35 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._view_stack.add_titled_with_icon(
             self._cheatsheet_view, "cheatsheet", "Cheat Sheet", "accessories-dictionary-symbolic"
         )
+
+        # Land on Setup by default
+        self._view_stack.set_visible_child_name("setup")
+
+    def _build_setup_view(self) -> Gtk.Widget:
+        """Build the zero-friction setup page."""
+        from dailydriver.services.profile_service import ProfileService
+
+        profile_service = ProfileService(self._gsettings_service)
+        return SetupView(
+            gsettings_service=self._gsettings_service,
+            profile_service=profile_service,
+            kbd_config=self._kbd_config,
+            tiling_service=self._tiling_service,
+            app_settings=self._settings,
+            on_toast=self._show_toast_with_undo,
+            on_shortcuts_reload=self._reload_shortcuts,
+        )
+
+    def _show_toast_with_undo(
+        self, message: str, undo_label: str | None, undo_cb
+    ) -> None:
+        """Show a toast, optionally with an undo button."""
+        toast = Adw.Toast(title=message)
+        toast.set_timeout(4)
+        if undo_label and undo_cb:
+            toast.set_button_label(undo_label)
+            toast.connect("button-clicked", lambda _t: undo_cb())
+        self.toast_overlay.add_toast(toast)
 
     def _build_shortcuts_view(self) -> Gtk.Widget:
         """Build the shortcuts browser view with config sidebar."""

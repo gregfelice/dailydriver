@@ -17,6 +17,16 @@ PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
 _PREFERRED  = 'org.mpris.MediaPlayer2.spotify'
 _NP_ACTIVE  = Path.home() / '.config' / 'nightpanel' / 'nightpanel-active'
 
+# Always active: Inter Light header title with wide kerning.
+_PLAYER_CSS = b"""
+.np-header-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    letter-spacing: 3px;
+    font-size: 11pt;
+}
+"""
+
 # Applied when nightpanel is active: green for title, amber for artist.
 _NP_CSS = b"""
 .np-title  { color: #26DE81; }
@@ -51,14 +61,23 @@ def _make_proxy(bus_name: str) -> Gio.DBusProxy | None:
 class PlayerWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_title('player')
-        self.set_default_size(340, 100)
+        self.set_title('NIGHT PANEL')
+        self.set_default_size(380, 100)
         self.set_resizable(False)
 
         self._proxy: Gio.DBusProxy | None = None
         self._bus_name: str | None = None
         self._playing = False
         self._np_active: bool | None = None
+
+        display = Gdk.Display.get_default()
+
+        self._player_provider = Gtk.CssProvider()
+        self._player_provider.load_from_data(_PLAYER_CSS)
+        Gtk.StyleContext.add_provider_for_display(
+            display, self._player_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
 
         self._np_provider = Gtk.CssProvider()
         self._np_provider.load_from_data(_NP_CSS)
@@ -76,6 +95,11 @@ class PlayerWindow(Adw.ApplicationWindow):
         header = Adw.HeaderBar()
         header.set_show_end_title_buttons(False)
         header.set_show_start_title_buttons(True)
+
+        title_lbl = Gtk.Label(label='NIGHT PANEL')
+        title_lbl.add_css_class('np-header-title')
+        header.set_title_widget(title_lbl)
+
         toolbar_view.add_top_bar(header)
 
         body = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -223,10 +247,56 @@ class PlayerWindow(Adw.ApplicationWindow):
 class PlayerApp(Adw.Application):
     def __init__(self):
         super().__init__(application_id='io.github.gregfelice.NightpanelPlayer')
+        self._launched_spotify = False
 
     def do_activate(self):
+        # If a window already exists, just raise it.
+        win = self.get_active_window()
+        if win:
+            win.present()
+            return
+
+        if not self._spotify_on_bus():
+            self._launch_spotify()
+
         win = PlayerWindow(application=self)
+        win.connect('destroy', self._on_window_destroy)
         win.present()
+
+    def _spotify_on_bus(self) -> bool:
+        try:
+            bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+            result = bus.call_sync(
+                'org.freedesktop.DBus', '/org/freedesktop/DBus',
+                'org.freedesktop.DBus', 'ListNames',
+                None, GLib.VariantType('(as)'), Gio.DBusCallFlags.NONE, -1, None,
+            )
+            return _PREFERRED in result[0]
+        except Exception:
+            return False
+
+    def _launch_spotify(self) -> None:
+        try:
+            Gio.Subprocess.new(['spotify'], Gio.SubprocessFlags.NONE)
+            self._launched_spotify = True
+        except Exception:
+            pass
+
+    def _on_window_destroy(self, _win) -> None:
+        if self._launched_spotify:
+            self._quit_spotify()
+        self.quit()
+
+    def _quit_spotify(self) -> None:
+        try:
+            bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+            bus.call_sync(
+                _PREFERRED, '/org/mpris/MediaPlayer2',
+                'org.mpris.MediaPlayer2', 'Quit',
+                None, None, Gio.DBusCallFlags.NONE, 2000, None,
+            )
+        except Exception:
+            pass
 
 
 def main():

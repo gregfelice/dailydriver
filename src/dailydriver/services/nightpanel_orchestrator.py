@@ -20,6 +20,7 @@ from pathlib import Path
 _LOG = logging.getLogger(__name__)
 
 _STATE_PATH         = Path.home() / ".config" / "dailydriver" / "nightpanel-state.json"
+_ACTIVE_FILE        = Path.home() / ".config" / "dailydriver" / "nightpanel-active"
 _NP_TMUX            = Path.home() / ".config" / "dailydriver" / "themes" / "tmux-nightpanel.conf"
 _NP_ALACRITTY_THEME = Path.home() / ".config" / "alacritty" / "themes" / "themes" / "nightpanel.toml"
 _ALACRITTY_CFG      = Path.home() / ".config" / "alacritty" / "alacritty.toml"
@@ -54,6 +55,8 @@ class NightpanelOrchestrator:
         self._apply_nvim()
         self._apply_gnome()
         self._apply_firefox()
+        _ACTIVE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _ACTIVE_FILE.touch()
 
     def revert(self) -> None:
         """Restore all tools to the pre-nightpanel state."""
@@ -63,6 +66,7 @@ class NightpanelOrchestrator:
         self._revert_nvim(state)
         self._revert_gnome(state)
         self._revert_firefox()
+        _ACTIVE_FILE.unlink(missing_ok=True)
 
     def install_gnome_extension(self) -> bool:
         """Copy the GNOME Shell extension files and enable the extension.
@@ -128,8 +132,17 @@ class NightpanelOrchestrator:
         state["gnome_color_scheme"] = self._gsettings_get(
             "org.gnome.desktop.interface", "color-scheme"
         )
-        state["gnome_gtk_theme"] = self._gsettings_get(
-            "org.gnome.desktop.interface", "gtk-theme"
+        state["gnome_bg_uri"] = self._gsettings_get(
+            "org.gnome.desktop.background", "picture-uri"
+        )
+        state["gnome_bg_uri_dark"] = self._gsettings_get(
+            "org.gnome.desktop.background", "picture-uri-dark"
+        )
+        state["gnome_bg_color"] = self._gsettings_get(
+            "org.gnome.desktop.background", "primary-color"
+        )
+        state["gnome_bg_options"] = self._gsettings_get(
+            "org.gnome.desktop.background", "picture-options"
         )
 
         try:
@@ -146,23 +159,30 @@ class NightpanelOrchestrator:
     # ── Alacritty ─────────────────────────────────────────────────
 
     def _read_alacritty_import(self) -> str | None:
+        """Return the current import line for state snapshot. Returns None if no real value."""
         if not _ALACRITTY_CFG.exists():
             return None
         text = _ALACRITTY_CFG.read_text()
-        m = re.search(r"^import\s*=.*$", text, re.MULTILINE)
-        return m.group(0) if m else None
+        # New format: import inside [general] section
+        general = re.search(r"^\[general\][^\[]*", text, re.MULTILINE | re.DOTALL)
+        if general:
+            m = re.search(r"^[ \t]*(import\s*=\s*\[.+\])[ \t]*$", general.group(0), re.MULTILINE)
+            if m:
+                return m.group(1).strip()
+        # Old top-level format (alacritty < 0.13)
+        m = re.search(r"^(import\s*=\s*\[.+\])[ \t]*$", text, re.MULTILINE)
+        return m.group(1) if m else None
 
     def _apply_alacritty(self) -> None:
+        import_line = f'import = ["{_NP_ALACRITTY_THEME}"]'
         try:
-            import_line = f'import = ["{_NP_ALACRITTY_THEME}"]'
-            if _ALACRITTY_CFG.exists():
-                text = _ALACRITTY_CFG.read_text()
-                if re.search(r"^import\s*=", text, re.MULTILINE):
-                    text = re.sub(r"^import\s*=.*$", import_line, text, flags=re.MULTILINE)
-                else:
-                    text = import_line + "\n\n" + text
+            text = _ALACRITTY_CFG.read_text() if _ALACRITTY_CFG.exists() else ""
+            # Remove any existing import line (top-level or in [general])
+            text = re.sub(r"^[ \t]*import\s*=.*\n?", "", text, flags=re.MULTILINE)
+            if re.search(r"^\[general\]", text, re.MULTILINE):
+                text = re.sub(r"^(\[general\][ \t]*)$", rf"\1\n{import_line}", text, flags=re.MULTILINE)
             else:
-                text = import_line + "\n"
+                text = f"[general]\n{import_line}\n\n" + text.lstrip()
             _ALACRITTY_CFG.write_text(text)
         except Exception as e:
             _LOG.warning("nightpanel: alacritty apply failed: %s", e)
@@ -173,11 +193,14 @@ class NightpanelOrchestrator:
             if not _ALACRITTY_CFG.exists():
                 return
             text = _ALACRITTY_CFG.read_text()
-            if prev_import:
-                text = re.sub(r"^import\s*=.*$", prev_import, text, flags=re.MULTILINE)
-            else:
-                # remove the import line entirely
-                text = re.sub(r"^import\s*=.*\n?", "", text, flags=re.MULTILINE)
+            # Remove nightpanel import line wherever it lives
+            text = re.sub(r"^[ \t]*import\s*=.*\n?", "", text, flags=re.MULTILINE)
+            # Only restore if prev_import is a real value (contains an array)
+            if prev_import and "[" in prev_import:
+                if re.search(r"^\[general\]", text, re.MULTILINE):
+                    text = re.sub(r"^(\[general\][ \t]*)$", rf"\1\n{prev_import}", text, flags=re.MULTILINE)
+                else:
+                    text = f"[general]\n{prev_import}\n\n" + text.lstrip()
             _ALACRITTY_CFG.write_text(text)
         except Exception as e:
             _LOG.warning("nightpanel: alacritty revert failed: %s", e)
@@ -249,20 +272,36 @@ class NightpanelOrchestrator:
 
     # ── Firefox bridge ────────────────────────────────────────────
 
-    def _write_command(self, action: str) -> None:
+    def update_brightness(self, brightness: float) -> None:
+        """Push a brightness update to Firefox (no-op if nightpanel is not active)."""
+        active_file = Path.home() / ".config" / "dailydriver" / "nightpanel-active"
+        if active_file.exists():
+            self._write_command("apply", brightness=brightness)
+
+    def _write_command(self, action: str, brightness: float = 0.9) -> None:
         """Write a command to np-command.json — native host picks it up and
         forwards to the extension within one poll interval (0.5 s)."""
         try:
             _NP_COMMAND.parent.mkdir(parents=True, exist_ok=True)
-            _NP_COMMAND.write_text(json.dumps({"action": action}))
+            _NP_COMMAND.write_text(json.dumps({"action": action, "brightness": brightness}))
         except OSError as e:
             _LOG.warning("nightpanel: command file write failed: %s", e)
 
     def _apply_firefox(self) -> None:
-        self._write_command("apply")
+        brightness = self._read_brightness_setting()
+        self._write_command("apply", brightness=brightness)
 
     def _revert_firefox(self) -> None:
         self._write_command("revert")
+
+    def _read_brightness_setting(self) -> float:
+        try:
+            r = _run(["gsettings", "get", "com.dailydriver.dailydriver", "theme-brightness"])
+            if r.returncode == 0:
+                return max(0.3, min(1.5, float(r.stdout.strip())))
+        except Exception:
+            pass
+        return 0.9
 
     def _install_native_host(self) -> bool:
         """Copy np-host.py to config dir and write the Firefox NM manifest."""
@@ -355,12 +394,24 @@ class NightpanelOrchestrator:
 
     def _apply_gnome(self) -> None:
         self._gsettings_set("org.gnome.desktop.interface", "color-scheme", "prefer-dark")
-        self._gsettings_set("org.gnome.desktop.interface", "gtk-theme", "Adwaita-dark")
+        # Solid near-black background — slightly lighter than pure black
+        self._gsettings_set("org.gnome.desktop.background", "picture-options", "none")
+        self._gsettings_set("org.gnome.desktop.background", "primary-color", "#0D0D0D")
+        self._gsettings_set("org.gnome.desktop.background", "picture-uri", "")
+        self._gsettings_set("org.gnome.desktop.background", "picture-uri-dark", "")
 
     def _revert_gnome(self, state: dict) -> None:
         cs = state.get("gnome_color_scheme", "default")
-        gt = state.get("gnome_gtk_theme", "Adwaita")
         if cs:
             self._gsettings_set("org.gnome.desktop.interface", "color-scheme", cs)
-        if gt:
-            self._gsettings_set("org.gnome.desktop.interface", "gtk-theme", gt)
+        bg_uri = state.get("gnome_bg_uri", "")
+        bg_uri_dark = state.get("gnome_bg_uri_dark", "")
+        bg_color = state.get("gnome_bg_color", "")
+        bg_options = state.get("gnome_bg_options", "zoom")
+        if bg_uri:
+            self._gsettings_set("org.gnome.desktop.background", "picture-uri", bg_uri)
+        if bg_uri_dark:
+            self._gsettings_set("org.gnome.desktop.background", "picture-uri-dark", bg_uri_dark)
+        if bg_color:
+            self._gsettings_set("org.gnome.desktop.background", "primary-color", bg_color)
+        self._gsettings_set("org.gnome.desktop.background", "picture-options", bg_options)

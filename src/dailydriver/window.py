@@ -123,7 +123,9 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._nightpanel_btn.set_icon_name("night-light-symbolic")
         self._nightpanel_btn.set_tooltip_text("nightpanel")
         self._nightpanel_btn.add_css_class("nightpanel-toggle")
-        self._nightpanel_btn.set_active(self._theme_service.enabled)
+        from pathlib import Path
+        _active = (Path.home() / ".config" / "dailydriver" / "nightpanel-active").exists()
+        self._nightpanel_btn.set_active(_active)
         self._nightpanel_btn.connect("toggled", self._on_nightpanel_toggled)
 
         # Menu button
@@ -230,6 +232,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             on_toast=self._show_toast_with_undo,
             on_shortcuts_reload=self._reload_shortcuts,
             theme_service=self._theme_service,
+            on_brightness_update=self._orchestrator.update_brightness,
         )
 
     def _show_toast_with_undo(
@@ -927,12 +930,13 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
     def _on_nightpanel_toggled(self, btn: Gtk.ToggleButton) -> None:
         """Handle nightpanel on/off toggle."""
-        enabled = btn.get_active()
-        self._theme_service.set_enabled(enabled, self._settings)
-        if enabled:
-            self._orchestrator.apply()
-        else:
+        from pathlib import Path
+        active = Path.home() / ".config" / "dailydriver" / "nightpanel-active"
+        if active.exists():
             self._orchestrator.revert()
+        else:
+            self._orchestrator.apply()
+        self._theme_service.set_enabled(active.exists(), self._settings)
 
     def _on_keyboard_toggled(self, button: Gtk.ToggleButton) -> None:
         """Handle keyboard view toggle."""

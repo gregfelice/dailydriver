@@ -1,61 +1,65 @@
 'use strict';
 
 // nightpanel bridge — background script
-//
-// Connects to the native host (np-host.py) which watches np-command.json.
-// When the orchestrator writes {action:"apply"} or {action:"revert"}, the
-// host forwards it here and we inject/remove the nightpanel CSS palette.
-//
-// CSS is injected at cssOrigin:"user" — user stylesheets beat DarkReader's
-// author-level !important rules, so our green/amber palette wins cleanly.
 
-const HOST = 'nightpanel';
+const HOST     = 'nightpanel';
+const STYLE_ID = 'nightpanel-palette';
 
-// ── Nightpanel palette CSS ─────────────────────────────────────────────────
-// Targets pages where DarkReader has applied dark mode (data-darkreader-scheme).
-// DarkReader handles the dark inversion; we tint its output with NP colors.
-const NP_CSS = `
-html[data-darkreader-scheme="dark"] body {
-  background-color: #0A0A0A !important;
-  color: #7DB890 !important;
+// ── CSS ────────────────────────────────────────────────────────────────────
+// Invert + hue-rotate the whole page (black bg, legible text, no DarkReader
+// dependency). Images and video are double-inverted back to normal.
+// brightness() is injected at apply-time from the command payload.
+
+function makeCss(brightness) {
+    return `
+html {
+  color-scheme: light !important;
+  filter: invert(1) hue-rotate(180deg) brightness(${brightness}) contrast(1.05) !important;
 }
-html[data-darkreader-scheme="dark"] a,
-html[data-darkreader-scheme="dark"] a:link {
-  color: #B08030 !important;
+img, video, canvas, iframe, picture, embed, object {
+  filter: invert(1) hue-rotate(180deg) !important;
 }
-html[data-darkreader-scheme="dark"] a:visited {
-  color: #7DB890 !important;
-}
-html[data-darkreader-scheme="dark"] a:hover,
-html[data-darkreader-scheme="dark"] a:focus {
-  color: #26DE81 !important;
-}
-html[data-darkreader-scheme="dark"] code,
-html[data-darkreader-scheme="dark"] pre,
-html[data-darkreader-scheme="dark"] kbd,
-html[data-darkreader-scheme="dark"] tt,
-html[data-darkreader-scheme="dark"] samp {
-  color: #26DE81 !important;
-  background-color: #111111 !important;
-}
-html[data-darkreader-scheme="dark"] blockquote {
-  border-left-color: #2E5040 !important;
-  color: #5A8A6A !important;
-}
-html[data-darkreader-scheme="dark"] ::selection {
-  background-color: #1A3020 !important;
-  color: #26DE81 !important;
-}
-html[data-darkreader-scheme="dark"] ::-moz-selection {
+::selection {
   background-color: #1A3020 !important;
   color: #26DE81 !important;
 }
 `;
+}
+
+function makeInjectCode(brightness) {
+    const css = JSON.stringify(makeCss(brightness));
+    return `(function() {
+  let s = document.getElementById('${STYLE_ID}');
+  if (!s) {
+    s = document.createElement('style');
+    s.id = '${STYLE_ID}';
+    (document.head || document.documentElement).appendChild(s);
+  }
+  s.textContent = ${css};
+})();`;
+}
+
+const REMOVE_CODE = `(function() {
+  const s = document.getElementById('${STYLE_ID}');
+  if (s) s.remove();
+})();`;
 
 // ── State ──────────────────────────────────────────────────────────────────
 
-let active = false;
-let port   = null;
+let active     = false;
+let brightness = 0.9;
+let port       = null;
+
+// ── Install notice ─────────────────────────────────────────────────────────
+
+browser.runtime.onInstalled.addListener(({ reason }) => {
+    if (reason !== 'install') return;
+    browser.notifications.create('np-installed', {
+        type:    'basic',
+        title:   'nightpanel bridge installed',
+        message: 'Toggle nightpanel from the dailydriver app or the GNOME panel button.',
+    });
+});
 
 // ── Native host connection ─────────────────────────────────────────────────
 
@@ -65,37 +69,38 @@ function connect() {
         port.onMessage.addListener(onCommand);
         port.onDisconnect.addListener(() => {
             port = null;
-            // Reconnect — host may have been replaced by orchestrator
             setTimeout(connect, 5000);
         });
     } catch (e) {
-        // Native host not installed yet — retry later
         setTimeout(connect, 15000);
     }
 }
 
 function onCommand(cmd) {
     if (!cmd || typeof cmd.action !== 'string') return;
-    if (cmd.action === 'apply')  activate();
+    if (cmd.action === 'apply')  activate(cmd.brightness ?? 0.9);
     if (cmd.action === 'revert') deactivate();
 }
 
 // ── CSS apply / remove ─────────────────────────────────────────────────────
 
-async function activate() {
-    active = true;
-    const tabs = await browser.tabs.query({});
-    for (const tab of tabs) {
-        if (isInjectable(tab.url)) injectTab(tab.id).catch(() => {});
-    }
+async function injectTab(tabId, b) {
+    try {
+        await browser.tabs.executeScript(tabId, {
+            code:      makeInjectCode(b),
+            allFrames: true,
+            runAt:     'document_start',
+        });
+    } catch (_) {}
 }
 
-async function deactivate() {
-    active = false;
-    const tabs = await browser.tabs.query({});
-    for (const tab of tabs) {
-        if (isInjectable(tab.url)) removeTab(tab.id).catch(() => {});
-    }
+async function removeTab(tabId) {
+    try {
+        await browser.tabs.executeScript(tabId, {
+            code:      REMOVE_CODE,
+            allFrames: true,
+        });
+    } catch (_) {}
 }
 
 function isInjectable(url) {
@@ -106,27 +111,31 @@ function isInjectable(url) {
            !url.startsWith('resource:');
 }
 
-function injectTab(tabId) {
-    return browser.tabs.insertCSS(tabId, {
-        code:      NP_CSS,
-        cssOrigin: 'user',
-        allFrames: false,
-        runAt:     'document_start',
-    });
+async function applyToAllTabs(b) {
+    const tabs = await browser.tabs.query({});
+    for (const tab of tabs) {
+        if (isInjectable(tab.url)) injectTab(tab.id, b);
+    }
 }
 
-function removeTab(tabId) {
-    return browser.tabs.removeCSS(tabId, {
-        code:      NP_CSS,
-        cssOrigin: 'user',
-        allFrames: false,
-    });
+async function activate(b) {
+    active     = true;
+    brightness = b;
+    await applyToAllTabs(b);
 }
 
-// Re-inject on new page loads while nightpanel is active
+async function deactivate() {
+    active = false;
+    const tabs = await browser.tabs.query({});
+    for (const tab of tabs) {
+        if (isInjectable(tab.url)) removeTab(tab.id);
+    }
+}
+
+// Re-inject on new page loads while active
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (active && changeInfo.status === 'complete' && isInjectable(tab.url)) {
-        injectTab(tabId).catch(() => {});
+        injectTab(tabId, brightness);
     }
 });
 

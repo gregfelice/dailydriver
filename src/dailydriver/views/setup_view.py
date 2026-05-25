@@ -44,6 +44,7 @@ class SetupView(Adw.PreferencesPage):
         on_toast: Callable[[str, str | None, Callable | None], None],
         on_shortcuts_reload: Callable[[], None],
         theme_service=None,
+        on_brightness_update: Callable[[float], None] | None = None,
     ) -> None:
         super().__init__()
         self._gs = gsettings_service
@@ -54,6 +55,7 @@ class SetupView(Adw.PreferencesPage):
         self._on_toast = on_toast
         self._on_reload = on_shortcuts_reload
         self._theme = theme_service
+        self._on_brightness_update = on_brightness_update
         self._loading = True
         self._preset_radios: dict[str, Gtk.CheckButton] = {}
 
@@ -323,5 +325,8 @@ class SetupView(Adw.PreferencesPage):
     def _on_brightness_changed(self, scale: Gtk.Scale) -> None:
         if self._loading:
             return
+        value = scale.get_value()
         if self._theme:
-            self._theme.set_brightness(scale.get_value(), self._settings)
+            self._theme.set_brightness(value, self._settings)
+        if self._on_brightness_update:
+            self._on_brightness_update(value)

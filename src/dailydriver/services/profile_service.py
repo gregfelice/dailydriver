@@ -182,21 +182,12 @@ class ProfileService:
                 if (b := KeyBinding.from_accelerator(accel))
             )
 
-            print(f"DEBUG: old={set(old_accelerators)}, new={normalized_profile}")
-            # Check if different (in clean_slate mode, old_accelerators is [] so always apply)
             if set(old_accelerators) != normalized_profile:
-                print("DEBUG: Accelerators differ, applying...")
-                # Update bindings
                 shortcut.bindings = [
                     b for accel in accelerators if (b := KeyBinding.from_accelerator(accel))
                 ]
-
-                # Save to GSettings
                 if self._gsettings.save_shortcut(shortcut):
-                    print(f"DEBUG: Saved {shortcut_id}")
                     changed[shortcut_id] = shortcut
-                else:
-                    print(f"DEBUG: Failed to save {shortcut_id}")
 
         return changed
 
@@ -368,3 +359,104 @@ class ProfileService:
             self.apply_profile(base_preset)
 
         return export_path, num_mods
+
+    def capture_current_state(self, name: str, description: str = "") -> Profile:
+        """Snapshot every bound shortcut into a new user profile and save it."""
+        from dailydriver.models import Profile
+
+        shortcuts = self._gsettings.load_all_shortcuts()
+        profile = Profile(name=name, description=description)
+        for shortcut_id, shortcut in shortcuts.items():
+            if shortcut.bindings:
+                parts = shortcut_id.rsplit(".", 1)
+                if len(parts) == 2:
+                    schema, key = parts
+                    profile.set_shortcut(schema, key, shortcut.accelerators)
+        self.save_profile(profile)
+        return profile
+
+    def export_as_shell_script(self, profile: "Profile", path: Path) -> None:  # noqa: F821
+        """Export a profile as a self-contained bash script for dotfiles/headless use."""
+        from datetime import datetime
+
+        _EXT_PREFIX = "org.gnome.shell.extensions."
+        _TA_EXT_ID = "tiling-assistant@leleat-on-github"
+        _TA_SCHEMA = "org.gnome.shell.extensions.tiling-assistant"
+
+        def _gsettings_value(accels: list[str]) -> str:
+            if not accels:
+                return '"@as []"'
+            inner = ", ".join(f"'{a}'" for a in accels)
+            return f'"[{inner}]"'
+
+        def _dconf_path(schema: str, key: str) -> str:
+            return "/" + schema.replace(".", "/") + "/" + key
+
+        standard: list[tuple[str, str, list[str]]] = []
+        ta_keys: list[tuple[str, str, list[str]]] = []
+        other_ext: list[tuple[str, str, list[str]]] = []
+
+        for storage_key, accels in sorted(profile.shortcuts.items()):
+            parts = storage_key.rsplit(".", 1)
+            if len(parts) != 2:
+                continue
+            schema, key = parts
+            if schema == _TA_SCHEMA:
+                ta_keys.append((schema, key, accels))
+            elif schema.startswith(_EXT_PREFIX):
+                other_ext.append((schema, key, accels))
+            else:
+                standard.append((schema, key, accels))
+
+        lines: list[str] = [
+            "#!/usr/bin/env bash",
+            f"# DailyDriver profile: {profile.name}",
+        ]
+        if profile.description:
+            lines.append(f"# {profile.description}")
+        lines += [
+            f"# Generated: {datetime.now().strftime('%Y-%m-%d')}",
+            "#",
+            "# Dependencies:",
+            "#   - GNOME desktop (gsettings, dconf)",
+            f"#   - Tiling keymaps: Tiling Assistant extension ({_TA_EXT_ID})",
+            "#     Install: https://extensions.gnome.org/extension/3733/tiling-assistant/",
+            "#     On Debian: sudo apt install gnome-shell-extension-tiling-assistant",
+            "#     (if packaged) or via GNOME Extensions app / extension manager",
+            "",
+            "set -euo pipefail",
+            "",
+        ]
+
+        if standard:
+            prev_schema = ""
+            for schema, key, accels in standard:
+                if schema != prev_schema:
+                    lines.append(f"\n# {schema}")
+                    prev_schema = schema
+                lines.append(f"gsettings set {schema} {key} {_gsettings_value(accels)}")
+
+        if ta_keys:
+            lines += [
+                "",
+                "# ── Tiling Assistant keymaps ──────────────────────────────────────────",
+                f"# Requires extension: {_TA_EXT_ID}",
+                f'if gnome-extensions list 2>/dev/null | grep -q "{_TA_EXT_ID}"; then',
+            ]
+            for schema, key, accels in ta_keys:
+                path_str = _dconf_path(schema, key)
+                lines.append(f"  dconf write {path_str} {_gsettings_value(accels)}")
+            lines += [
+                "else",
+                f'  echo "Warning: Tiling Assistant ({_TA_EXT_ID}) not installed — skipping tiling keymaps" >&2',
+                '  echo "  Install via GNOME Extensions app or: https://extensions.gnome.org/extension/3733/tiling-assistant/" >&2',
+                '  echo "  On Debian: sudo apt install gnome-shell-extension-tiling-assistant  (if available)" >&2',
+                "fi",
+            ]
+
+        for schema, key, accels in other_ext:
+            lines.append(f"dconf write {_dconf_path(schema, key)} {_gsettings_value(accels)}")
+
+        lines.append("")
+        path.write_text("\n".join(lines))
+        path.chmod(0o755)

@@ -13,6 +13,7 @@ from dailydriver.services.tiling_service import TilingService
 from dailydriver.views.cheatsheet import CheatSheetView
 from dailydriver.views.keyboard_view import KeyboardView
 from dailydriver.views.preset_selector import PresetSelector
+from dailydriver.views.profiles_view import ProfilesView
 from dailydriver.views.setup_view import SetupView
 from dailydriver.views.shortcut_editor import ShortcutEditorDialog
 from dailydriver.views.shortcut_list import ShortcutListView
@@ -138,6 +139,15 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             "preferences-desktop-keyboard-shortcuts-symbolic",
         )
 
+        # === PROFILES VIEW ===
+        self._profiles_view = self._build_profiles_view()
+        self._view_stack.add_titled_with_icon(
+            self._profiles_view,
+            "profiles",
+            "Profiles",
+            "avatar-default-symbolic",
+        )
+
         # === CHEAT SHEET VIEW ===
         self._cheatsheet_view = CheatSheetView()
         self._view_stack.add_titled_with_icon(
@@ -146,6 +156,20 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         # Land on Setup by default
         self._view_stack.set_visible_child_name("setup")
+
+    def _build_profiles_view(self) -> Gtk.Widget:
+        """Build the profiles management panel."""
+        from dailydriver.services.profile_service import ProfileService
+
+        profile_service = ProfileService(self._gsettings_service)
+        return ProfilesView(
+            gsettings_service=self._gsettings_service,
+            profile_service=profile_service,
+            app_settings=self._settings,
+            on_toast=self._show_toast_with_undo,
+            on_shortcuts_reload=self._reload_shortcuts,
+            window=self,
+        )
 
     def _build_setup_view(self) -> Gtk.Widget:
         """Build the zero-friction setup page."""

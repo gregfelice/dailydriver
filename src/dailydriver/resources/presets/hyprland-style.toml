@@ -126,6 +126,16 @@ philosophy = "keyboard-centric"
 "org.gnome.shell.extensions.tiling-assistant.restore-window" = ["<Super><Ctrl>r"]
 "org.gnome.shell.extensions.tiling-assistant.center-window" = ["<Super>c"]
 
+# Expand in one axis (no Hyprland equivalent — fills full width or full height)
+"org.gnome.shell.extensions.tiling-assistant.tile-maximize-horizontally" = ["<Super><Ctrl>x"]
+"org.gnome.shell.extensions.tiling-assistant.tile-maximize-vertically" = ["<Super><Ctrl>y"]
+
+# Auto-tile new windows (approximates Hyprland dwindle auto-placement)
+"org.gnome.shell.extensions.tiling-assistant.auto-tile" = ["<Super><Ctrl>t"]
+
+# Edit mode — drag/swap tiles without touching the mouse
+"org.gnome.shell.extensions.tiling-assistant.tile-edit-mode" = ["<Super><Ctrl>e"]
+
 # =============================================================================
 # SHELL & LAUNCHERS
 # =============================================================================

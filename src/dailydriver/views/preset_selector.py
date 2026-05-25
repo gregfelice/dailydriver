@@ -28,7 +28,7 @@ class PresetSelector(Adw.Dialog):
         self._presets: list[Profile] = []
         self._selected_preset: Profile | None = None
 
-        self.set_title("Choose a Preset")
+        self.set_title("choose a preset")
         self.set_content_width(500)
         self.set_content_height(600)
 
@@ -45,11 +45,11 @@ class PresetSelector(Adw.Dialog):
         header.set_show_start_title_buttons(False)
         header.set_show_end_title_buttons(False)
 
-        cancel_button = Gtk.Button(label="Cancel")
+        cancel_button = Gtk.Button(label="cancel")
         cancel_button.connect("clicked", lambda b: self.close())
         header.pack_start(cancel_button)
 
-        self._apply_button = Gtk.Button(label="Apply")
+        self._apply_button = Gtk.Button(label="apply")
         self._apply_button.add_css_class("suggested-action")
         self._apply_button.set_sensitive(False)
         self._apply_button.connect("clicked", self._on_apply)
@@ -69,8 +69,8 @@ class PresetSelector(Adw.Dialog):
         desc_box.set_margin_bottom(16)
 
         desc_label = Gtk.Label(
-            label="Choose a preset to configure your keyboard shortcuts.\n"
-            "You can customize individual shortcuts afterwards."
+            label="choose a preset to configure your keyboard shortcuts.\n"
+            "you can customize individual shortcuts afterwards."
         )
         desc_label.set_wrap(True)
         desc_label.add_css_class("dim-label")
@@ -94,7 +94,7 @@ class PresetSelector(Adw.Dialog):
         scroll.set_child(clamp)
 
         self._preset_group = Adw.PreferencesGroup()
-        self._preset_group.set_title("Available Presets")
+        self._preset_group.set_title("available presets")
         clamp.set_child(self._preset_group)
 
         content.append(scroll)
@@ -110,7 +110,7 @@ class PresetSelector(Adw.Dialog):
         changes_box.set_margin_bottom(16)
         changes_box.add_css_class("card")
 
-        changes_label = Gtk.Label(label="Changes Preview")
+        changes_label = Gtk.Label(label="changes preview")
         changes_label.add_css_class("heading")
         changes_label.set_xalign(0)
         changes_box.append(changes_label)
@@ -146,7 +146,7 @@ class PresetSelector(Adw.Dialog):
 
         # Category badge
         category = profile.metadata.get("category", "standard")
-        badge = Gtk.Label(label=category.title())
+        badge = Gtk.Label(label=category.lower())
         badge.add_css_class("profile-indicator")
         row.add_suffix(badge)
 
@@ -163,13 +163,13 @@ class PresetSelector(Adw.Dialog):
     def _get_display_name(self, name: str) -> str:
         """Convert preset filename to display name."""
         names = {
-            "vanilla-gnome": "Vanilla GNOME",
-            "gnome-tiling": "GNOME + Tiling",
-            "hyprland-style": "Hyprland Style",
-            "power-user": "Power User",
-            "mac-like": "Mac-like",
+            "vanilla-gnome": "vanilla gnome",
+            "gnome-tiling": "gnome + tiling",
+            "hyprland-style": "hyprland style",
+            "power-user": "power user",
+            "mac-like": "mac-like",
         }
-        return names.get(name, name.replace("-", " ").title())
+        return names.get(name, name.replace("-", " "))
 
     def _on_preset_selected(self, row: Adw.ActionRow) -> None:
         """Handle preset selection."""
@@ -223,13 +223,13 @@ class PresetSelector(Adw.Dialog):
     def _show_workspace_restore_dialog(self, apply_button: Gtk.Button) -> None:
         """Show confirmation dialog for restoring default workspaces."""
         dialog = Adw.AlertDialog()
-        dialog.set_heading("Restore Default Workspaces?")
+        dialog.set_heading("restore default workspaces?")
         dialog.set_body(
-            "You currently have 10 workspaces configured for Hyprland-style shortcuts.\n\n"
-            "Do you want to restore the default 4 workspaces?"
+            "you currently have 10 workspaces configured for hyprland-style shortcuts.\n\n"
+            "do you want to restore the default 4 workspaces?"
         )
-        dialog.add_response("keep", "Keep 10 Workspaces")
-        dialog.add_response("restore", "Restore to 4")
+        dialog.add_response("keep", "keep 10 workspaces")
+        dialog.add_response("restore", "restore to 4")
         dialog.set_response_appearance("restore", Adw.ResponseAppearance.SUGGESTED)
         dialog.set_default_response("restore")
         dialog.set_close_response("keep")

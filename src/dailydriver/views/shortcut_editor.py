@@ -34,7 +34,7 @@ class ShortcutEditorWindow(Gtk.Window):
         self._inhibit_active = False
 
         # Window setup
-        self.set_title("Set Shortcut")
+        self.set_title("set shortcut")
         self.set_default_size(400, 300)
         self.set_modal(True)
         self.set_transient_for(parent)
@@ -64,11 +64,11 @@ class ShortcutEditorWindow(Gtk.Window):
         header.set_show_end_title_buttons(False)
         header.set_show_start_title_buttons(False)
 
-        cancel_button = Gtk.Button(label="Cancel")
+        cancel_button = Gtk.Button(label="cancel")
         cancel_button.connect("clicked", self._on_cancel)
         header.pack_start(cancel_button)
 
-        self.set_button = Gtk.Button(label="Set")
+        self.set_button = Gtk.Button(label="set")
         self.set_button.set_sensitive(False)
         self.set_button.add_css_class("suggested-action")
         self.set_button.connect("clicked", self._on_set)
@@ -86,13 +86,13 @@ class ShortcutEditorWindow(Gtk.Window):
         content_box.set_vexpand(True)
 
         # Shortcut name
-        name_label = Gtk.Label(label=self.shortcut.name)
+        name_label = Gtk.Label(label=self.shortcut.name.lower())
         name_label.add_css_class("title-2")
         content_box.append(name_label)
 
         # Instructions
         self.instruction_label = Gtk.Label(
-            label="Press a key combination or press Backspace to clear"
+            label="press a key combination or press backspace to clear"
         )
         self.instruction_label.add_css_class("dim-label")
         content_box.append(self.instruction_label)
@@ -109,8 +109,8 @@ class ShortcutEditorWindow(Gtk.Window):
         self.conflict_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
 
         self.conflict_banner = Adw.Banner()
-        self.conflict_banner.set_title("This shortcut is already in use")
-        self.conflict_banner.set_button_label("Replace")
+        self.conflict_banner.set_title("this shortcut is already in use")
+        self.conflict_banner.set_button_label("replace")
         self.conflict_banner.set_revealed(True)
         self.conflict_banner.connect("button-clicked", self._on_replace_conflict)
         self.conflict_revealer.set_child(self.conflict_banner)
@@ -246,7 +246,7 @@ class ShortcutEditorWindow(Gtk.Window):
 
             if self._pending_binding in other.bindings:
                 self._conflict_shortcut = other
-                self.conflict_banner.set_title(f"Already used by: {other.name}")
+                self.conflict_banner.set_title(f"already used by: {other.name.lower()}")
                 self.conflict_revealer.set_reveal_child(True)
                 self.set_button.set_sensitive(False)
                 return

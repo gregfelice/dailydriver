@@ -213,6 +213,19 @@ KEY_CATEGORIES = {
 }
 
 
+def _parses_as_key_binding(value: str) -> bool:
+    """Return True if value is a valid GTK accelerator (with or without modifiers)."""
+    from gi.repository import Gtk
+
+    try:
+        result = Gtk.accelerator_parse(value)
+        if isinstance(result, tuple) and len(result) >= 3 and result[0]:
+            return result[1] != 0  # keyval must be non-zero
+    except Exception:
+        pass
+    return False
+
+
 def _humanize_key_name(key: str) -> str:
     """Convert a GSettings key name to a human-readable label."""
     name = key
@@ -266,20 +279,20 @@ def _humanize_key_name(key: str) -> str:
 
     # Friendly name mappings for tiling
     tiling_names = {
-        "left-half": "Left Half",
-        "right-half": "Right Half",
-        "top-half": "Top Half",
-        "bottom-half": "Bottom Half",
-        "topleft-quarter": "Top Left",
-        "topright-quarter": "Top Right",
-        "bottomleft-quarter": "Bottom Left",
-        "bottomright-quarter": "Bottom Right",
-        "maximize": "Maximize",
-        "maximize-horizontally": "Maximize Horizontal",
-        "maximize-vertically": "Maximize Vertical",
-        "center-window": "Center Window",
-        "restore-window": "Restore Window",
-        "edit-mode": "Edit Mode",
+        "left-half": "left half",
+        "right-half": "right half",
+        "top-half": "top half",
+        "bottom-half": "bottom half",
+        "topleft-quarter": "top left",
+        "topright-quarter": "top right",
+        "bottomleft-quarter": "bottom left",
+        "bottomright-quarter": "bottom right",
+        "maximize": "maximize",
+        "maximize-horizontally": "maximize horizontal",
+        "maximize-vertically": "maximize vertical",
+        "center-window": "center window",
+        "restore-window": "restore window",
+        "edit-mode": "edit mode",
     }
 
     if name in tiling_names:
@@ -289,24 +302,13 @@ def _humanize_key_name(key: str) -> str:
     if name.startswith("layout"):
         try:
             num = int(name[6:]) + 1
-            return f"Layout {num}"
+            return f"layout {num}"
         except ValueError:
             pass
 
     # Convert to readable format
     name = name.replace("-", " ").replace("_", " ")
-
-    # Capitalize words
-    words = name.split()
-    humanized = []
-
-    for word in words:
-        if len(word) <= 2 and humanized:
-            humanized.append(word)
-        else:
-            humanized.append(word.capitalize())
-
-    return " ".join(humanized)
+    return name
 
 
 def _get_shortcut_group(key: str) -> str:
@@ -540,10 +542,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
             if default:
                 values = default.unpack()
                 if values and not any(
-                    v.startswith("<")  # Has modifiers
-                    or v.startswith("XF86")  # Media/function keys
-                    or v in ("disabled", "")
-                    or len(v) <= 3  # Single key like "F1"
+                    _parses_as_key_binding(v)  # Valid accelerator (with or without modifiers)
                     for v in values
                 ):
                     return False
@@ -670,12 +669,18 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 if kb:
                     bindings.append(kb)
 
+            name_lower = (name or "").lower()
+            if "screenshot" in name_lower:
+                group = "Screenshots"
+            else:
+                group = "Launchers"
+
             shortcut = Shortcut(
                 id=shortcut_id,
                 name=name or "Custom Shortcut",
                 description=command or "",
                 category="custom",
-                group="Launchers",
+                group=group,
                 schema="custom",
                 key=path,
                 bindings=bindings,
@@ -949,6 +954,10 @@ class GnomeShortcutsBackend(ShortcutsBackend):
             "file_manager": ["files", "nautilus", "nemo", "thunar", "dolphin", "pcmanfm"],
             "music": ["music", "player", "spotify", "tidal", "rhythmbox"],
             "cheat_sheet": ["cheat", "dailydriver"],
+            "screenshot_full_file": ["screenshot to file"],
+            "screenshot_full_clipboard": ["screenshot to clipboard"],
+            "screenshot_area_file": ["screenshot area to file"],
+            "screenshot_area_clipboard": ["screenshot area to clipboard"],
         }
 
         keywords = type_keywords.get(app_type, [])
@@ -1145,12 +1154,12 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 self.update_custom_keybinding(
                     existing["path"], command=terminal, binding="<Super>Return"
                 )
-                results["terminal"] = f"Updated: {terminal}"
+                results["terminal"] = f"updated: {terminal}"
             else:
-                path = self.add_custom_keybinding("Launch Terminal", terminal, "<Super>Return")
-                results["terminal"] = f"Added: {terminal}" if path else "Failed to add"
+                path = self.add_custom_keybinding("launch terminal", terminal, "<Super>Return")
+                results["terminal"] = f"added: {terminal}" if path else "failed to add"
         else:
-            results["terminal"] = "No terminal found"
+            results["terminal"] = "no terminal found"
 
         # File manager
         file_manager = self.detect_file_manager()
@@ -1160,12 +1169,12 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 self.update_custom_keybinding(
                     existing["path"], command=file_manager, binding="<Super>e"
                 )
-                results["file_manager"] = f"Updated: {file_manager}"
+                results["file_manager"] = f"updated: {file_manager}"
             else:
-                path = self.add_custom_keybinding("Launch Files", file_manager, "<Super>e")
-                results["file_manager"] = f"Added: {file_manager}" if path else "Failed to add"
+                path = self.add_custom_keybinding("launch files", file_manager, "<Super>e")
+                results["file_manager"] = f"added: {file_manager}" if path else "failed to add"
         else:
-            results["file_manager"] = "No file manager found"
+            results["file_manager"] = "no file manager found"
 
         # Browser
         browser = self.detect_browser()
@@ -1173,12 +1182,12 @@ class GnomeShortcutsBackend(ShortcutsBackend):
             existing = self.find_custom_keybinding_by_type("browser")
             if existing:
                 self.update_custom_keybinding(existing["path"], command=browser, binding="<Super>b")
-                results["browser"] = f"Updated: {browser}"
+                results["browser"] = f"updated: {browser}"
             else:
-                path = self.add_custom_keybinding("Launch Browser", browser, "<Super>b")
-                results["browser"] = f"Added: {browser}" if path else "Failed to add"
+                path = self.add_custom_keybinding("launch browser", browser, "<Super>b")
+                results["browser"] = f"added: {browser}" if path else "failed to add"
         else:
-            results["browser"] = "No browser found"
+            results["browser"] = "no browser found"
 
         # Music player
         music = self.detect_music_player()
@@ -1186,12 +1195,12 @@ class GnomeShortcutsBackend(ShortcutsBackend):
             existing = self.find_custom_keybinding_by_type("music")
             if existing:
                 self.update_custom_keybinding(existing["path"], command=music, binding="<Super>p")
-                results["music"] = f"Updated: {music}"
+                results["music"] = f"updated: {music}"
             else:
-                path = self.add_custom_keybinding("Launch Music", music, "<Super>p")
-                results["music"] = f"Added: {music}" if path else "Failed to add"
+                path = self.add_custom_keybinding("launch music", music, "<Super>p")
+                results["music"] = f"added: {music}" if path else "failed to add"
         else:
-            results["music"] = "No music player found"
+            results["music"] = "no music player found"
 
         # Cheat sheet
         dailydriver = self.detect_dailydriver()
@@ -1201,13 +1210,65 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                 self.update_custom_keybinding(
                     existing["path"], command=dailydriver, binding="<Alt><Super>slash"
                 )
-                results["cheat_sheet"] = f"Updated: {dailydriver}"
+                results["cheat_sheet"] = f"updated: {dailydriver}"
             else:
                 path = self.add_custom_keybinding(
-                    "Keyboard Cheat Sheet", dailydriver, "<Alt><Super>slash"
+                    "keyboard cheat sheet", dailydriver, "<Alt><Super>slash"
                 )
-                results["cheat_sheet"] = f"Added: {dailydriver}" if path else "Failed to add"
+                results["cheat_sheet"] = f"added: {dailydriver}" if path else "failed to add"
         else:
-            results["cheat_sheet"] = "DailyDriver not found"
+            results["cheat_sheet"] = "dailydriver not found"
+
+        # Screenshot: full screen → file (Alt+Shift+Super+S)
+        existing = self.find_custom_keybinding_by_type("screenshot_full_file")
+        if existing:
+            self.update_custom_keybinding(
+                existing["path"], command="gnome-screenshot", binding="<Alt><Shift><Super>s"
+            )
+            results["screenshot_full_file"] = "updated"
+        else:
+            path = self.add_custom_keybinding(
+                "screenshot to file", "gnome-screenshot", "<Alt><Shift><Super>s"
+            )
+            results["screenshot_full_file"] = "added" if path else "failed to add"
+
+        # Screenshot: full screen → clipboard (Ctrl+Shift+Super+S)
+        existing = self.find_custom_keybinding_by_type("screenshot_full_clipboard")
+        if existing:
+            self.update_custom_keybinding(
+                existing["path"], command="gnome-screenshot -c", binding="<Control><Shift><Super>s"
+            )
+            results["screenshot_full_clipboard"] = "updated"
+        else:
+            path = self.add_custom_keybinding(
+                "screenshot to clipboard", "gnome-screenshot -c", "<Control><Shift><Super>s"
+            )
+            results["screenshot_full_clipboard"] = "added" if path else "failed to add"
+
+        # Screenshot: area → file (Alt+Shift+Super+A)
+        existing = self.find_custom_keybinding_by_type("screenshot_area_file")
+        if existing:
+            self.update_custom_keybinding(
+                existing["path"], command="gnome-screenshot -a", binding="<Alt><Shift><Super>a"
+            )
+            results["screenshot_area_file"] = "updated"
+        else:
+            path = self.add_custom_keybinding(
+                "screenshot area to file", "gnome-screenshot -a", "<Alt><Shift><Super>a"
+            )
+            results["screenshot_area_file"] = "added" if path else "failed to add"
+
+        # Screenshot: area → clipboard (Ctrl+Shift+Super+A)
+        existing = self.find_custom_keybinding_by_type("screenshot_area_clipboard")
+        if existing:
+            self.update_custom_keybinding(
+                existing["path"], command="gnome-screenshot -a -c", binding="<Control><Shift><Super>a"
+            )
+            results["screenshot_area_clipboard"] = "updated"
+        else:
+            path = self.add_custom_keybinding(
+                "screenshot area to clipboard", "gnome-screenshot -a -c", "<Control><Shift><Super>a"
+            )
+            results["screenshot_area_clipboard"] = "added" if path else "failed to add"
 
         return results

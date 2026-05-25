@@ -9,20 +9,20 @@ from gi.repository import Adw, GLib, Gtk
 
 PRESET_META = {
     "vanilla-gnome": {
-        "label": "Vanilla GNOME",
-        "subtitle": "Default GNOME shortcuts, no tiling keys",
+        "label": "vanilla gnome",
+        "subtitle": "default gnome shortcuts, no tiling keys",
         "tiling": False,
         "hyprland_bundle": False,
     },
     "gnome-tiling": {
-        "label": "GNOME + Tiling",
-        "subtitle": "Adds tiling extension keymaps to GNOME defaults",
+        "label": "gnome + tiling",
+        "subtitle": "adds tiling extension keymaps to gnome defaults",
         "tiling": True,
         "hyprland_bundle": False,
     },
     "hyprland-style": {
-        "label": "Hyprland Style",
-        "subtitle": "Keyboard-centric, vim-nav, workspace numbers, tiling",
+        "label": "hyprland style",
+        "subtitle": "keyboard-centric, vim-nav, workspace numbers, tiling",
         "tiling": True,
         "hyprland_bundle": True,
     },
@@ -43,6 +43,7 @@ class SetupView(Adw.PreferencesPage):
         app_settings,
         on_toast: Callable[[str, str | None, Callable | None], None],
         on_shortcuts_reload: Callable[[], None],
+        theme_service=None,
     ) -> None:
         super().__init__()
         self._gs = gsettings_service
@@ -52,6 +53,7 @@ class SetupView(Adw.PreferencesPage):
         self._settings = app_settings
         self._on_toast = on_toast
         self._on_reload = on_shortcuts_reload
+        self._theme = theme_service
         self._loading = True
         self._preset_radios: dict[str, Gtk.CheckButton] = {}
 
@@ -61,46 +63,73 @@ class SetupView(Adw.PreferencesPage):
     # ------------------------------------------------------------------ build
 
     def _build_ui(self) -> None:
-        self.set_title("Setup")
+        self.set_title("setup")
+
+        # ── Nightpanel ────────────────────────────────────────────────────
+        nightpanel_group = Adw.PreferencesGroup()
+        nightpanel_group.set_title("nightpanel")
+        nightpanel_group.set_description("panel glow intensity")
+        self.add(nightpanel_group)
+
+        brightness_row = Adw.ActionRow()
+        brightness_row.set_title("brightness")
+
+        self._brightness_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0.3, 1.5, 0.05)
+        self._brightness_scale.set_hexpand(True)
+        self._brightness_scale.set_draw_value(False)
+        self._brightness_scale.set_valign(Gtk.Align.CENTER)
+        self._brightness_scale.set_size_request(200, -1)
+        self._brightness_scale.add_mark(0.3, Gtk.PositionType.BOTTOM, None)
+        self._brightness_scale.add_mark(1.0, Gtk.PositionType.BOTTOM, None)
+        self._brightness_scale.add_mark(1.5, Gtk.PositionType.BOTTOM, None)
+        self._brightness_scale.connect("value-changed", self._on_brightness_changed)
+        brightness_row.add_suffix(self._brightness_scale)
+        nightpanel_group.add(brightness_row)
 
         # ── Tiling Manager ────────────────────────────────────────────────
         tiling_group = Adw.PreferencesGroup()
-        tiling_group.set_title("Tiling Manager")
-        tiling_group.set_description("Snap and auto-resize windows side-by-side")
+        tiling_group.set_title("tiling manager")
+        tiling_group.set_description("snap and auto-resize windows side-by-side")
         self.add(tiling_group)
 
         # Status row (read-only)
         self._tiling_status_row = Adw.ActionRow()
-        self._tiling_status_row.set_title("Tiling Assistant")
-        self._tiling_status_row.set_subtitle("Checking…")
+        self._tiling_status_row.set_title("tiling assistant")
+        self._tiling_status_row.set_subtitle("checking…")
         self._tiling_status_icon = Gtk.Image()
         self._tiling_status_row.add_suffix(self._tiling_status_icon)
         tiling_group.add(self._tiling_status_row)
 
         # Tile groups (auto-resize adjacent windows)
         self._tile_groups_row = Adw.SwitchRow()
-        self._tile_groups_row.set_title("Tile Groups")
-        self._tile_groups_row.set_subtitle("Resize adjacent tiled windows together")
+        self._tile_groups_row.set_title("tile groups")
+        self._tile_groups_row.set_subtitle("resize adjacent tiled windows together")
         self._tile_groups_row.connect("notify::active", self._on_tile_groups_toggled)
         tiling_group.add(self._tile_groups_row)
 
         # Raise group together
         self._raise_group_row = Adw.SwitchRow()
-        self._raise_group_row.set_title("Raise Group Together")
-        self._raise_group_row.set_subtitle("Focusing one tiled window raises its group")
+        self._raise_group_row.set_title("raise group together")
+        self._raise_group_row.set_subtitle("focusing one tiled window raises its group")
         self._raise_group_row.connect("notify::active", self._on_raise_group_toggled)
         tiling_group.add(self._raise_group_row)
 
         # ── Keymap Style ──────────────────────────────────────────────────
         keymap_group = Adw.PreferencesGroup()
-        keymap_group.set_title("Keymap Style")
-        keymap_group.set_description("Choose once — applied immediately")
+        keymap_group.set_title("keymap style")
+        keymap_group.set_description("choose once — applied immediately")
         self.add(keymap_group)
 
         first_radio: Gtk.CheckButton | None = None
         for key, meta in PRESET_META.items():
             row = Adw.ActionRow()
-            row.set_title(meta["label"])
+            if meta["hyprland_bundle"]:
+                row.set_title(
+                    f'{meta["label"]}  '
+                    f'<span size="small" foreground="#26DE81">recommended</span>'
+                )
+            else:
+                row.set_title(meta["label"])
             row.set_subtitle(meta["subtitle"])
             row.set_activatable(True)
 
@@ -115,24 +144,17 @@ class SetupView(Adw.PreferencesPage):
             radio.connect("notify::active", self._on_preset_radio_toggled, key)
             self._preset_radios[key] = radio
 
-            if meta["hyprland_bundle"]:
-                badge = Gtk.Label(label="Recommended")
-                badge.add_css_class("accent")
-                badge.add_css_class("caption")
-                badge.set_valign(Gtk.Align.CENTER)
-                row.add_prefix(badge)
-
             keymap_group.add(row)
 
         # ── Keyboard Hardware ─────────────────────────────────────────────
         kbd_group = Adw.PreferencesGroup()
-        kbd_group.set_title("Keyboard")
+        kbd_group.set_title("keyboard")
         self.add(kbd_group)
 
         self._caps_row = Adw.ComboRow()
-        self._caps_row.set_title("Caps Lock key")
+        self._caps_row.set_title("caps lock key")
         caps_model = Gtk.StringList()
-        for label in ("Caps Lock", "Escape", "Control"):
+        for label in ("caps lock", "escape", "control"):
             caps_model.append(label)
         self._caps_row.set_model(caps_model)
         self._caps_row.connect("notify::selected", self._on_caps_selected)
@@ -149,11 +171,11 @@ class SetupView(Adw.PreferencesPage):
             from dailydriver.services.tiling_service import TilingStatus
 
             if tiling_info.status == TilingStatus.TILING_ASSISTANT:
-                self._tiling_status_row.set_subtitle("Active")
+                self._tiling_status_row.set_subtitle("active")
                 self._tiling_status_icon.set_from_icon_name("emblem-ok-symbolic")
                 self._tiling_status_icon.add_css_class("success")
             else:
-                self._tiling_status_row.set_subtitle("Not installed — install from GNOME Extensions")
+                self._tiling_status_row.set_subtitle("not installed — install from gnome extensions")
                 self._tiling_status_icon.set_from_icon_name("dialog-warning-symbolic")
                 self._tiling_status_icon.add_css_class("warning")
                 self._tile_groups_row.set_sensitive(False)
@@ -189,6 +211,17 @@ class SetupView(Adw.PreferencesPage):
             self._caps_row.set_selected(idx)
         except Exception:
             pass
+
+        # Brightness
+        if self._settings:
+            try:
+                brightness = self._settings.get_double("theme-brightness")
+                brightness = max(0.3, min(1.5, brightness))
+            except Exception:
+                brightness = 1.0
+        else:
+            brightness = self._theme.brightness if self._theme else 1.0
+        self._brightness_scale.set_value(brightness)
 
         self._loading = False
         return False
@@ -242,9 +275,10 @@ class SetupView(Adw.PreferencesPage):
             self._profiles.apply_profile(profile)
 
             if is_hyprland:
-                # Full Hyprland bundle: 10 workspaces + TA defaults
+                # Full Hyprland bundle: 10 workspaces + TA defaults + custom shortcuts
                 self._gs.setup_workspaces_for_hyprland()
                 self._tiling.apply_hyprland_tiling_settings()
+                self._gs.setup_default_custom_shortcuts()
 
             # Persist app setting
             if self._settings:
@@ -270,7 +304,7 @@ class SetupView(Adw.PreferencesPage):
                 if was_hyprland and old_key != "hyprland-style":
                     self._gs.restore_default_workspaces()
 
-        self._on_toast(f"Applied: {label}", "Undo", undo)
+        self._on_toast(f"applied: {label}", "undo", undo)
         return False
 
     def _on_caps_selected(self, row: Adw.ComboRow, _param) -> None:
@@ -285,3 +319,9 @@ class SetupView(Adw.PreferencesPage):
                 self._kbd.set_caps_lock_behavior(behaviors[idx])
             except Exception:
                 pass
+
+    def _on_brightness_changed(self, scale: Gtk.Scale) -> None:
+        if self._loading:
+            return
+        if self._theme:
+            self._theme.set_brightness(scale.get_value(), self._settings)

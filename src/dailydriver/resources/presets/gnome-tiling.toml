@@ -153,17 +153,18 @@ philosophy = "mouse-friendly"
 "org.gnome.shell.keybindings.toggle-message-tray" = ["<Super>v"]
 
 # =============================================================================
-# SCREENSHOTS (Super+Shift+S style - avoids workspace conflicts)
+# SCREENSHOTS
 # =============================================================================
 
-# Screenshot UI: Super+Shift+S (like Windows Snipping Tool)
+# Screenshot UI: Super+Shift+S — interactive, pick screen/window/area then save or copy
 "org.gnome.shell.keybindings.show-screenshot-ui" = ["<Super><Shift>s"]
 
-# Full screen screenshot: Ctrl+Super+Shift+S
-"org.gnome.shell.keybindings.screenshot" = ["<Control><Super><Shift>s"]
-
-# Window screenshot: Alt+Super+Shift+S
-"org.gnome.shell.keybindings.screenshot-window" = ["<Alt><Super><Shift>s"]
+# Additional shortcuts via custom keybindings (set up by dailydriver):
+#   Ctrl+Shift+Super+S → gnome-screenshot -c   (full screen to clipboard)
+#   Ctrl+Shift+Super+A → gnome-screenshot -a -c (area to clipboard)
+#   Alt+Shift+Super+A  → gnome-screenshot -a   (area to file)
+"org.gnome.shell.keybindings.screenshot" = []
+"org.gnome.shell.keybindings.screenshot-window" = []
 
 # =============================================================================
 # MEDIA CONTROLS (Ctrl+Super - works on any keyboard)

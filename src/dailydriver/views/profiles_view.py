@@ -56,12 +56,12 @@ class ProfilesView(Gtk.Box):
 
         # ── User profiles group ────────────────────────────────────────────
         self._user_group = Adw.PreferencesGroup()
-        self._user_group.set_title("My Profiles")
+        self._user_group.set_title("my profiles")
         self._user_group.set_description(
-            "Snapshots of your configuration. Export as a shell script to drop into dotfiles."
+            "snapshots of your configuration. export as a shell script to drop into dotfiles."
         )
 
-        save_btn = Gtk.Button(label="Save Current State…")
+        save_btn = Gtk.Button(label="save current state…")
         save_btn.add_css_class("flat")
         save_btn.set_icon_name("document-save-symbolic")
         save_btn.connect("clicked", self._on_save_current)
@@ -71,19 +71,19 @@ class ProfilesView(Gtk.Box):
 
         # Placeholder shown when user has no profiles
         self._user_placeholder = Adw.ActionRow()
-        self._user_placeholder.set_title("No saved profiles yet")
+        self._user_placeholder.set_title("no saved profiles yet")
         self._user_placeholder.set_subtitle(
-            "Click \"Save Current State\" to snapshot your setup"
+            'click "save current state" to snapshot your setup'
         )
         self._user_placeholder.set_sensitive(False)
         self._user_group.add(self._user_placeholder)
 
         # ── Presets group ──────────────────────────────────────────────────
         self._preset_group = Adw.PreferencesGroup()
-        self._preset_group.set_title("Built-in Presets")
-        self._preset_group.set_description("Read-only. Export to customise.")
+        self._preset_group.set_title("built-in presets")
+        self._preset_group.set_description("read-only. export to customise.")
 
-        import_btn = Gtk.Button(label="Import…")
+        import_btn = Gtk.Button(label="import…")
         import_btn.add_css_class("flat")
         import_btn.set_icon_name("document-open-symbolic")
         import_btn.connect("clicked", self._on_import)
@@ -145,7 +145,7 @@ class ProfilesView(Gtk.Box):
 
         # Active badge
         if is_active:
-            active_badge = Gtk.Label(label="Active")
+            active_badge = Gtk.Label(label="active")
             active_badge.add_css_class("success")
             active_badge.add_css_class("caption")
             active_badge.set_valign(Gtk.Align.CENTER)
@@ -154,7 +154,7 @@ class ProfilesView(Gtk.Box):
         # Apply button
         apply_btn = Gtk.Button()
         apply_btn.set_icon_name("media-playback-start-symbolic")
-        apply_btn.set_tooltip_text("Apply this profile")
+        apply_btn.set_tooltip_text("apply this profile")
         apply_btn.add_css_class("flat")
         apply_btn.set_valign(Gtk.Align.CENTER)
         apply_btn.connect("clicked", self._on_apply_profile, profile)
@@ -162,12 +162,12 @@ class ProfilesView(Gtk.Box):
 
         # Export menu button
         export_menu = Gio.Menu()
-        export_menu.append("Export as TOML…", f"profiles.export-toml::{profile.name}")
-        export_menu.append("Export as shell script…", f"profiles.export-sh::{profile.name}")
+        export_menu.append("export as toml…", f"profiles.export-toml::{profile.name}")
+        export_menu.append("export as shell script…", f"profiles.export-sh::{profile.name}")
 
         export_btn = Gtk.MenuButton()
         export_btn.set_icon_name("document-send-symbolic")
-        export_btn.set_tooltip_text("Export profile")
+        export_btn.set_tooltip_text("export profile")
         export_btn.add_css_class("flat")
         export_btn.set_valign(Gtk.Align.CENTER)
         export_btn.set_menu_model(export_menu)
@@ -194,7 +194,7 @@ class ProfilesView(Gtk.Box):
         if not is_preset:
             delete_btn = Gtk.Button()
             delete_btn.set_icon_name("user-trash-symbolic")
-            delete_btn.set_tooltip_text("Delete profile")
+            delete_btn.set_tooltip_text("delete profile")
             delete_btn.add_css_class("flat")
             delete_btn.add_css_class("error")
             delete_btn.set_valign(Gtk.Align.CENTER)
@@ -228,15 +228,15 @@ class ProfilesView(Gtk.Box):
     def _after_apply(self, name: str, old_name: str) -> bool:
         self._on_reload()
         self._populate()
-        self._on_toast(f"Applied: {self._display_name(name)}", None, None)
+        self._on_toast(f"applied: {self._display_name(name)}", None, None)
         return False
 
     def _on_save_current(self, _btn) -> None:
         dialog = Adw.AlertDialog()
-        dialog.set_heading("Save Current State")
-        dialog.set_body("Name this snapshot of your current shortcuts.")
-        dialog.add_response("cancel", "Cancel")
-        dialog.add_response("save", "Save")
+        dialog.set_heading("save current state")
+        dialog.set_body("name this snapshot of your current shortcuts.")
+        dialog.add_response("cancel", "cancel")
+        dialog.add_response("save", "save")
         dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
         dialog.set_default_response("save")
         dialog.set_close_response("cancel")
@@ -250,7 +250,7 @@ class ProfilesView(Gtk.Box):
         box.append(name_entry)
 
         desc_entry = Gtk.Entry()
-        desc_entry.set_placeholder_text("Description (optional)")
+        desc_entry.set_placeholder_text("description (optional)")
         box.append(desc_entry)
 
         dialog.set_extra_child(box)
@@ -279,15 +279,15 @@ class ProfilesView(Gtk.Box):
 
     def _after_save(self, display_name: str) -> bool:
         self._populate()
-        self._on_toast(f"Saved: {display_name}", None, None)
+        self._on_toast(f"saved: {display_name}", None, None)
         return False
 
     def _on_delete_profile(self, _btn, name: str) -> None:
         dialog = Adw.AlertDialog()
-        dialog.set_heading("Delete Profile?")
+        dialog.set_heading("delete profile?")
         dialog.set_body(f'"{self._display_name(name)}" will be permanently removed.')
-        dialog.add_response("cancel", "Cancel")
-        dialog.add_response("delete", "Delete")
+        dialog.add_response("cancel", "cancel")
+        dialog.add_response("delete", "delete")
         dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
         dialog.set_default_response("cancel")
         dialog.set_close_response("cancel")
@@ -297,15 +297,15 @@ class ProfilesView(Gtk.Box):
     def _do_delete(self, name: str) -> None:
         self._ps.delete_profile(name)
         self._populate()
-        self._on_toast(f"Deleted: {self._display_name(name)}", None, None)
+        self._on_toast(f"deleted: {self._display_name(name)}", None, None)
 
     def _on_import(self, _btn) -> None:
         fd = Gtk.FileDialog()
-        fd.set_title("Import Profile")
+        fd.set_title("import profile")
         fd.set_modal(True)
 
         toml_filter = Gtk.FileFilter()
-        toml_filter.set_name("TOML profiles (*.toml)")
+        toml_filter.set_name("toml profiles (*.toml)")
         toml_filter.add_pattern("*.toml")
         filters = Gio.ListStore.new(Gtk.FileFilter)
         filters.append(toml_filter)
@@ -322,9 +322,9 @@ class ProfilesView(Gtk.Box):
         try:
             profile = self._ps.import_profile(path)
             self._populate()
-            self._on_toast(f"Imported: {self._display_name(profile.name)}", None, None)
+            self._on_toast(f"imported: {self._display_name(profile.name)}", None, None)
         except Exception as e:
-            self._on_toast(f"Import failed: {e}", None, None)
+            self._on_toast(f"import failed: {e}", None, None)
 
     def _on_export_toml_action(self, action, param) -> None:
         name = param.get_string()
@@ -333,10 +333,10 @@ class ProfilesView(Gtk.Box):
             return
         self._show_export_dialog(
             profile,
-            title="Export as TOML",
+            title="export as toml",
             default_name=f"{profile.name}.toml",
             suffix=".toml",
-            filter_name="TOML profiles (*.toml)",
+            filter_name="toml profiles (*.toml)",
             is_script=False,
         )
 
@@ -347,10 +347,10 @@ class ProfilesView(Gtk.Box):
             return
         self._show_export_dialog(
             profile,
-            title="Export as Shell Script",
+            title="export as shell script",
             default_name=f"{profile.name}-keymaps.sh",
             suffix=".sh",
-            filter_name="Shell scripts (*.sh)",
+            filter_name="shell scripts (*.sh)",
             is_script=True,
         )
 
@@ -383,19 +383,19 @@ class ProfilesView(Gtk.Box):
         try:
             if is_script:
                 self._ps.export_as_shell_script(profile, path)
-                self._on_toast(f"Exported shell script: {path.name}", None, None)
+                self._on_toast(f"exported shell script: {path.name}", None, None)
             else:
                 self._ps.export_profile(profile, path)
-                self._on_toast(f"Exported: {path.name}", None, None)
+                self._on_toast(f"exported: {path.name}", None, None)
         except Exception as e:
-            self._on_toast(f"Export failed: {e}", None, None)
+            self._on_toast(f"export failed: {e}", None, None)
 
     # ----------------------------------------------------------------- helpers
 
     def _display_name(self, name: str) -> str:
         names = {
-            "vanilla-gnome": "Vanilla GNOME",
-            "gnome-tiling": "GNOME + Tiling",
-            "hyprland-style": "Hyprland Style",
+            "vanilla-gnome": "vanilla gnome",
+            "gnome-tiling": "gnome + tiling",
+            "hyprland-style": "hyprland style",
         }
-        return names.get(name, name.replace("-", " ").title())
+        return names.get(name, name.replace("-", " "))

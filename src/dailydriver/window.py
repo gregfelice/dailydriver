@@ -9,7 +9,10 @@ from dailydriver.models import Shortcut, ShortcutCategory
 from dailydriver.services.gsettings_service import GSettingsService
 from dailydriver.services.hardware_service import HardwareService
 from dailydriver.services.keyboard_config_service import CapsLockBehavior, KeyboardConfigService
+from dailydriver.services.nightpanel_orchestrator import NightpanelOrchestrator
+from dailydriver.services.theme_service import ThemeService
 from dailydriver.services.tiling_service import TilingService
+from dailydriver.views.appearance_view import AppearanceView
 from dailydriver.views.cheatsheet import CheatSheetView
 from dailydriver.views.keyboard_view import KeyboardView
 from dailydriver.views.preset_selector import PresetSelector
@@ -32,6 +35,8 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._hardware = HardwareService()
         self._kbd_config = KeyboardConfigService()
         self._tiling_service = TilingService()
+        self._theme_service = ThemeService()
+        self._orchestrator = NightpanelOrchestrator()
         self._shortcuts: dict[str, Shortcut] = {}
         self._shortcut_views: dict[str, ShortcutListView] = {}
         self._current_category: str | None = None
@@ -44,6 +49,13 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         # Load settings before building UI (setup view needs them at construction)
         self._settings = self._get_app_settings()
+
+        # Apply dark theme + stored accent before first paint
+        self._theme_service.apply_from_settings(self._settings)
+
+        # Apply system-wide nightpanel if it was active at last exit
+        if self._theme_service.enabled:
+            GLib.idle_add(self._orchestrator.apply)
 
         # Build UI
         self._build_ui()
@@ -100,62 +112,95 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         toolbar_view = Adw.ToolbarView()
         self.toast_overlay.set_child(toolbar_view)
 
-        # Header bar
+        # Header bar with custom tab bar (no AdwViewSwitcher — full CSS control)
         header = Adw.HeaderBar()
 
-        # View switcher in header
-        self._view_switcher = Adw.ViewSwitcher()
-        self._view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
-        header.set_title_widget(self._view_switcher)
+        tab_bar = self._build_tab_bar()
+        header.set_title_widget(tab_bar)
+
+        # Nightpanel toggle button (rightmost — menu is end, this goes before it)
+        self._nightpanel_btn = Gtk.ToggleButton()
+        self._nightpanel_btn.set_icon_name("night-light-symbolic")
+        self._nightpanel_btn.set_tooltip_text("nightpanel")
+        self._nightpanel_btn.add_css_class("nightpanel-toggle")
+        self._nightpanel_btn.set_active(self._theme_service.enabled)
+        self._nightpanel_btn.connect("toggled", self._on_nightpanel_toggled)
 
         # Menu button
         menu_button = Gtk.MenuButton()
         menu_button.set_icon_name("open-menu-symbolic")
         menu_button.set_menu_model(self._create_menu())
-        menu_button.set_tooltip_text("Main Menu")
+        menu_button.set_tooltip_text("main menu")
         header.pack_end(menu_button)
+        header.pack_end(self._nightpanel_btn)
         toolbar_view.add_top_bar(header)
 
-        # View stack
-        self._view_stack = Adw.ViewStack()
-        self._view_switcher.set_stack(self._view_stack)
+        # Plain Gtk.Stack (we drive it ourselves)
+        self._view_stack = Gtk.Stack()
+        self._view_stack.set_transition_type(Gtk.StackTransitionType.NONE)
         toolbar_view.set_content(self._view_stack)
 
         # === SETUP VIEW (landing page) ===
         self._setup_view = self._build_setup_view()
-        self._view_stack.add_titled_with_icon(
-            self._setup_view,
-            "setup",
-            "Setup",
-            "preferences-system-symbolic",
-        )
+        self._view_stack.add_named(self._setup_view, "setup")
 
         # === SHORTCUTS VIEW ===
         shortcuts_page = self._build_shortcuts_view()
-        self._view_stack.add_titled_with_icon(
-            shortcuts_page,
-            "shortcuts",
-            "Shortcuts",
-            "preferences-desktop-keyboard-shortcuts-symbolic",
-        )
+        self._view_stack.add_named(shortcuts_page, "shortcuts")
 
         # === PROFILES VIEW ===
         self._profiles_view = self._build_profiles_view()
-        self._view_stack.add_titled_with_icon(
-            self._profiles_view,
-            "profiles",
-            "Profiles",
-            "avatar-default-symbolic",
+        self._view_stack.add_named(self._profiles_view, "profiles")
+
+        # === APPEARANCE VIEW ===
+        self._appearance_view = AppearanceView(
+            theme_service=self._theme_service,
+            app_settings=self._settings,
+            on_toast=self._show_toast_with_undo,
         )
+        self._view_stack.add_named(self._appearance_view, "appearance")
 
         # === CHEAT SHEET VIEW ===
         self._cheatsheet_view = CheatSheetView()
-        self._view_stack.add_titled_with_icon(
-            self._cheatsheet_view, "cheatsheet", "Cheat Sheet", "accessories-dictionary-symbolic"
-        )
+        self._view_stack.add_named(self._cheatsheet_view, "cheatsheet")
 
         # Land on Setup by default
         self._view_stack.set_visible_child_name("setup")
+        self._tab_buttons["setup"].set_active(True)
+
+    def _build_tab_bar(self) -> Gtk.Box:
+        """Custom tab bar: ALLCAPS text, light rounded borders, no icons."""
+        self._tab_buttons: dict[str, Gtk.ToggleButton] = {}
+
+        bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        bar.add_css_class("nightpanel-tabbar")
+
+        tabs = [
+            ("setup", "Setup"),
+            ("shortcuts", "Shortcuts"),
+            ("profiles", "Profiles"),
+            ("appearance", "Appearance"),
+            ("cheatsheet", "Cheat Sheet"),
+        ]
+
+        first_btn = None
+        for name, label_text in tabs:
+            btn = Gtk.ToggleButton(label=label_text.upper())
+            btn.add_css_class("nightpanel-tab")
+            btn.set_has_frame(False)
+            if first_btn is not None:
+                btn.set_group(first_btn)
+            else:
+                first_btn = btn
+            btn.connect("toggled", self._on_tab_toggled, name)
+            self._tab_buttons[name] = btn
+            bar.append(btn)
+
+        return bar
+
+    def _on_tab_toggled(self, btn: Gtk.ToggleButton, name: str) -> None:
+        if btn.get_active():
+            self._view_stack.set_visible_child_name(name)
 
     def _build_profiles_view(self) -> Gtk.Widget:
         """Build the profiles management panel."""
@@ -184,6 +229,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             app_settings=self._settings,
             on_toast=self._show_toast_with_undo,
             on_shortcuts_reload=self._reload_shortcuts,
+            theme_service=self._theme_service,
         )
 
     def _show_toast_with_undo(
@@ -228,9 +274,8 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         sidebar_scroll.set_child(sidebar_content)
 
         # --- Categories Section ---
-        cat_header = Gtk.Label(label="Categories")
-        cat_header.add_css_class("heading")
-        cat_header.add_css_class("dim-label")
+        cat_header = Gtk.Label(label="categories")
+        cat_header.add_css_class("sidebar-section-label")
         cat_header.set_xalign(0)
         cat_header.set_margin_start(12)
         cat_header.set_margin_top(8)
@@ -250,9 +295,8 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         sidebar_content.append(sep)
 
         # --- Settings Section Header ---
-        settings_header = Gtk.Label(label="Settings")
-        settings_header.add_css_class("heading")
-        settings_header.add_css_class("dim-label")
+        settings_header = Gtk.Label(label="settings")
+        settings_header.add_css_class("sidebar-section-label")
         settings_header.set_xalign(0)
         settings_header.set_margin_start(12)
         settings_header.set_margin_bottom(4)
@@ -267,7 +311,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         # === CONTENT ===
         content_page = Adw.NavigationPage()
-        content_page.set_title("Shortcuts")
+        content_page.set_title("shortcuts")
         content_page.set_tag("content")
 
         content_toolbar = Adw.ToolbarView()
@@ -281,7 +325,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # Keyboard toggle button
         self.show_keyboard_button = Gtk.ToggleButton()
         self.show_keyboard_button.set_icon_name("input-keyboard-symbolic")
-        self.show_keyboard_button.set_tooltip_text("Show Keyboard")
+        self.show_keyboard_button.set_tooltip_text("show keyboard")
         self.show_keyboard_button.connect("toggled", self._on_keyboard_toggled)
         content_header.pack_start(self.show_keyboard_button)
 
@@ -352,7 +396,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         kbd_info.append(kbd_icon)
 
         kbd_name = (
-            self._detected_keyboard.display_name if self._detected_keyboard else "Standard Keyboard"
+            self._detected_keyboard.display_name.lower() if self._detected_keyboard else "standard keyboard"
         )
         kbd_label = Gtk.Label(label=kbd_name)
         kbd_label.add_css_class("dim-label")
@@ -367,7 +411,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         preset_icon.add_css_class("dim-label")
         preset_info.append(preset_icon)
 
-        self._current_preset_label = Gtk.Label(label="GNOME + Tiling Preset")
+        self._current_preset_label = Gtk.Label(label="gnome + tiling preset")
         self._current_preset_label.add_css_class("dim-label")
         self._current_preset_label.set_xalign(0)
         self._current_preset_label.set_hexpand(True)
@@ -377,7 +421,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         config_box.append(header_box)
 
         # --- Preset Section (collapsible) ---
-        preset_expander = Gtk.Expander(label="Shortcut Presets")
+        preset_expander = Gtk.Expander(label="shortcut presets")
         preset_expander.set_expanded(False)
 
         preset_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
@@ -387,9 +431,9 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # Radio buttons for presets
         self._preset_radios: dict[str, Gtk.CheckButton] = {}
         preset_options = [
-            ("vanilla-gnome", "Vanilla GNOME"),
-            ("gnome-tiling", "GNOME + Tiling"),
-            ("hyprland-style", "Hyprland Style"),
+            ("vanilla-gnome", "vanilla gnome"),
+            ("gnome-tiling", "gnome + tiling"),
+            ("hyprland-style", "hyprland style"),
         ]
 
         first_radio = None
@@ -407,7 +451,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         config_box.append(preset_expander)
 
         # --- User Section (collapsible) ---
-        user_expander = Gtk.Expander(label="User Modifications")
+        user_expander = Gtk.Expander(label="user modifications")
         user_expander.set_expanded(False)
 
         user_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
@@ -415,7 +459,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         user_content.set_margin_top(4)
 
         # Set up launchers button
-        launchers_button = Gtk.Button(label="Set Up Launchers")
+        launchers_button = Gtk.Button(label="set up launchers")
         launchers_button.add_css_class("flat")
         launchers_button.connect("clicked", self._on_setup_launchers)
         user_content.append(launchers_button)
@@ -427,13 +471,13 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         user_content.append(sep)
 
         # Clear user modifications button
-        clear_mods_button = Gtk.Button(label="Clear Modifications")
+        clear_mods_button = Gtk.Button(label="clear modifications")
         clear_mods_button.add_css_class("flat")
         clear_mods_button.connect("clicked", self._on_clear_modifications)
         user_content.append(clear_mods_button)
 
         # Load user modifications button
-        load_mods_button = Gtk.Button(label="Load Modifications")
+        load_mods_button = Gtk.Button(label="load modifications")
         load_mods_button.add_css_class("flat")
         load_mods_button.connect("clicked", self._on_load_modifications)
         user_content.append(load_mods_button)
@@ -442,7 +486,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         config_box.append(user_expander)
 
         # --- Keyboard Layout Section (collapsible) ---
-        layout_expander = Gtk.Expander(label="Keyboard Layout")
+        layout_expander = Gtk.Expander(label="keyboard layout")
         layout_expander.set_expanded(False)
 
         layout_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
@@ -451,7 +495,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         # Radio buttons for layout
         self._layout_radios: dict[str, Gtk.CheckButton] = {}
-        layout_options = [("pc", "PC Standard"), ("mac", "Mac Style"), ("custom", "Custom")]
+        layout_options = [("pc", "pc standard"), ("mac", "mac style"), ("custom", "custom")]
 
         first_radio = None
         for key, label in layout_options:
@@ -468,7 +512,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         config_box.append(layout_expander)
 
         # --- Caps Lock Section (collapsible) ---
-        caps_expander = Gtk.Expander(label="Caps Lock Behavior")
+        caps_expander = Gtk.Expander(label="caps lock behavior")
         caps_expander.set_expanded(False)
 
         caps_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
@@ -478,10 +522,10 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # Radio buttons for caps lock
         self._caps_radios: dict[str, Gtk.CheckButton] = {}
         caps_options = [
-            ("caps", "Caps Lock"),
-            ("escape", "Escape"),
-            ("ctrl", "Control"),
-            ("custom", "Custom"),
+            ("caps", "caps lock"),
+            ("escape", "escape"),
+            ("ctrl", "control"),
+            ("custom", "custom"),
         ]
 
         first_radio = None
@@ -503,7 +547,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         unbound_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
 
-        unbound_label = Gtk.Label(label="Show Unbound")
+        unbound_label = Gtk.Label(label="show unbound")
         unbound_label.set_xalign(0)
         unbound_label.set_hexpand(True)
         unbound_row.append(unbound_label)
@@ -515,7 +559,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         unbound_group.append(unbound_row)
 
-        unbound_desc = Gtk.Label(label="Include shortcuts with no key binding")
+        unbound_desc = Gtk.Label(label="include shortcuts with no key binding")
         unbound_desc.add_css_class("dim-label")
         unbound_desc.add_css_class("caption")
         unbound_desc.set_xalign(0)
@@ -575,12 +619,12 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         if current_preset and current_preset in self._preset_radios:
             self._preset_radios[current_preset].set_active(True)
             preset_names = {
-                "vanilla-gnome": "Vanilla GNOME",
-                "gnome-tiling": "GNOME + Tiling",
-                "hyprland-style": "Hyprland Style",
+                "vanilla-gnome": "vanilla gnome",
+                "gnome-tiling": "gnome + tiling",
+                "hyprland-style": "hyprland style",
             }
             self._current_preset_label.set_label(
-                f"{preset_names.get(current_preset, current_preset)} Preset"
+                f"{preset_names.get(current_preset, current_preset)} preset"
             )
 
         # Show unbound
@@ -609,7 +653,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         if key == "custom":
             # Custom means user manages it externally
             self._current_layout = "custom"
-            self._show_toast("Using custom layout")
+            self._show_toast("using custom layout")
             return
 
         from dailydriver.models import FnMode, MacKeyboardConfig
@@ -618,7 +662,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         hid = HidAppleService()
         if not hid.is_module_loaded():
             self._current_layout = key
-            self._show_toast("Layout updated (no Mac keyboard)")
+            self._show_toast("layout updated (no mac keyboard)")
             return
 
         is_mac = key == "mac"
@@ -631,13 +675,13 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         if success:
             self._current_layout = key
-            self._show_toast("Layout updated")
+            self._show_toast("layout updated")
         else:
             # Revert to previous selection
             self._loading = True
             self._layout_radios[self._current_layout].set_active(True)
             self._loading = False
-            self._show_toast("Layout change cancelled")
+            self._show_toast("layout change cancelled")
 
     def _on_caps_toggled(self, radio: Gtk.CheckButton, key: str) -> None:
         """Handle caps lock radio toggle."""
@@ -647,7 +691,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         if key == "custom":
             # Custom means user manages it externally
             self._current_caps = "custom"
-            self._show_toast("Using custom caps lock")
+            self._show_toast("using custom caps lock")
             return
 
         caps_map = {
@@ -661,13 +705,13 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         if success:
             self._current_caps = key
-            self._show_toast("Caps Lock updated")
+            self._show_toast("caps lock updated")
         else:
             # Revert to previous selection
             self._loading = True
             self._caps_radios[self._current_caps].set_active(True)
             self._loading = False
-            self._show_toast("Caps Lock change cancelled")
+            self._show_toast("caps lock change cancelled")
 
     def _show_toast(self, message: str) -> None:
         """Show a toast notification."""
@@ -680,12 +724,12 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         menu = Gio.Menu()
 
         section1 = Gio.Menu()
-        section1.append("Import Profile...", "win.import-profile")
-        section1.append("Export Profile...", "win.export-profile")
+        section1.append("import profile...", "win.import-profile")
+        section1.append("export profile...", "win.export-profile")
         menu.append_section(None, section1)
 
         section2 = Gio.Menu()
-        section2.append("About Daily Driver", "app.about")
+        section2.append("about daily driver", "app.about")
         menu.append_section(None, section2)
 
         return menu
@@ -851,7 +895,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         icon = Gtk.Image.new_from_icon_name(category.icon)
         box.append(icon)
 
-        label = Gtk.Label(label=category.name)
+        label = Gtk.Label(label=category.name.lower())
         label.set_xalign(0)
         label.set_hexpand(True)
         box.append(label)
@@ -881,6 +925,15 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         if category_id in self._shortcut_views:
             self.shortcuts_container.append(self._shortcut_views[category_id])
 
+    def _on_nightpanel_toggled(self, btn: Gtk.ToggleButton) -> None:
+        """Handle nightpanel on/off toggle."""
+        enabled = btn.get_active()
+        self._theme_service.set_enabled(enabled, self._settings)
+        if enabled:
+            self._orchestrator.apply()
+        else:
+            self._orchestrator.revert()
+
     def _on_keyboard_toggled(self, button: Gtk.ToggleButton) -> None:
         """Handle keyboard view toggle."""
         self.keyboard_revealer.set_reveal_child(button.get_active())
@@ -901,7 +954,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._keyboard_view.highlight_shortcut(shortcut)
         self._cheatsheet_view.refresh()
 
-        toast = Adw.Toast(title=f"Shortcut updated: {shortcut.name}")
+        toast = Adw.Toast(title=f"shortcut updated: {shortcut.name}")
         self.toast_overlay.add_toast(toast)
 
     def _on_shortcut_reset(self, view: ShortcutListView, shortcut: Shortcut) -> None:
@@ -910,7 +963,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._gsettings_service.save_shortcut(shortcut)
         view.update_shortcut(shortcut)
 
-        toast = Adw.Toast(title=f"Shortcut reset: {shortcut.name}")
+        toast = Adw.Toast(title=f"shortcut reset: {shortcut.name}")
         self.toast_overlay.add_toast(toast)
 
     def _on_preset_radio_toggled(self, radio: Gtk.CheckButton, preset_key: str) -> None:
@@ -920,9 +973,9 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         # Get display name
         preset_names = {
-            "vanilla-gnome": "Vanilla GNOME",
-            "gnome-tiling": "GNOME + Tiling",
-            "hyprland-style": "Hyprland Style",
+            "vanilla-gnome": "vanilla gnome",
+            "gnome-tiling": "gnome + tiling",
+            "hyprland-style": "hyprland style",
         }
         display_name = preset_names.get(preset_key, preset_key)
 
@@ -948,12 +1001,12 @@ class DailyDriverWindow(Adw.ApplicationWindow):
                     profile_service.reset_orphaned_shortcuts(old_profile, profile)
 
             profile_service.apply_profile(profile)
-            self._current_preset_label.set_label(f"{display_name} Preset")
+            self._current_preset_label.set_label(f"{display_name} preset")
             self._reload_shortcuts()
-            toast = Adw.Toast(title=f"Applied: {display_name}")
+            toast = Adw.Toast(title=f"applied: {display_name}")
             self.toast_overlay.add_toast(toast)
         else:
-            self._show_toast(f"Preset not found: {preset_key}")
+            self._show_toast(f"preset not found: {preset_key}")
 
     def _show_preset_selector(self) -> None:
         """Show the preset selector dialog."""
@@ -989,21 +1042,21 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             self._preset_radios[preset_name].set_active(True)
             self._loading = False
         preset_names = {
-            "vanilla-gnome": "Vanilla GNOME",
-            "gnome-tiling": "GNOME + Tiling",
-            "hyprland-style": "Hyprland Style",
+            "vanilla-gnome": "vanilla gnome",
+            "gnome-tiling": "gnome + tiling",
+            "hyprland-style": "hyprland style",
         }
-        self._current_preset_label.set_label(f"{preset_names.get(preset_name, preset_name)} Preset")
-        toast = Adw.Toast(title=f"Applied: {preset_names.get(preset_name, preset_name)}")
+        self._current_preset_label.set_label(f"{preset_names.get(preset_name, preset_name)} preset")
+        toast = Adw.Toast(title=f"applied: {preset_names.get(preset_name, preset_name)}")
         self.toast_overlay.add_toast(toast)
 
     def _on_import_profile(self, action: Gio.SimpleAction, param: GLib.Variant | None) -> None:
         """Import a profile from file."""
-        self._show_toast("Import: Coming soon")
+        self._show_toast("import: coming soon")
 
     def _on_export_profile(self, action: Gio.SimpleAction, param: GLib.Variant | None) -> None:
         """Export current profile to file."""
-        self._show_toast("Export: Coming soon")
+        self._show_toast("export: coming soon")
 
     def _on_clear_modifications(self, button: Gtk.Button) -> None:
         """Clear user modifications, saving them to a file first."""
@@ -1019,21 +1072,21 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         user_mods = profile_service.get_user_modifications(current_preset)
 
         if not user_mods:
-            self._show_toast("No user modifications to clear")
+            self._show_toast("no user modifications to clear")
             return
 
         modified_count = len(user_mods)
 
         # Show confirmation dialog
         dialog = Adw.AlertDialog()
-        dialog.set_heading("Clear User Modifications?")
+        dialog.set_heading("clear user modifications?")
         dialog.set_body(
-            f"This will save your {modified_count} modification(s) to a file and "
+            f"this will save your {modified_count} modification(s) to a file and "
             f"reset all shortcuts to the {self._get_preset_display_name(current_preset)} preset.\n\n"
-            "You can import the saved modifications later."
+            "you can import the saved modifications later."
         )
-        dialog.add_response("cancel", "Cancel")
-        dialog.add_response("clear", "Clear Modifications")
+        dialog.add_response("cancel", "cancel")
+        dialog.add_response("clear", "clear modifications")
         dialog.set_response_appearance("clear", Adw.ResponseAppearance.DESTRUCTIVE)
         dialog.set_default_response("cancel")
         dialog.set_close_response("cancel")
@@ -1055,19 +1108,18 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
         if export_path:
             self._reload_shortcuts()
-            # Show toast with file location
-            toast = Adw.Toast(title=f"Saved {num_mods} modification(s) to {export_path.name}")
+            toast = Adw.Toast(title=f"saved {num_mods} modification(s) to {export_path.name}")
             toast.set_timeout(5)
             self.toast_overlay.add_toast(toast)
         else:
-            self._show_toast("No modifications to clear")
+            self._show_toast("no modifications to clear")
 
     def _get_preset_display_name(self, preset_key: str) -> str:
         """Get display name for a preset key."""
         preset_names = {
-            "vanilla-gnome": "Vanilla GNOME",
-            "gnome-tiling": "GNOME + Tiling",
-            "hyprland-style": "Hyprland Style",
+            "vanilla-gnome": "vanilla gnome",
+            "gnome-tiling": "gnome + tiling",
+            "hyprland-style": "hyprland style",
         }
         return preset_names.get(preset_key, preset_key)
 
@@ -1078,32 +1130,44 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # Build result message
         lines = []
         if "terminal" in results:
-            lines.append(f"• Terminal: {results['terminal']}")
+            lines.append(f"• terminal: {results['terminal']}")
         if "file_manager" in results:
-            lines.append(f"• Files: {results['file_manager']}")
+            lines.append(f"• files: {results['file_manager']}")
         if "browser" in results:
-            lines.append(f"• Browser: {results['browser']}")
+            lines.append(f"• browser: {results['browser']}")
         if "music" in results:
-            lines.append(f"• Music: {results['music']}")
+            lines.append(f"• music: {results['music']}")
         if "cheat_sheet" in results:
-            lines.append(f"• Cheat Sheet: {results['cheat_sheet']}")
+            lines.append(f"• cheat sheet: {results['cheat_sheet']}")
+        if "screenshot_clipboard_full" in results:
+            lines.append(f"• Screenshot → clipboard: {results['screenshot_clipboard_full']}")
+        if "screenshot_area_file" in results:
+            lines.append(f"• Screenshot area → file: {results['screenshot_area_file']}")
+        if "screenshot_area_clipboard" in results:
+            lines.append(f"• Screenshot area → clipboard: {results['screenshot_area_clipboard']}")
 
-        result_text = "\n".join(lines) if lines else "No applications detected"
+        result_text = "\n".join(lines) if lines else "no applications detected"
 
         # Show dialog with results
         dialog = Adw.AlertDialog()
-        dialog.set_heading("Launchers Configured")
+        dialog.set_heading("launchers configured")
         dialog.set_body(
-            f"Custom shortcuts have been set up:\n\n"
+            f"custom shortcuts set up:\n\n"
             f"{result_text}\n\n"
-            "Shortcuts:\n"
-            "• Super+Return → Terminal\n"
-            "• Super+E → File Manager\n"
-            "• Super+B → Browser\n"
-            "• Super+P → Music Player\n"
-            "• Super+/ → Cheat Sheet"
+            "launchers:\n"
+            "• super+return → terminal\n"
+            "• super+e → file manager\n"
+            "• super+b → browser\n"
+            "• super+p → music player\n"
+            "• super+/ → cheat sheet\n\n"
+            "screenshots:\n"
+            "• super+shift+s → screenshot ui\n"
+            "• alt+super+shift+s → full screen → file\n"
+            "• alt+super+shift+a → area → file\n"
+            "• ctrl+super+shift+s → full screen → clipboard\n"
+            "• ctrl+super+shift+a → area → clipboard"
         )
-        dialog.add_response("ok", "OK")
+        dialog.add_response("ok", "ok")
         dialog.set_default_response("ok")
         dialog.present(self)
 
@@ -1113,11 +1177,11 @@ class DailyDriverWindow(Adw.ApplicationWindow):
     def _on_load_modifications(self, button: Gtk.Button) -> None:
         """Load user modifications from a file."""
         dialog = Gtk.FileDialog()
-        dialog.set_title("Load User Modifications")
+        dialog.set_title("load user modifications")
 
         # Set up file filter for TOML files
         filter_toml = Gtk.FileFilter()
-        filter_toml.set_name("TOML files")
+        filter_toml.set_name("toml files")
         filter_toml.add_pattern("*.toml")
 
         filters = Gio.ListStore.new(Gtk.FileFilter)
@@ -1154,14 +1218,14 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             self._reload_shortcuts()
 
             num_applied = len(changed)
-            toast = Adw.Toast(title=f"Applied {num_applied} modification(s) from {path.name}")
+            toast = Adw.Toast(title=f"applied {num_applied} modification(s) from {path.name}")
             self.toast_overlay.add_toast(toast)
 
         except GLib.Error as e:
             if e.code != Gtk.DialogError.DISMISSED:
-                self._show_toast(f"Error loading file: {e.message}")
+                self._show_toast(f"error loading file: {e.message}")
         except Exception as e:
-            self._show_toast(f"Error loading profile: {e}")
+            self._show_toast(f"error loading profile: {e}")
 
     def show_cheat_sheet(self) -> None:
         """Show the cheat sheet view."""

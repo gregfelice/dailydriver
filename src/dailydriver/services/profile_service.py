@@ -114,7 +114,7 @@ class ProfileService:
 
         profile = Profile(
             name=name,
-            description=f"User modifications exported from {base_preset_name} preset",
+            description=f"user modifications exported from {base_preset_name} preset",
             metadata={"base_preset": base_preset_name, "type": "user-modifications"},
         )
 
@@ -326,7 +326,7 @@ class ProfileService:
 
         mods_profile = Profile(
             name=name,
-            description=f"User modifications exported from {base_preset_name} preset",
+            description=f"user modifications exported from {base_preset_name} preset",
             metadata={"base_preset": base_preset_name, "type": "user-modifications"},
         )
 

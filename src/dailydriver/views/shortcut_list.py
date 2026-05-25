@@ -73,7 +73,7 @@ class ShortcutRow(Adw.ActionRow):
         # Add reset button (hidden by default) - before shortcut label
         self._reset_button = Gtk.Button.new_from_icon_name("edit-undo-symbolic")
         self._reset_button.set_valign(Gtk.Align.CENTER)
-        self._reset_button.set_tooltip_text("Reset to default")
+        self._reset_button.set_tooltip_text("reset to default")
         self._reset_button.add_css_class("flat")
         self._reset_button.set_visible(False)
         self.add_suffix(self._reset_button)
@@ -91,7 +91,7 @@ class ShortcutRow(Adw.ActionRow):
         # Add edit button (rightmost)
         self._edit_button = Gtk.Button.new_from_icon_name("document-edit-symbolic")
         self._edit_button.set_valign(Gtk.Align.CENTER)
-        self._edit_button.set_tooltip_text("Edit shortcut")
+        self._edit_button.set_tooltip_text("edit shortcut")
         self._edit_button.add_css_class("flat")
         self.add_suffix(self._edit_button)
 
@@ -156,7 +156,7 @@ class ShortcutRow(Adw.ActionRow):
 
         # User modification - show warning style
         self._modified_icon.add_css_class("warning")  # Orange
-        self._modified_icon.set_tooltip_text("User modification (differs from preset)")
+        self._modified_icon.set_tooltip_text("user modification (differs from preset)")
 
     def connect_reset(self, callback: callable) -> None:
         """Connect reset button click handler."""
@@ -260,13 +260,13 @@ class ShortcutListView(Gtk.Box):
         header_box.append(icon)
 
         title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        title_label = Gtk.Label(label=category.name)
+        title_label = Gtk.Label(label=category.name.lower())
         title_label.add_css_class("title-2")
         title_label.set_xalign(0)
         title_box.append(title_label)
 
         if category.description:
-            desc_label = Gtk.Label(label=category.description)
+            desc_label = Gtk.Label(label=category.description.lower())
             desc_label.add_css_class("dim-label")
             desc_label.set_xalign(0)
             title_box.append(desc_label)
@@ -296,9 +296,9 @@ class ShortcutListView(Gtk.Box):
 
             # Create preferences group with title and description
             prefs_group = Adw.PreferencesGroup()
-            prefs_group.set_title(group_name)
+            prefs_group.set_title(group_name.lower())
             if group_name in GROUP_DESCRIPTIONS:
-                prefs_group.set_description(GROUP_DESCRIPTIONS[group_name])
+                prefs_group.set_description(GROUP_DESCRIPTIONS[group_name].lower())
 
             # Create list box for this group
             list_box = Gtk.ListBox()

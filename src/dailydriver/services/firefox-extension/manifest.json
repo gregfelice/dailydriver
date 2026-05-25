@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "nightpanel bridge",
+  "version": "1.0",
+  "description": "applies nightpanel color palette over darkreader — instrument green, amber, pure black",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "nightpanel-bridge@dailydriver",
+      "strict_min_version": "78.0"
+    }
+  },
+  "permissions": [
+    "nativeMessaging",
+    "tabs",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  }
+}

@@ -132,7 +132,7 @@ class CategorySection(Gtk.Frame):
         icon.add_css_class("dim-label")
         header.append(icon)
 
-        title = Gtk.Label(label=category.name)
+        title = Gtk.Label(label=category.name.lower())
         title.add_css_class("heading")
         title.set_xalign(0)
         header.append(title)
@@ -210,11 +210,11 @@ class CheatSheetView(Gtk.Box):
         header_box.set_margin_top(24)
         header_box.set_margin_bottom(16)
 
-        title = Gtk.Label(label="Keyboard Shortcuts")
+        title = Gtk.Label(label="keyboard shortcuts")
         title.add_css_class("title-1")
         header_box.append(title)
 
-        subtitle = Gtk.Label(label="Quick reference for all configured shortcuts")
+        subtitle = Gtk.Label(label="quick reference for all configured shortcuts")
         subtitle.add_css_class("dim-label")
         header_box.append(subtitle)
 

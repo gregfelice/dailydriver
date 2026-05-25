@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "nightpanel bridge",
-  "version": "1.5",
-  "description": "applies nightpanel color palette over darkreader — instrument green, amber, pure black",
+  "version": "1.6",
+  "description": "nightpanel bridge — dims pages when nightpanel is active",
   "browser_specific_settings": {
     "gecko": {
       "id": "nightpanel-bridge@nightpanel",

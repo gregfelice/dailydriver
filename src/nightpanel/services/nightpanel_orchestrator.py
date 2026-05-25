@@ -24,6 +24,32 @@ _ACTIVE_FILE        = Path.home() / ".config" / "nightpanel" / "nightpanel-activ
 _NP_TMUX            = Path.home() / ".config" / "nightpanel" / "themes" / "tmux-nightpanel.conf"
 _NP_ALACRITTY_THEME = Path.home() / ".config" / "alacritty" / "themes" / "themes" / "nightpanel.toml"
 _ALACRITTY_CFG      = Path.home() / ".config" / "alacritty" / "alacritty.toml"
+_GTK4_CSS           = Path.home() / ".config" / "gtk-4.0" / "gtk.css"
+_GTK3_CSS           = Path.home() / ".config" / "gtk-3.0" / "gtk.css"
+
+_NP_GTK4_CSS = """\
+/* nightpanel — backgrounds (must be explicit or GNOME may compute light from fg) */
+@define-color window_bg_color #0D0D0D;
+@define-color headerbar_bg_color #111111;
+@define-color view_bg_color #0D0D0D;
+@define-color card_bg_color #111111;
+@define-color sidebar_bg_color #0D0D0D;
+/* nightpanel — foreground / accent */
+@define-color window_fg_color #26DE81;
+@define-color headerbar_fg_color #26DE81;
+@define-color view_fg_color #26DE81;
+@define-color card_fg_color #26DE81;
+@define-color sidebar_fg_color #26DE81;
+@define-color accent_color #26DE81;
+@define-color accent_bg_color #1A3020;
+@define-color accent_fg_color #26DE81;
+/* nightpanel — desaturate file/folder icons in content areas only */
+scrolledwindow image,
+scrolledwindow picture {
+    -gtk-icon-filter: saturate(0) brightness(0.15);
+    opacity: 0.35;
+}
+"""
 _TMUX_CONF          = Path.home() / ".tmux.conf"
 # Written to make nightpanel the active theme for every new nvim session; deleted on revert.
 _NVIM_AFTER         = Path.home() / ".config" / "nvim" / "after" / "plugin" / "nightpanel_active.lua"
@@ -49,7 +75,12 @@ class NightpanelOrchestrator:
 
     def apply(self) -> None:
         """Snapshot current state then apply nightpanel to all tools."""
-        self._save_state()
+        if not _ACTIVE_FILE.exists():
+            # Only snapshot if alacritty is not already importing nightpanel —
+            # a contaminated alacritty means a previous revert failed partially.
+            alacritty_import = self._read_alacritty_import()
+            if "nightpanel" not in (alacritty_import or ""):
+                self._save_state()
         self._apply_alacritty()
         self._apply_tmux()
         self._apply_nvim()
@@ -145,6 +176,10 @@ class NightpanelOrchestrator:
             "org.gnome.desktop.background", "picture-options"
         )
 
+        # GTK CSS
+        state["gtk4_css"] = _GTK4_CSS.read_text() if _GTK4_CSS.exists() else None
+        state["gtk3_css"] = _GTK3_CSS.read_text() if _GTK3_CSS.exists() else None
+
         try:
             _STATE_PATH.write_text(json.dumps(state, indent=2))
         except OSError as e:
@@ -193,14 +228,11 @@ class NightpanelOrchestrator:
             if not _ALACRITTY_CFG.exists():
                 return
             text = _ALACRITTY_CFG.read_text()
-            # Remove nightpanel import line wherever it lives
-            text = re.sub(r"^[ \t]*import\s*=.*\n?", "", text, flags=re.MULTILINE)
-            # Only restore if prev_import is a real value (contains an array)
             if prev_import and "[" in prev_import:
-                if re.search(r"^\[general\]", text, re.MULTILINE):
-                    text = re.sub(r"^(\[general\][ \t]*)$", rf"\1\n{prev_import}", text, flags=re.MULTILINE)
-                else:
-                    text = f"[general]\n{prev_import}\n\n" + text.lstrip()
+                # Replace whatever import line is there with the saved one
+                text = re.sub(r"^[ \t]*import\s*=.*$", prev_import, text, flags=re.MULTILINE)
+            else:
+                text = re.sub(r"^[ \t]*import\s*=.*\n?", "", text, flags=re.MULTILINE)
             _ALACRITTY_CFG.write_text(text)
         except Exception as e:
             _LOG.warning("nightpanel: alacritty revert failed: %s", e)
@@ -319,7 +351,7 @@ class NightpanelOrchestrator:
             # Write manifest
             manifest = {
                 "name": "nightpanel",
-                "description": "nightpanel bridge — connects dailydriver to Firefox",
+                "description": "nightpanel bridge — connects nightpanel to Firefox",
                 "path": str(_NP_HOST_DEST),
                 "type": "stdio",
                 "allowed_extensions": [_EXT_ID],
@@ -394,13 +426,16 @@ class NightpanelOrchestrator:
 
     def _apply_gnome(self) -> None:
         self._gsettings_set("org.gnome.desktop.interface", "color-scheme", "prefer-dark")
-        # Solid near-black background — slightly lighter than pure black
         self._gsettings_set("org.gnome.desktop.background", "picture-options", "none")
         self._gsettings_set("org.gnome.desktop.background", "primary-color", "#0D0D0D")
         self._gsettings_set("org.gnome.desktop.background", "picture-uri", "")
         self._gsettings_set("org.gnome.desktop.background", "picture-uri-dark", "")
+        self._apply_gtk_css()
 
     def _revert_gnome(self, state: dict) -> None:
+        # Restore CSS before triggering color-scheme change so the reload
+        # picks up the restored (or absent) gtk.css in one pass.
+        self._revert_gtk_css(state)
         cs = state.get("gnome_color_scheme", "default")
         if cs:
             self._gsettings_set("org.gnome.desktop.interface", "color-scheme", cs)
@@ -415,3 +450,26 @@ class NightpanelOrchestrator:
         if bg_color:
             self._gsettings_set("org.gnome.desktop.background", "primary-color", bg_color)
         self._gsettings_set("org.gnome.desktop.background", "picture-options", bg_options)
+
+    def _apply_gtk_css(self) -> None:
+        try:
+            for path in (_GTK4_CSS, _GTK3_CSS):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                existing = path.read_text() if path.exists() else ""
+                if "/* nightpanel" not in existing:
+                    path.write_text(_NP_GTK4_CSS + existing)
+            _run(["pkill", "nautilus"])
+        except OSError as e:
+            _LOG.warning("nightpanel: gtk css apply failed: %s", e)
+
+    def _revert_gtk_css(self, state: dict) -> None:
+        try:
+            for path, key in ((_GTK4_CSS, "gtk4_css"), (_GTK3_CSS, "gtk3_css")):
+                prev = state.get(key)
+                if prev is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    path.write_text(prev)
+            _run(["pkill", "nautilus"])
+        except OSError as e:
+            _LOG.warning("nightpanel: gtk css revert failed: %s", e)

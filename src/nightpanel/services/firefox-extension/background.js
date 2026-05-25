@@ -6,8 +6,8 @@ const HOST     = 'nightpanel';
 const STYLE_ID = 'nightpanel-palette';
 
 // ── CSS ────────────────────────────────────────────────────────────────────
-// Invert + hue-rotate the whole page (black bg, legible text, no DarkReader
-// dependency). Images and video are double-inverted back to normal.
+// Invert + hue-rotate the whole page (black bg, legible text).
+// Images and video are double-inverted back to normal.
 // brightness() is injected at apply-time from the command payload.
 
 function makeCss(brightness) {
@@ -57,7 +57,7 @@ browser.runtime.onInstalled.addListener(({ reason }) => {
     browser.notifications.create('np-installed', {
         type:    'basic',
         title:   'nightpanel bridge installed',
-        message: 'Toggle nightpanel from the dailydriver app or the GNOME panel button.',
+        message: 'Toggle nightpanel from the nightpanel app or the GNOME panel button.',
     });
 });
 
@@ -139,6 +139,6 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
-// ── Boot ───────────────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────────
 
 connect();

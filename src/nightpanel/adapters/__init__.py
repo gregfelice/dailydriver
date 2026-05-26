@@ -7,6 +7,7 @@ from .claude_code import ClaudeCodeAdapter
 from .emacs import EmacsAdapter
 from .firefox import FirefoxAdapter
 from .gnome import GnomeAdapter
+from .gws import GwsAdapter
 from .nvim import NvimAdapter
 from .tmux import TmuxAdapter
 
@@ -17,6 +18,7 @@ __all__ = [
     "EmacsAdapter",
     "FirefoxAdapter",
     "GnomeAdapter",
+    "GwsAdapter",
     "NvimAdapter",
     "TmuxAdapter",
 ]

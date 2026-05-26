@@ -23,6 +23,7 @@ from ..adapters import (
     EmacsAdapter,
     FirefoxAdapter,
     GnomeAdapter,
+    GwsAdapter,
     NvimAdapter,
     TmuxAdapter,
 )
@@ -86,6 +87,7 @@ class NightpanelOrchestrator:
                 ClaudeCodeAdapter(),
                 GnomeAdapter(),
                 FirefoxAdapter(),
+                GwsAdapter(),
             ]
         )
 

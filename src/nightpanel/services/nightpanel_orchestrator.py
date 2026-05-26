@@ -162,10 +162,27 @@ class NightpanelOrchestrator:
         """Return ``{adapter_name: matches_expected}`` for every active adapter."""
         return {a.name: a.verify(expected) for a in self._active_adapters()}
 
+    _BRIGHTNESS_MIN_INTERVAL = 0.1   # seconds; rate-limit FF command writes to 10/s
+
     def update_brightness(self, brightness: float) -> None:
-        """Push a brightness update to the Firefox extension."""
+        """Push a brightness update to the Firefox extension.
+
+        Rate-limited via _BRIGHTNESS_MIN_INTERVAL — without this, every
+        Gtk.Scale value-changed signal (which can arrive 30+ times per
+        second during drag, or from spurious scroll-wheel events
+        passing through the parent ActionRow) writes np-command.json,
+        which the native messaging host then forwards to Firefox at
+        500ms cadence. The result is observable as a visible
+        "cycling" of page brightness when the slider gets even a hint
+        of wheel input from anywhere on its surrounding row.
+        """
         if not _ACTIVE_FILE.exists():
             return
+        import time
+        now = time.monotonic()
+        if now - getattr(self, "_last_brightness_write", 0.0) < self._BRIGHTNESS_MIN_INTERVAL:
+            return
+        self._last_brightness_write = now
         try:
             _NP_COMMAND.parent.mkdir(parents=True, exist_ok=True)
             _NP_COMMAND.write_text(json.dumps({"action": "apply", "brightness": brightness}))

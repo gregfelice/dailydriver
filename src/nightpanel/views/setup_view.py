@@ -87,6 +87,17 @@ class SetupView(Adw.PreferencesPage):
         self._brightness_scale.add_mark(1.0, Gtk.PositionType.BOTTOM, None)
         self._brightness_scale.add_mark(1.5, Gtk.PositionType.BOTTOM, None)
         self._brightness_scale.connect("value-changed", self._on_brightness_changed)
+        # Consume scroll events at capture phase before Gtk.Range's built-in
+        # scroll-to-adjust handler sees them. Without this, any wheel/touchpad
+        # scroll passing through the parent ActionRow drifts the slider
+        # without user intent — observed as continuous brightness updates
+        # being written even when the user isn't touching the slider.
+        _no_scroll = Gtk.EventControllerScroll.new(
+            Gtk.EventControllerScrollFlags.BOTH_AXES
+        )
+        _no_scroll.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        _no_scroll.connect("scroll", lambda *_: True)
+        self._brightness_scale.add_controller(_no_scroll)
         brightness_row.add_suffix(self._brightness_scale)
         nightpanel_group.add(brightness_row)
 

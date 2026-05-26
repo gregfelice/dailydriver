@@ -127,10 +127,21 @@ function onCommand(cmd) {
 
 async function injectTab(tabId, b) {
     const css = makeCss(b);
+    const previous = appliedCss.get(tabId);
     try {
-        // Remove any previously-injected CSS for this tab so we don't pile up
-        // multiple stylesheets across brightness changes.
-        const previous = appliedCss.get(tabId);
+        // Insert NEW CSS first, then remove the previous block. During the
+        // brief overlap, both stylesheets are active; the new one wins on
+        // same-origin same-specificity (last-declared rule). Order matters:
+        // doing remove-then-insert with an await between them leaves one
+        // paint cycle where the user-origin override is gone, which is the
+        // visible flash users see during slider drags.
+        await browser.tabs.insertCSS(tabId, {
+            code:      css,
+            cssOrigin: 'user',          // beats inline !important from the page
+            allFrames: true,
+            runAt:     'document_start',
+        });
+        appliedCss.set(tabId, css);
         if (previous) {
             try {
                 await browser.tabs.removeCSS(tabId, {
@@ -140,13 +151,6 @@ async function injectTab(tabId, b) {
                 });
             } catch (_) {}
         }
-        await browser.tabs.insertCSS(tabId, {
-            code:      css,
-            cssOrigin: 'user',          // beats inline !important from the page
-            allFrames: true,
-            runAt:     'document_start',
-        });
-        appliedCss.set(tabId, css);
     } catch (_) {}
 }
 

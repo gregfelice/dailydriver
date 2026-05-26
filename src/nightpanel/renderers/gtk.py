@@ -52,6 +52,36 @@ sidebar listview {{
     background-color: {p.bg};
 }}
 
+/* nightpanel — sharp corners + thin NP border everywhere.
+   Industrial SAAB aesthetic: square windows, no Adwaita rounding.
+   The 1px border_q grey separates the window from the canvas. */
+window,
+window.background,
+.csd,
+.csd > decoration,
+.csd > decoration-overlay,
+dialog,
+popover > arrow,
+popover > contents,
+menu,
+.menu {{
+    border-radius: 0 !important;
+    border: 1px solid {p.border_q};
+}}
+
+window > headerbar,
+window > .titlebar,
+headerbar {{
+    border-radius: 0 !important;
+    border-bottom: 1px solid {p.border_q};
+}}
+
+/* nightpanel — neutralize Adwaita's window drop-shadow ring so the
+   thin border isn't doubled by a phantom highlight. */
+window.csd {{
+    box-shadow: none;
+}}
+
 /* nightpanel — desaturate file/folder icons in content areas only */
 scrolledwindow image,
 scrolledwindow picture {{

@@ -12,7 +12,7 @@ def render(p: Palette) -> str:
 
 [colors.primary]
 background = "{p.bg}"
-foreground = "{p.fg_mid}"   # dim instrument green for default text — diff state pops via slot 77 + ANSI red
+foreground = "{p.fg}"   # instrument scale green — unified default across Nautilus / Firefox / Claude Code
 
 [colors.cursor]
 text    = "{p.bg}"
@@ -60,10 +60,10 @@ background = "None"
 [colors.normal]
 black   = "{p.bg}"
 red     = "{p.red}"
-green   = "{p.fg_mid}"     # dim instrument green — matches default fg
+green   = "{p.fg}"         # instrument scale — matches default fg
 yellow  = "{p.fg_amber}"
 blue    = "{p.fg_dim}"
-magenta = "{p.fg_mid}"
+magenta = "{p.fg}"
 cyan    = "{p.fg_bright}"
 white   = "{p.fg_light}"
 

@@ -27,15 +27,18 @@ def render(p: Palette) -> str:
 @define-color dialog_bg_color {p.bg};
 @define-color thumbnail_bg_color {p.bg};
 
-/* nightpanel — foreground / accent */
-@define-color window_fg_color {p.fg_bright};
-@define-color headerbar_fg_color {p.fg_bright};
-@define-color view_fg_color {p.fg_bright};
-@define-color card_fg_color {p.fg_bright};
-@define-color sidebar_fg_color {p.fg_bright};
-@define-color secondary_sidebar_fg_color {p.fg_bright};
-@define-color popover_fg_color {p.fg_bright};
-@define-color dialog_fg_color {p.fg_bright};
+/* nightpanel — foreground / accent.
+   Default text uses fg (#7DB890 instrument scale) for unified saturation
+   across Nautilus / Firefox / Claude Code. Bright (#26DE81 fg_bright) is
+   reserved for the accent_color (active items, focused state, links). */
+@define-color window_fg_color {p.fg};
+@define-color headerbar_fg_color {p.fg};
+@define-color view_fg_color {p.fg};
+@define-color card_fg_color {p.fg};
+@define-color sidebar_fg_color {p.fg};
+@define-color secondary_sidebar_fg_color {p.fg};
+@define-color popover_fg_color {p.fg};
+@define-color dialog_fg_color {p.fg};
 @define-color accent_color {p.fg_bright};
 @define-color accent_bg_color {p.bg_select};
 @define-color accent_fg_color {p.fg_bright};

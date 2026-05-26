@@ -19,6 +19,10 @@ Scope of latest audit (2026-05-25): orchestrator + adapter layer only. `window.p
 - [ ] **Dead DailyDriver shell extension at `/extension/`** — `metadata.json` is the old `dailydriver-cheatsheet` UUID; nothing in `src/` references it; the new nightpanel extension is at `~/.local/share/gnome-shell/extensions/nightpanel@nightpanel/` (and presumably `src/nightpanel/shell-extension/...` per the install function). Delete `/extension/`. Confusing cruft for any contributor.
 - [ ] **CLAUDE.md / docs/STATUS.md / docs/BACKLOG.md describe DailyDriver, not nightpanel** — the rename committed but docs weren't updated. New contributors will get false-rooted assumptions about scope/architecture.
 
+## Theming layer — P0.5 (UX surfacing)
+
+- [ ] **Add gws status row to the Setup tab.** Analogous to the existing Tiling Assistant status row in `views/setup_view.py`. Should show: binary present (`shutil.which("gws")`), state file present (`~/.gws/todo.state`), current theme name from snapshot, and whether NP is currently driving it (`adapter.verify("on")`). Makes the new gws adapter discoverable in the UI rather than buried in the orchestrator's adapter list.
+
 ## Theming layer — P1 (correctness / UX)
 
 - [ ] **No lock on concurrent `apply()`/`revert()`** — extension double-click or rapid CLI toggle races on `nightpanel-state.json`. Last writer wins; snapshot for the loser may be the post-apply state (the exact bug we just patched). `fcntl.flock` on the state file would fix it.

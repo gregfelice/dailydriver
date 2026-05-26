@@ -17,7 +17,9 @@ const HOST = 'nightpanel';
 // at build time.
 
 function makeCss(brightness) {
-    const imgBrightness = (brightness * 0.95).toFixed(2);
+    // Images get aggressively dimmed — half the base brightness — so photos
+    // and brand graphics don't pull the eye away from the muted text.
+    const imgBrightness = (brightness * 0.5).toFixed(2);
     return `
 /* Solid NP black canvas */
 html {

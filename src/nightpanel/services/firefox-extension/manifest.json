@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "nightpanel bridge",
-  "version": "2.2",
-  "description": "nightpanel bridge — Inter Light text, amber links, NP green, desaturated images",
+  "version": "2.3",
+  "description": "nightpanel bridge — Inter Light text, amber links, NP green, dim desaturated images",
   "browser_specific_settings": {
     "gecko": {
       "id": "nightpanel-bridge@nightpanel",

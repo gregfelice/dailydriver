@@ -1,7 +1,7 @@
 [project]
 name = "nightpanel"
-version = "0.2.0"
-description = "Visual keyboard configuration for GNOME/Wayland"
+version = "0.2.1"
+description = "Visual keyboard configuration + system-wide dark-mode orchestrator for GNOME/Wayland"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Greg Felice" }]

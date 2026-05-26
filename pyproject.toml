@@ -1,6 +1,6 @@
 [project]
 name = "nightpanel"
-version = "0.2.2"
+version = "0.2.3"
 description = "Visual keyboard configuration + system-wide dark-mode orchestrator for GNOME/Wayland"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }

@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=Daily Driver
-Comment=Visual keyboard configuration for GNOME
+Name=Nightpanel
+Comment=Visual keyboard configuration + system-wide dark-mode orchestrator
 Exec=nightpanel
 Icon=io.github.gregfelice.Nightpanel
 Terminal=false
 Type=Application
 Categories=Settings;HardwareSettings;GTK;
-Keywords=keyboard;shortcuts;keybindings;hotkeys;
+Keywords=keyboard;shortcuts;keybindings;hotkeys;theme;darkmode;nightmode;palette;
 StartupNotify=true

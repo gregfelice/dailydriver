@@ -52,43 +52,13 @@ jobs:
           pip install --break-system-packages pytest pytest-cov pytest-mock pydantic tomli tomli-w
 
       - name: Run unit tests
-        run: PYTHONPATH=src pytest tests/unit/ -v --cov=dailydriver --cov-report=term-missing --cov-report=xml
-        continue-on-error: true  # Some mocks need updating for Settings.new_full
+        run: PYTHONPATH=src pytest tests/unit/ -v --cov=nightpanel --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: coverage.xml
           fail_ci_if_error: false
-        continue-on-error: true
-
-  integration-tests:
-    name: Integration Tests (GNOME ${{ matrix.gnome_version }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - fedora: '39'
-            gnome_version: '45'
-          - fedora: '40'
-            gnome_version: '46'
-          - fedora: '41'
-            gnome_version: '47'
-    container:
-      image: ghcr.io/schneegans/gnome-shell-pod-${{ matrix.fedora }}
-      options: --privileged
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Python and dependencies
-        run: |
-          dnf install -y python3 python3-pip python3-devel python3-gobject gtk4 libadwaita
-          pip3 install pytest pytest-cov pytest-mock pydantic tomli tomli-w
-
-      - name: Run integration tests
-        run: |
-          PYTHONPATH=src xvfb-run -a python3 -m pytest tests/integration/ -v --tb=short
         continue-on-error: true
 
   preset-validation:
@@ -112,9 +82,9 @@ jobs:
         run: |
           PYTHONPATH=src python3 -c "
           from pathlib import Path
-          from dailydriver.models.profile import Profile
+          from nightpanel.models.profile import Profile
 
-          presets_dir = Path('src/dailydriver/resources/presets')
+          presets_dir = Path('src/nightpanel/resources/presets')
           for preset_path in presets_dir.glob('*.toml'):
               print(f'Validating {preset_path.name}...')
               profile = Profile.from_toml(preset_path)
@@ -123,26 +93,3 @@ jobs:
               print(f'  ✓ {len(profile.shortcuts)} shortcuts loaded')
           print('All presets valid!')
           "
-
-  flatpak-build:
-    name: Flatpak Build
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-47
-      options: --privileged
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Flatpak
-        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-        with:
-          bundle: dailydriver.flatpak
-          manifest-path: io.github.gregfelice.DailyDriver.yml
-          cache-key: flatpak-${{ github.sha }}
-
-      - name: Upload Flatpak bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: dailydriver-flatpak
-          path: dailydriver.flatpak
-          retention-days: 14

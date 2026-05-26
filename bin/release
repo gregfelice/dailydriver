@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Tag + dual-publish (Forgejo `origin` + GitHub `github` mirror).
+# Usage: bin/release v0.2.1
+#
+# GitHub Actions on the mirror picks up the tag and creates a GH Release
+# with auto-generated notes (.github/workflows/release.yml). Forgejo just
+# stores the tag — no CI engine per ADR-030. AUR PKGBUILD update and
+# extensions.gnome.org submission are separate manual steps; see
+# aur/MIGRATION.md and dist/extensions-gnome-org/SUBMISSION_CHECKLIST.md.
+set -euo pipefail
+
+VERSION="${1:?usage: bin/release VERSION (e.g. v0.2.1)}"
+
+echo "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$' || {
+    echo "✗ VERSION must be semver (e.g. v0.2.1, v1.0.0-rc.1)" >&2
+    exit 1
+}
+
+cd "$(git rev-parse --show-toplevel)"
+
+if ! git diff --quiet HEAD; then
+    echo "✗ working tree is dirty — commit or stash before releasing" >&2
+    exit 1
+fi
+
+# Confirm pyproject.toml version matches (drop leading v from $VERSION)
+PYPROJ_VERSION=$(grep -E '^version' pyproject.toml | head -1 | sed -E 's/version *= *"([^"]+)"/\1/')
+if [[ "v$PYPROJ_VERSION" != "$VERSION" ]]; then
+    echo "✗ pyproject.toml says $PYPROJ_VERSION but you're tagging $VERSION" >&2
+    echo "   bump pyproject.toml first, commit, then re-run bin/release $VERSION" >&2
+    exit 1
+fi
+
+echo "→ tagging $VERSION at $(git rev-parse --short HEAD)"
+git tag -a "$VERSION" -m "Release $VERSION"
+
+echo "→ pushing main + tag to origin (Forgejo)"
+git push origin main "$VERSION"
+
+if git remote get-url github >/dev/null 2>&1; then
+    echo "→ pushing main + tag to github mirror"
+    git push github main "$VERSION"
+else
+    echo "⚠ github remote not configured — skipping GH push"
+fi
+
+cat <<EOF
+
+✓ released $VERSION
+
+Next steps (manual, not automated):
+- GH Release will be created by GitHub Actions on the mirror. Verify at:
+  https://github.com/gregfelice/nightpanel/releases
+- After the source tarball lands, update AUR PKGBUILD sha256sum + push.
+  See aur/MIGRATION.md.
+- e.g.o. submission: see dist/extensions-gnome-org/SUBMISSION_CHECKLIST.md
+EOF

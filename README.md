@@ -1,15 +1,17 @@
-# DailyDriver
+# Nightpanel
 
-**Visual keyboard shortcut configuration for GNOME/Wayland**
+**Visual keyboard configuration + system-wide dark-mode orchestrator for GNOME/Wayland**
 
-[![Tests](https://github.com/gregfelice/dailydriver/actions/workflows/test.yml/badge.svg)](https://github.com/gregfelice/dailydriver/actions/workflows/test.yml)
+[![Tests](https://github.com/gregfelice/nightpanel/actions/workflows/test.yml/badge.svg)](https://github.com/gregfelice/nightpanel/actions/workflows/test.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![AUR](https://img.shields.io/aur/version/dailydriver)](https://aur.archlinux.org/packages/dailydriver)
+[![AUR](https://img.shields.io/aur/version/nightpanel)](https://aur.archlinux.org/packages/nightpanel)
 
-DailyDriver lets you configure GNOME keyboard shortcuts visually, apply curated presets, and see all your shortcuts at a
-glance with a keyboard cheat sheet. There's presets to instantly give you HYPR-style keymaps too.
+Nightpanel is two tools under one roof:
 
-![DailyDriver - Keyboard Visualization](data/screenshots/keyboard-view.png)
+1. **Theming orchestrator** — one click flips alacritty, tmux, nvim, emacs, GNOME (GTK CSS + background), Claude Code, and Firefox into a coordinated dark palette. Toggle from a panel button or a CLI. Reverts to your pre-apply state on click.
+2. **Keyboard configurator** (the original DailyDriver functionality) — visually edit GNOME keyboard shortcuts, apply curated presets (Hyprland-style, GNOME+Tiling, Vanilla), see everything on a cheat sheet overlay (Alt+Super+/).
+
+![Nightpanel — Keyboard Visualization](data/screenshots/keyboard-view.png)
 
 <details>
 <summary>More screenshots</summary>
@@ -34,131 +36,116 @@ Choose from curated shortcut profiles
 
 </details>
 
-## Features
+## Theming layer
 
-- **Preset Profiles** - One-click configuration with curated shortcut sets
-- **Clean Slate Mode** - Presets disable ALL shortcuts first, then apply only what's defined (no mystery keymaps)
-- **Keyboard Cheat Sheet** - Quick reference overlay showing all active shortcuts (Alt+Super+/)
-- **10 Workspace Support** - Navigate workspaces with Super+1-9, Super+0
-- **Visual Keyboard** - See shortcuts on an interactive keyboard layout
-- **Conflict Detection** - Warns when shortcuts conflict with existing bindings
-- **Tiling Assistant Integration** - Built-in support for tiling shortcuts
+The theming side is built around the **Adapter** contract — one Python class per tool that knows how to snapshot, apply, revert, and verify its piece of the palette. Adding a new tool is one class + one list append. Currently bundled:
+
+| Tool | Mechanism |
+|---|---|
+| alacritty | Flips the `import` line in `alacritty.toml` to a rendered NP theme. |
+| tmux | Sources a palette overlay; revert re-sources `~/.tmux.conf`. |
+| nvim | Drops an `after/plugin/nightpanel_active.lua`; talks to live instances over `--server`. |
+| emacs | Renders `nightpanel-theme.el`, drives daemons via `emacsclient`. |
+| GNOME (GTK CSS + background) | Writes a sentinel-wrapped block into `~/.config/gtk-{3,4}.0/gtk.css`; swaps `color-scheme` + background color via `gsettings`. |
+| Claude Code | Flips `theme` in `~/.claude/settings.json`; installs a `~/.local/bin/claude` wrapper that strips `COLORTERM` while NP is active. |
+| Firefox | Installs a tiny extension + native-messaging host; CSS overrides via `tabs.insertCSS` with `cssOrigin: "user"`. **Opt-in** — bridge install requires explicit consent because it lowers `xpinstall.signatures.required`. |
+
+Want to add an adapter for kitty / wezterm / ghostty / helix / chromium / your editor? See `src/nightpanel/adapters/base.py` for the contract and any of the existing adapters for shape. PRs welcome.
 
 ## Installation
 
 ### Arch Linux (AUR)
 
 ```bash
-yay -S dailydriver
+yay -S nightpanel
 # or
-paru -S dailydriver
+paru -S nightpanel
 ```
 
-### Flathub (Coming Soon)
-
-Flathub submission is [pending review](https://github.com/flathub/flathub/pull/7735). Once approved:
+Migrating from `dailydriver`?
 
 ```bash
-flatpak install flathub io.github.gregfelice.DailyDriver
-```
-
-### Flatpak Bundle (Manual)
-
-Download the Flatpak bundle from [Releases](https://github.com/gregfelice/dailydriver/releases):
-
-```bash
-flatpak install dailydriver-0.1.0.flatpak
-flatpak run io.github.gregfelice.DailyDriver
+sudo pacman -R dailydriver
+yay -S nightpanel
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/gregfelice/dailydriver.git
-cd dailydriver
+git clone https://github.com/gregfelice/nightpanel.git
+cd nightpanel
 meson setup build
 meson compile -C build
 meson install -C build
 ```
 
+### Dev mode (no install)
+
+```bash
+./run-dev.sh        # config UI
+nightpanel-toggle   # engage/disengage theming
+```
+
 ## Platform Support
 
-| Platform         | Version    | Status                 |
-| ---------------- | ---------- | ---------------------- |
-| GNOME on Wayland | 45, 46, 47 | Tested in CI           |
-| GNOME on X11     | 45+        | Should work (untested) |
-| KDE Plasma       | -          | Planned                |
-| Hyprland         | -          | Planned                |
+| Platform         | Status                 |
+| ---------------- | ---------------------- |
+| GNOME on Wayland | Primary target |
+| GNOME on X11     | Should work (untested) |
+| KDE Plasma       | Planned (adapter shape exists) |
+| Hyprland         | Planned |
 
 ### Requirements
 
-- GNOME 45+
-- Wayland session (recommended)
-- Flatpak runtime: `org.gnome.Platform//47`
+- Python 3.11+
+- GTK 4, libadwaita 1
+- GNOME 45+ (for the panel-button extension)
 
-## Built-in Presets
+## Built-in Presets (keyboard layer)
 
-| Preset             | Description                                                                                                 |
-| ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| **Hyprland Style** | Keyboard-centric workflow with vim-like navigation. Super+Q close, Super+hjkl tiling, Super+1-0 workspaces. |
-| **GNOME + Tiling** | Standard GNOME with Tiling Assistant snap zones. Alt+F4 close, Super+arrows for tiling.                     |
-| **Vanilla GNOME**  | Pure GNOME Shell defaults without tiling extensions.                                                        |
+| Preset | Description |
+|---|---|
+| **Hyprland Style** | Keyboard-centric: Super+Q close, Super+hjkl tiling, Super+1-0 workspaces |
+| **GNOME + Tiling** | Standard GNOME with Tiling Assistant snap zones |
+| **Vanilla GNOME**  | Pure GNOME Shell defaults |
 
-## How It Works
+Presets use a "clean slate" model: every shortcut is cleared first, then only the ones in the preset TOML are applied. Your cheat sheet shows exactly what's in your config — no inherited defaults.
 
-When you apply a preset, DailyDriver:
+## How the theming toggle works
 
-1. **Disables ALL shortcuts** - Clears every GNOME keybinding to start fresh
-2. **Applies only what's defined** - Sets exactly the shortcuts in your preset file
-3. **Preserves custom launchers** - Your Terminal/Browser/Files shortcuts stay intact
+1. **Snapshot** — every adapter captures its pre-apply state into `~/.config/nightpanel/nightpanel-state.json`.
+2. **Apply** — every adapter writes its part of the palette.
+3. **Mark active** — touch `~/.config/nightpanel/nightpanel-active`. (Only if ≥1 adapter succeeded; nightpanel won't lie about being "on" if everything failed.)
+4. **Revert** — read the snapshot, each adapter restores its pre-state, unlink the marker.
 
-This "clean slate" approach means your cheat sheet shows exactly what's in your config - no inherited GNOME defaults
-cluttering things up.
+The state machine is defensive against partial failures, double-clicks, and the user manually deleting the marker file mid-cycle.
 
 ## Development
 
 ```bash
 # Run tests
-pytest tests/ -v
+pytest tests/unit/ -v
 
 # Lint
 ruff check src/ tests/
 ruff format src/ tests/
-
-# Build Flatpak locally
-flatpak-builder --force-clean --user --install build-dir io.github.gregfelice.DailyDriver.yml
 ```
-
-## CI/CD
-
-Tests run on every push:
-
-- **Lint** - ruff check and format
-- **Unit Tests** - pytest with coverage
-- **Integration Tests** - Real GNOME Shell on Fedora 39/40/41 (GNOME 45/46/47)
-- **Preset Validation** - Ensures all preset TOML files are valid
-- **Flatpak Build** - Verifies the app builds as a Flatpak
 
 ## Roadmap
 
-- [x] Screenshots for README
-- [x] AUR package
-- [ ] Flathub ([pending review](https://github.com/flathub/flathub/pull/7735))
+- [x] AUR package (under `nightpanel` from 0.2.1)
 - [ ] COPR (Fedora)
+- [ ] More tier-1 adapters: kitty, wezterm, helix, chromium
 - [ ] KDE Plasma backend
 - [ ] Hyprland backend
-- [ ] Custom shortcut editor (create new shortcuts)
-- [ ] Import/export profiles
+- [ ] UI surfacing of per-adapter apply outcomes
+- [ ] Concurrent-apply lock + finer test coverage of the adapter layer
 
 ## Feedback & Contributing
 
-Your feedback helps make DailyDriver better!
-
-- **Bug reports**: [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=bug&title=Bug:%20)
-- **Feature requests**:
-  [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=enhancement&title=Feature:%20)
-- **Questions**:
-  [Open an issue](https://github.com/gregfelice/dailydriver/issues/new?labels=question&title=Question:%20)
+- **Bug reports**: [Open an issue](https://github.com/gregfelice/nightpanel/issues/new?labels=bug&title=Bug:%20)
+- **Feature requests**: [Open an issue](https://github.com/gregfelice/nightpanel/issues/new?labels=enhancement&title=Feature:%20)
+- **Questions**: [Open an issue](https://github.com/gregfelice/nightpanel/issues/new?labels=question&title=Question:%20)
 
 ## License
 

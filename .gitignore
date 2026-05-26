@@ -16,6 +16,11 @@ venv*/
 *.egg-info/
 .eggs/
 dist/
+# but keep the prepared third-party submission packages — these aren't
+# build output, they're release-ready artifacts the maintainer reviews
+# and uploads by hand (per the submission-carefulness convention).
+!dist/extensions-gnome-org/
+!dist/extensions-gnome-org/**
 
 # Testing
 .coverage

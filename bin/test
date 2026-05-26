@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Run the synchronous test suite.
+# Wraps the dev venv's pytest with the standard project PYTHONPATH.
+# Per ADR-030: this is the canonical test entrypoint; CI and pre-commit
+# both invoke it, so the test command shape is the same everywhere.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+VENV=".venv-dev"
+if [[ ! -x "$VENV/bin/python" ]]; then
+    echo "✗ dev venv not found at $VENV — run ./run-dev.sh first to bootstrap" >&2
+    exit 1
+fi
+
+exec env PYTHONPATH=src "$VENV/bin/python" -m pytest tests/unit/ "$@"

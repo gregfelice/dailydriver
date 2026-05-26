@@ -172,7 +172,7 @@ class ShortcutsBackend(ABC):
                 "manager",
             ],
             "browser": ["browser", "firefox", "chrome", "chromium", "web", "internet"],
-            "cheat_sheet": ["cheat", "dailydriver", "shortcut", "help"],
+            "cheat_sheet": ["cheat", "nightpanel", "shortcut", "help"],
             "music": ["music", "spotify", "player", "rhythmbox", "tidal", "audio"],
         }
 

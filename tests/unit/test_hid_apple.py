@@ -12,7 +12,7 @@ class TestHidAppleService:
 
     def test_is_module_loaded_true(self, mock_hid_apple: Path) -> None:
         """Test module loaded detection when params exist."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = mock_hid_apple
@@ -21,7 +21,7 @@ class TestHidAppleService:
 
     def test_is_module_loaded_false(self, tmp_path: Path) -> None:
         """Test module loaded detection when params don't exist."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = tmp_path / "nonexistent"
@@ -30,7 +30,7 @@ class TestHidAppleService:
 
     def test_is_available_when_loaded(self, mock_hid_apple: Path) -> None:
         """Test module availability when loaded."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = mock_hid_apple
@@ -39,7 +39,7 @@ class TestHidAppleService:
 
     def test_is_available_with_modinfo(self, tmp_path: Path) -> None:
         """Test module availability via modinfo."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = tmp_path / "nonexistent"
@@ -51,7 +51,7 @@ class TestHidAppleService:
 
     def test_is_available_not_installed(self, tmp_path: Path) -> None:
         """Test module unavailable when not installed."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = tmp_path / "nonexistent"
@@ -63,8 +63,8 @@ class TestHidAppleService:
 
     def test_get_current_config_default(self, mock_hid_apple: Path) -> None:
         """Test reading default configuration."""
-        from dailydriver.models.profile import FnMode
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import FnMode
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = mock_hid_apple
@@ -79,8 +79,8 @@ class TestHidAppleService:
 
     def test_get_current_config_custom(self, mock_hid_apple: Path) -> None:
         """Test reading custom configuration."""
-        from dailydriver.models.profile import FnMode
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import FnMode
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         # Set custom values
         (mock_hid_apple / "fnmode").write_text("1\n")
@@ -101,7 +101,7 @@ class TestHidAppleService:
 
     def test_get_current_config_not_loaded(self, tmp_path: Path) -> None:
         """Test reading config when module not loaded."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = tmp_path / "nonexistent"
@@ -111,8 +111,8 @@ class TestHidAppleService:
 
     def test_get_persistent_config(self, tmp_path: Path) -> None:
         """Test reading persistent modprobe.d configuration."""
-        from dailydriver.models.profile import FnMode
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import FnMode
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         # Create mock modprobe.d config
         modprobe_conf = tmp_path / "hid_apple.conf"
@@ -130,7 +130,7 @@ class TestHidAppleService:
 
     def test_get_persistent_config_not_exists(self, tmp_path: Path) -> None:
         """Test reading persistent config when file doesn't exist."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODPROBE_CONF_PATH = tmp_path / "nonexistent.conf"
@@ -140,8 +140,8 @@ class TestHidAppleService:
 
     def test_apply_config_not_loaded(self, tmp_path: Path) -> None:
         """Test applying config when module not loaded."""
-        from dailydriver.models.profile import MacKeyboardConfig
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import MacKeyboardConfig
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = tmp_path / "nonexistent"
@@ -153,8 +153,8 @@ class TestHidAppleService:
 
     def test_apply_config_with_pkexec(self, mock_hid_apple: Path, tmp_path: Path) -> None:
         """Test applying config with pkexec."""
-        from dailydriver.models.profile import FnMode, MacKeyboardConfig
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import FnMode, MacKeyboardConfig
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = mock_hid_apple
@@ -178,8 +178,8 @@ class TestHidAppleService:
 
     def test_apply_config_pkexec_failure(self, mock_hid_apple: Path, tmp_path: Path) -> None:
         """Test handling pkexec failure."""
-        from dailydriver.models.profile import MacKeyboardConfig
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import MacKeyboardConfig
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = mock_hid_apple
@@ -196,7 +196,7 @@ class TestHidAppleService:
 
     def test_reload_module(self) -> None:
         """Test module reload."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
 
@@ -211,7 +211,7 @@ class TestHidAppleService:
 
     def test_reload_module_failure(self) -> None:
         """Test handling module reload failure."""
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
 
@@ -226,8 +226,8 @@ class TestHidAppleService:
 
     def test_fnmode_mapping(self, mock_hid_apple: Path) -> None:
         """Test fnmode value to FnMode enum mapping."""
-        from dailydriver.models.profile import FnMode
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import FnMode
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = mock_hid_apple
@@ -252,8 +252,8 @@ class TestHidAppleService:
 
     def test_caching(self, mock_hid_apple: Path) -> None:
         """Test configuration caching after apply."""
-        from dailydriver.models.profile import FnMode, MacKeyboardConfig
-        from dailydriver.services.hid_apple_service import HidAppleService
+        from nightpanel.models.profile import FnMode, MacKeyboardConfig
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         service = HidAppleService()
         service.MODULE_PARAMS_PATH = mock_hid_apple

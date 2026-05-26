@@ -264,7 +264,7 @@ def _setup_gi_mocks() -> None:
 
     # Create mock GLib
     mock_glib = MagicMock()
-    mock_glib.get_user_config_dir = lambda: "/tmp/dailydriver-test/config"
+    mock_glib.get_user_config_dir = lambda: "/tmp/nightpanel-test/config"
     mock_glib.get_system_data_dirs = lambda: ["/usr/share", "/usr/local/share"]
 
     # Create mock repository
@@ -508,7 +508,7 @@ class MockGLib:
     @staticmethod
     def get_user_config_dir() -> str:
         """Return mock config directory."""
-        return "/tmp/dailydriver-test/config"
+        return "/tmp/nightpanel-test/config"
 
     @staticmethod
     def get_system_data_dirs() -> list[str]:
@@ -706,4 +706,4 @@ def sample_profile_toml(tmp_path: Path, sample_profile_data: dict[str, Any]) -> 
 @pytest.fixture
 def presets_dir() -> Path:
     """Return the path to the built-in presets directory."""
-    return Path(__file__).parent.parent / "src" / "dailydriver" / "resources" / "presets"
+    return Path(__file__).parent.parent / "src" / "nightpanel" / "resources" / "presets"

@@ -12,10 +12,10 @@ class TestProfileService:
 
     def test_list_profiles_empty(self, tmp_path: Path) -> None:
         """Test listing profiles when none exist."""
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.services.profile_service import ProfileService
 
         # Mock GLib paths
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -29,8 +29,8 @@ class TestProfileService:
 
     def test_list_profiles_with_user_profiles(self, tmp_path: Path) -> None:
         """Test listing user profiles."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -39,7 +39,7 @@ class TestProfileService:
         profile = Profile(name="my-profile", description="Test")
         profile.to_toml(profiles_dir / "my-profile.toml")
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -54,12 +54,12 @@ class TestProfileService:
 
     def test_list_profiles_includes_presets(self, tmp_path: Path, presets_dir: Path) -> None:
         """Test that built-in presets are included in listing."""
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -75,8 +75,8 @@ class TestProfileService:
 
     def test_get_profile_user(self, tmp_path: Path) -> None:
         """Test getting a user profile by name."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -85,7 +85,7 @@ class TestProfileService:
         profile = Profile(name="my-profile", description="Test")
         profile.to_toml(profiles_dir / "my-profile.toml")
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -100,12 +100,12 @@ class TestProfileService:
 
     def test_get_profile_preset(self, tmp_path: Path, presets_dir: Path) -> None:
         """Test getting a preset profile by name."""
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -120,12 +120,12 @@ class TestProfileService:
 
     def test_get_profile_not_found(self, tmp_path: Path) -> None:
         """Test getting a non-existent profile."""
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -139,13 +139,13 @@ class TestProfileService:
 
     def test_save_profile(self, tmp_path: Path) -> None:
         """Test saving a profile."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -161,8 +161,8 @@ class TestProfileService:
 
     def test_delete_profile(self, tmp_path: Path) -> None:
         """Test deleting a profile."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -171,7 +171,7 @@ class TestProfileService:
         profile = Profile(name="to-delete", description="Test")
         profile.to_toml(profiles_dir / "to-delete.toml")
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -186,12 +186,12 @@ class TestProfileService:
 
     def test_delete_profile_not_found(self, tmp_path: Path) -> None:
         """Test deleting non-existent profile."""
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -205,8 +205,8 @@ class TestProfileService:
 
     def test_import_profile(self, tmp_path: Path) -> None:
         """Test importing a profile from external file."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -218,7 +218,7 @@ class TestProfileService:
         external_path = external_dir / "imported.toml"
         external_profile.to_toml(external_path)
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -233,15 +233,15 @@ class TestProfileService:
 
     def test_export_profile(self, tmp_path: Path) -> None:
         """Test exporting a profile."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
         export_dir = tmp_path / "export"
         export_dir.mkdir()
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -261,12 +261,12 @@ class TestProfileService:
 
     def test_active_profile_property(self, tmp_path: Path) -> None:
         """Test active_profile property."""
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -279,9 +279,9 @@ class TestProfileService:
 
     def test_reset_orphaned_shortcuts(self, tmp_path: Path) -> None:
         """Test resetting shortcuts not in new profile."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -312,7 +312,7 @@ class TestProfileService:
             "org.gnome.desktop.wm.keybindings.minimize": minimize_shortcut
         }
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -331,9 +331,9 @@ class TestProfileDiff:
 
     def test_get_profile_diff_no_changes(self, tmp_path: Path) -> None:
         """Test diff when profile matches current settings."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.models.shortcut import KeyBinding, Shortcut
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.models.shortcut import KeyBinding, Shortcut
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -358,7 +358,7 @@ class TestProfileDiff:
             "org.gnome.desktop.wm.keybindings.close": shortcut
         }
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -373,9 +373,9 @@ class TestProfileDiff:
 
     def test_get_profile_diff_with_changes(self, tmp_path: Path, mock_gi: dict) -> None:
         """Test diff when profile differs from current settings."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.models.shortcut import KeyBinding, Shortcut
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.models.shortcut import KeyBinding, Shortcut
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -400,7 +400,7 @@ class TestProfileDiff:
             "org.gnome.desktop.wm.keybindings.close": shortcut
         }
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -419,7 +419,7 @@ class TestUserModifications:
 
     def test_create_modifications_profile_empty(self, tmp_path: Path, presets_dir: Path) -> None:
         """Test creating modifications profile when no changes."""
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -428,7 +428,7 @@ class TestUserModifications:
         mock_gsettings = MagicMock()
         mock_gsettings.load_all_shortcuts.return_value = {}
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 

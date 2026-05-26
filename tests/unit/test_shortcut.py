@@ -15,13 +15,13 @@ class TestModifier:
 
     def test_modifier_none(self, mock_gi: dict) -> None:
         """Test NONE modifier."""
-        from dailydriver.models.shortcut import Modifier
+        from nightpanel.models.shortcut import Modifier
 
         assert Modifier.NONE.value == 0
 
     def test_modifier_flags(self, mock_gi: dict) -> None:
         """Test individual modifier flags."""
-        from dailydriver.models.shortcut import Modifier
+        from nightpanel.models.shortcut import Modifier
 
         assert Modifier.SHIFT.value > 0
         assert Modifier.CTRL.value > 0
@@ -30,7 +30,7 @@ class TestModifier:
 
     def test_modifier_combinations(self, mock_gi: dict) -> None:
         """Test combining modifier flags."""
-        from dailydriver.models.shortcut import Modifier
+        from nightpanel.models.shortcut import Modifier
 
         combined = Modifier.CTRL | Modifier.SHIFT
         assert Modifier.CTRL in combined
@@ -39,7 +39,7 @@ class TestModifier:
 
     def test_from_gtk(self, mock_gi: dict) -> None:
         """Test conversion from GTK modifier state."""
-        from dailydriver.models.shortcut import Modifier
+        from nightpanel.models.shortcut import Modifier
         from tests.conftest import MockGdkModifierType
 
         # Single modifier
@@ -54,7 +54,7 @@ class TestModifier:
 
     def test_to_gtk(self, mock_gi: dict) -> None:
         """Test conversion to GTK modifier state."""
-        from dailydriver.models.shortcut import Modifier
+        from nightpanel.models.shortcut import Modifier
         from tests.conftest import MockGdkModifierType
 
         mods = Modifier.CTRL | Modifier.SHIFT
@@ -69,7 +69,7 @@ class TestKeyBinding:
 
     def test_keybinding_creation(self, mock_gi: dict) -> None:
         """Test basic KeyBinding creation."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier
+        from nightpanel.models.shortcut import KeyBinding, Modifier
 
         binding = KeyBinding(keyval=0x61, modifiers=Modifier.CTRL)
 
@@ -78,7 +78,7 @@ class TestKeyBinding:
 
     def test_from_accelerator_simple(self, mock_gi: dict) -> None:
         """Test parsing simple accelerator strings."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier
+        from nightpanel.models.shortcut import KeyBinding, Modifier
 
         # Super+a
         binding = KeyBinding.from_accelerator("<Super>a")
@@ -88,7 +88,7 @@ class TestKeyBinding:
 
     def test_from_accelerator_combined_modifiers(self, mock_gi: dict) -> None:
         """Test parsing accelerator with multiple modifiers."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier
+        from nightpanel.models.shortcut import KeyBinding, Modifier
 
         # Ctrl+Shift+Tab
         binding = KeyBinding.from_accelerator("<Control><Shift>Tab")
@@ -98,20 +98,20 @@ class TestKeyBinding:
 
     def test_from_accelerator_empty(self, mock_gi: dict) -> None:
         """Test parsing empty accelerator."""
-        from dailydriver.models.shortcut import KeyBinding
+        from nightpanel.models.shortcut import KeyBinding
 
         assert KeyBinding.from_accelerator("") is None
         assert KeyBinding.from_accelerator("disabled") is None
 
     def test_from_accelerator_invalid(self, mock_gi: dict) -> None:
         """Test parsing invalid accelerator."""
-        from dailydriver.models.shortcut import KeyBinding
+        from nightpanel.models.shortcut import KeyBinding
 
         assert KeyBinding.from_accelerator("<InvalidKey>xyz") is None
 
     def test_to_accelerator(self, mock_gi: dict) -> None:
         """Test converting KeyBinding back to accelerator string."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier
+        from nightpanel.models.shortcut import KeyBinding, Modifier
 
         binding = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
         accel = binding.to_accelerator()
@@ -121,7 +121,7 @@ class TestKeyBinding:
 
     def test_to_label(self, mock_gi: dict) -> None:
         """Test converting KeyBinding to human-readable label."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier
+        from nightpanel.models.shortcut import KeyBinding, Modifier
 
         binding = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
         label = binding.to_label()
@@ -130,14 +130,14 @@ class TestKeyBinding:
 
     def test_key_name(self, mock_gi: dict) -> None:
         """Test getting key name without modifiers."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier
+        from nightpanel.models.shortcut import KeyBinding, Modifier
 
         binding = KeyBinding(keyval=0xFF09, modifiers=Modifier.ALT)  # Tab
         assert binding.key_name == "Tab"
 
     def test_round_trip(self, mock_gi: dict) -> None:
         """Test accelerator parsing round-trip."""
-        from dailydriver.models.shortcut import KeyBinding
+        from nightpanel.models.shortcut import KeyBinding
 
         original = "<Super>Left"
         binding = KeyBinding.from_accelerator(original)
@@ -152,7 +152,7 @@ class TestKeyBinding:
 
     def test_frozen_dataclass(self, mock_gi: dict) -> None:
         """Test that KeyBinding is frozen (immutable)."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier
+        from nightpanel.models.shortcut import KeyBinding, Modifier
 
         binding = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
 
@@ -165,7 +165,7 @@ class TestShortcutCategory:
 
     def test_category_creation(self, mock_gi: dict) -> None:
         """Test basic category creation."""
-        from dailydriver.models.shortcut import ShortcutCategory
+        from nightpanel.models.shortcut import ShortcutCategory
 
         category = ShortcutCategory(
             id="window-management",
@@ -184,7 +184,7 @@ class TestShortcut:
 
     def test_shortcut_creation(self, mock_gi: dict) -> None:
         """Test basic shortcut creation."""
-        from dailydriver.models.shortcut import Shortcut
+        from nightpanel.models.shortcut import Shortcut
 
         shortcut = Shortcut(
             id="org.gnome.desktop.wm.keybindings.close",
@@ -201,7 +201,7 @@ class TestShortcut:
 
     def test_accelerator_property(self, mock_gi: dict) -> None:
         """Test accelerator property."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         shortcut = Shortcut(
             id="test",
@@ -229,7 +229,7 @@ class TestShortcut:
 
     def test_accelerators_property(self, mock_gi: dict) -> None:
         """Test accelerators property with multiple bindings."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         shortcut = Shortcut(
             id="test",
@@ -250,7 +250,7 @@ class TestShortcut:
 
     def test_label_property(self, mock_gi: dict) -> None:
         """Test label property."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         shortcut = Shortcut(
             id="test",
@@ -278,7 +278,7 @@ class TestShortcut:
 
     def test_is_modified(self, mock_gi: dict) -> None:
         """Test is_modified property."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         binding1 = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
         binding2 = KeyBinding(keyval=0x62, modifiers=Modifier.SUPER)
@@ -311,7 +311,7 @@ class TestShortcut:
 
     def test_set_binding(self, mock_gi: dict) -> None:
         """Test set_binding method."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         shortcut = Shortcut(
             id="test",
@@ -334,7 +334,7 @@ class TestShortcut:
 
     def test_add_binding_single(self, mock_gi: dict) -> None:
         """Test add_binding when allow_multiple is False."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         shortcut = Shortcut(
             id="test",
@@ -359,7 +359,7 @@ class TestShortcut:
 
     def test_add_binding_multiple(self, mock_gi: dict) -> None:
         """Test add_binding when allow_multiple is True."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         shortcut = Shortcut(
             id="test",
@@ -385,7 +385,7 @@ class TestShortcut:
 
     def test_remove_binding(self, mock_gi: dict) -> None:
         """Test remove_binding method."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         binding1 = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
         binding2 = KeyBinding(keyval=0x62, modifiers=Modifier.SUPER)
@@ -411,7 +411,7 @@ class TestShortcut:
 
     def test_reset(self, mock_gi: dict) -> None:
         """Test reset method."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         default_binding = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
         current_binding = KeyBinding(keyval=0x62, modifiers=Modifier.CTRL)
@@ -436,7 +436,7 @@ class TestShortcut:
 
     def test_conflicts_with(self, mock_gi: dict) -> None:
         """Test conflicts_with method."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         binding1 = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
         binding2 = KeyBinding(keyval=0x62, modifiers=Modifier.SUPER)

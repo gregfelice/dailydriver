@@ -12,7 +12,7 @@ class TestPresetLoading:
 
     def test_all_presets_load_successfully(self, presets_dir: Path) -> None:
         """Test that all preset files load without errors."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         for preset_path in presets_dir.glob("*.toml"):
             profile = Profile.from_toml(preset_path)
@@ -24,8 +24,8 @@ class TestPresetLoading:
 
     def test_preset_shortcut_format_valid(self, presets_dir: Path, mock_gi: dict) -> None:
         """Test that all shortcuts in presets have valid format."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.models.shortcut import KeyBinding
+        from nightpanel.models.profile import Profile
+        from nightpanel.models.shortcut import KeyBinding
 
         for preset_path in presets_dir.glob("*.toml"):
             profile = Profile.from_toml(preset_path)
@@ -48,8 +48,8 @@ class TestPresetApplication:
 
     def test_vanilla_gnome_applies(self, tmp_path: Path, presets_dir: Path) -> None:
         """Test applying vanilla-gnome preset."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -68,7 +68,7 @@ class TestPresetApplication:
         mock_gsettings.load_all_shortcuts.return_value = {}
         mock_gsettings.save_shortcut.side_effect = mock_save
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -89,9 +89,9 @@ class TestPresetDiff:
 
     def test_diff_shows_changes(self, tmp_path: Path, presets_dir: Path, mock_gi: dict) -> None:
         """Test that diff correctly identifies changes."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.models.shortcut import KeyBinding, Shortcut
-        from dailydriver.services.profile_service import ProfileService
+        from nightpanel.models.profile import Profile
+        from nightpanel.models.shortcut import KeyBinding, Shortcut
+        from nightpanel.services.profile_service import ProfileService
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
@@ -117,7 +117,7 @@ class TestPresetDiff:
             "org.gnome.desktop.wm.keybindings.close": mock_shortcut
         }
 
-        with patch("dailydriver.services.profile_service.GLib") as mock_glib:
+        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
 
@@ -136,7 +136,7 @@ class TestPresetSwitching:
 
     def test_switch_presets(self, tmp_path: Path, presets_dir: Path) -> None:
         """Test switching from one preset to another."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)

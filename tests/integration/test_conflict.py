@@ -11,8 +11,8 @@ class TestConflictDetection:
 
     def test_no_internal_conflicts_in_presets(self, presets_dir: Path, mock_gi: dict) -> None:
         """Test that presets have no internal conflicts."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.models.shortcut import KeyBinding
+        from nightpanel.models.profile import Profile
+        from nightpanel.models.shortcut import KeyBinding
 
         for preset_path in presets_dir.glob("*.toml"):
             profile = Profile.from_toml(preset_path)
@@ -43,7 +43,7 @@ class TestConflictDetection:
 
     def test_shortcut_conflicts_with_method(self, mock_gi: dict) -> None:
         """Test the Shortcut.conflicts_with method."""
-        from dailydriver.models.shortcut import KeyBinding, Modifier, Shortcut
+        from nightpanel.models.shortcut import KeyBinding, Modifier, Shortcut
 
         binding = KeyBinding(keyval=0x61, modifiers=Modifier.SUPER)
 
@@ -92,7 +92,7 @@ class TestCrossPresetConflicts:
 
     def test_vanilla_vs_hyprland_differences(self, presets_dir: Path) -> None:
         """Test that vanilla and hyprland presets have meaningful differences."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         vanilla = Profile.from_toml(presets_dir / "vanilla-gnome.toml")
         hyprland = Profile.from_toml(presets_dir / "hyprland-style.toml")
@@ -114,8 +114,8 @@ class TestBindingUniqueness:
 
     def test_presets_minimize_super_key_conflicts(self, presets_dir: Path, mock_gi: dict) -> None:
         """Test that presets avoid Super+letter conflicts where possible."""
-        from dailydriver.models.profile import Profile
-        from dailydriver.models.shortcut import KeyBinding
+        from nightpanel.models.profile import Profile
+        from nightpanel.models.shortcut import KeyBinding
 
         for preset_path in presets_dir.glob("*.toml"):
             profile = Profile.from_toml(preset_path)

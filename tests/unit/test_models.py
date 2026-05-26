@@ -17,7 +17,7 @@ class TestKeyboardType:
 
     def test_display_names(self) -> None:
         """Test that all keyboard types have display names."""
-        from dailydriver.models.keyboard import KeyboardType
+        from nightpanel.models.keyboard import KeyboardType
 
         for kb_type in KeyboardType:
             assert kb_type.display_name
@@ -25,7 +25,7 @@ class TestKeyboardType:
 
     def test_is_apple(self) -> None:
         """Test Apple keyboard detection."""
-        from dailydriver.models.keyboard import KeyboardType
+        from nightpanel.models.keyboard import KeyboardType
 
         assert KeyboardType.MAC_ANSI.is_apple
         assert KeyboardType.MAC_ISO.is_apple
@@ -34,7 +34,7 @@ class TestKeyboardType:
 
     def test_is_iso(self) -> None:
         """Test ISO layout detection."""
-        from dailydriver.models.keyboard import KeyboardType
+        from nightpanel.models.keyboard import KeyboardType
 
         assert KeyboardType.ISO_105.is_iso
         assert KeyboardType.MAC_ISO.is_iso
@@ -47,7 +47,7 @@ class TestKey:
 
     def test_key_creation(self) -> None:
         """Test basic key creation."""
-        from dailydriver.models.keyboard import Key
+        from nightpanel.models.keyboard import Key
 
         key = Key(x=0.0, y=0.0, width=1.0, height=1.0, label="A")
 
@@ -59,7 +59,7 @@ class TestKey:
 
     def test_center_position(self) -> None:
         """Test center position calculation."""
-        from dailydriver.models.keyboard import Key
+        from nightpanel.models.keyboard import Key
 
         # 1u key at (0,0)
         key = Key(x=0.0, y=0.0, width=1.0, height=1.0)
@@ -78,7 +78,7 @@ class TestKey:
 
     def test_key_with_labels(self) -> None:
         """Test key with primary and secondary labels."""
-        from dailydriver.models.keyboard import Key
+        from nightpanel.models.keyboard import Key
 
         key = Key(
             x=0.0,
@@ -92,7 +92,7 @@ class TestKey:
 
     def test_modifier_key(self) -> None:
         """Test modifier key properties."""
-        from dailydriver.models.keyboard import Key
+        from nightpanel.models.keyboard import Key
 
         shift = Key(x=0.0, y=0.0, label="Shift", is_modifier=True)
         regular = Key(x=1.0, y=0.0, label="A")
@@ -106,7 +106,7 @@ class TestKeyboardLayout:
 
     def test_layout_from_json(self, tmp_path: Path) -> None:
         """Test loading layout from JSON file."""
-        from dailydriver.models.keyboard import KeyboardLayout, KeyboardType
+        from nightpanel.models.keyboard import KeyboardLayout, KeyboardType
 
         layout_data = {
             "id": "test-layout",
@@ -135,7 +135,7 @@ class TestKeyboardLayout:
 
     def test_get_key_at(self, tmp_path: Path) -> None:
         """Test finding key at position."""
-        from dailydriver.models.keyboard import KeyboardLayout
+        from nightpanel.models.keyboard import KeyboardLayout
 
         layout_data = {
             "id": "test",
@@ -169,7 +169,7 @@ class TestKeyboardLayout:
 
     def test_get_key_by_keycode(self, tmp_path: Path) -> None:
         """Test finding key by keycode."""
-        from dailydriver.models.keyboard import KeyboardLayout
+        from nightpanel.models.keyboard import KeyboardLayout
 
         layout_data = {
             "id": "test",
@@ -204,7 +204,7 @@ class TestDetectedKeyboard:
 
     def test_basic_creation(self) -> None:
         """Test basic DetectedKeyboard creation."""
-        from dailydriver.models.keyboard import DetectedKeyboard
+        from nightpanel.models.keyboard import DetectedKeyboard
 
         kb = DetectedKeyboard(
             name="Test Keyboard",
@@ -219,7 +219,7 @@ class TestDetectedKeyboard:
 
     def test_usb_id(self) -> None:
         """Test USB ID formatting."""
-        from dailydriver.models.keyboard import DetectedKeyboard
+        from nightpanel.models.keyboard import DetectedKeyboard
 
         kb = DetectedKeyboard(
             name="Test",
@@ -232,7 +232,7 @@ class TestDetectedKeyboard:
 
     def test_display_name_with_brand(self) -> None:
         """Test display name generation."""
-        from dailydriver.models.keyboard import DetectedKeyboard
+        from nightpanel.models.keyboard import DetectedKeyboard
 
         # Keyboard with model name
         kb_with_model = DetectedKeyboard(
@@ -267,7 +267,7 @@ class TestDetectedKeyboard:
 
     def test_form_factor(self) -> None:
         """Test form factor detection."""
-        from dailydriver.models.keyboard import DetectedKeyboard
+        from nightpanel.models.keyboard import DetectedKeyboard
 
         # Full-size with numpad
         full = DetectedKeyboard(
@@ -300,7 +300,7 @@ class TestDetectedKeyboard:
 
     def test_suggested_layout(self) -> None:
         """Test layout suggestion."""
-        from dailydriver.models.keyboard import DetectedKeyboard, KeyboardType
+        from nightpanel.models.keyboard import DetectedKeyboard, KeyboardType
 
         # Mac keyboard
         mac = DetectedKeyboard(
@@ -337,7 +337,7 @@ class TestFnMode:
 
     def test_fn_mode_values(self) -> None:
         """Test FnMode enum values."""
-        from dailydriver.models.profile import FnMode
+        from nightpanel.models.profile import FnMode
 
         assert FnMode.DISABLED.value == 0
         assert FnMode.FKEYS.value == 1
@@ -349,7 +349,7 @@ class TestMacKeyboardConfig:
 
     def test_default_config(self) -> None:
         """Test default Mac keyboard configuration."""
-        from dailydriver.models.profile import FnMode, MacKeyboardConfig
+        from nightpanel.models.profile import FnMode, MacKeyboardConfig
 
         config = MacKeyboardConfig()
 
@@ -360,7 +360,7 @@ class TestMacKeyboardConfig:
 
     def test_to_modprobe_options(self) -> None:
         """Test conversion to modprobe options."""
-        from dailydriver.models.profile import FnMode, MacKeyboardConfig
+        from nightpanel.models.profile import FnMode, MacKeyboardConfig
 
         config = MacKeyboardConfig(
             fn_mode=FnMode.FKEYS,
@@ -382,7 +382,7 @@ class TestXKBOptions:
 
     def test_default_options(self) -> None:
         """Test default XKB options."""
-        from dailydriver.models.profile import XKBOptions
+        from nightpanel.models.profile import XKBOptions
 
         options = XKBOptions()
 
@@ -392,7 +392,7 @@ class TestXKBOptions:
 
     def test_to_xkb_options(self) -> None:
         """Test conversion to XKB options list."""
-        from dailydriver.models.profile import XKBOptions
+        from nightpanel.models.profile import XKBOptions
 
         options = XKBOptions(
             caps_lock_behavior="caps:escape",
@@ -409,7 +409,7 @@ class TestXKBOptions:
 
     def test_partial_options(self) -> None:
         """Test with only some options set."""
-        from dailydriver.models.profile import XKBOptions
+        from nightpanel.models.profile import XKBOptions
 
         options = XKBOptions(caps_lock_behavior="caps:ctrl_modifier")
 
@@ -423,7 +423,7 @@ class TestProfile:
 
     def test_profile_creation(self) -> None:
         """Test basic profile creation."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         profile = Profile(
             name="test-profile",
@@ -437,7 +437,7 @@ class TestProfile:
 
     def test_profile_from_toml(self, sample_profile_toml: Path) -> None:
         """Test loading profile from TOML file."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         profile = Profile.from_toml(sample_profile_toml)
 
@@ -448,7 +448,7 @@ class TestProfile:
 
     def test_profile_to_toml(self, tmp_path: Path) -> None:
         """Test saving profile to TOML file."""
-        from dailydriver.models.profile import Profile, XKBOptions
+        from nightpanel.models.profile import Profile, XKBOptions
 
         profile = Profile(
             name="save-test",
@@ -470,7 +470,7 @@ class TestProfile:
 
     def test_profile_round_trip(self, tmp_path: Path) -> None:
         """Test that profile survives TOML round-trip."""
-        from dailydriver.models.profile import (
+        from nightpanel.models.profile import (
             FnMode,
             MacKeyboardConfig,
             Profile,
@@ -515,7 +515,7 @@ class TestProfile:
 
     def test_shortcut_key_generation(self) -> None:
         """Test shortcut storage key generation."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         profile = Profile(name="test")
 
@@ -524,7 +524,7 @@ class TestProfile:
 
     def test_set_and_get_shortcut(self) -> None:
         """Test setting and getting shortcuts."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         profile = Profile(name="test")
 
@@ -545,7 +545,7 @@ class TestPresetValidity:
 
     def test_all_presets_load(self, presets_dir: Path) -> None:
         """Test that all preset files can be loaded."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         preset_files = list(presets_dir.glob("*.toml"))
         assert len(preset_files) >= 3, "Expected at least 3 preset files"
@@ -558,7 +558,7 @@ class TestPresetValidity:
 
     def test_preset_has_required_fields(self, presets_dir: Path) -> None:
         """Test that presets have required metadata."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         for preset_path in presets_dir.glob("*.toml"):
             profile = Profile.from_toml(preset_path)
@@ -568,7 +568,7 @@ class TestPresetValidity:
 
     def test_vanilla_gnome_preset(self, presets_dir: Path) -> None:
         """Test specific vanilla-gnome preset content."""
-        from dailydriver.models.profile import Profile
+        from nightpanel.models.profile import Profile
 
         profile = Profile.from_toml(presets_dir / "vanilla-gnome.toml")
 

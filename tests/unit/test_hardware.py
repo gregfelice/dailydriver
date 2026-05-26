@@ -14,7 +14,7 @@ class TestHardwareService:
 
     def test_list_keyboards_empty(self, mock_sysfs: Path) -> None:
         """Test listing keyboards when none are present."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         service = HardwareService()
         service._input_path = mock_sysfs / "class" / "input"
@@ -24,7 +24,7 @@ class TestHardwareService:
 
     def test_list_keyboards_with_apple(self, mock_sysfs: Path) -> None:
         """Test detecting Apple Magic Keyboard."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         # Create Apple keyboard
         create_mock_keyboard(
@@ -49,7 +49,7 @@ class TestHardwareService:
 
     def test_list_keyboards_multiple(self, mock_sysfs: Path) -> None:
         """Test detecting multiple keyboards."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         # Create Apple keyboard
         create_mock_keyboard(
@@ -80,7 +80,7 @@ class TestHardwareService:
 
     def test_filter_non_keyboards(self, mock_sysfs: Path) -> None:
         """Test that non-keyboard devices are filtered out."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         # Create a trackpad (should be filtered)
         create_mock_keyboard(
@@ -123,7 +123,7 @@ class TestHardwareService:
 
     def test_vendor_detection(self, mock_sysfs: Path) -> None:
         """Test vendor name detection from vendor ID."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         # Create Logitech keyboard
         create_mock_keyboard(
@@ -147,7 +147,7 @@ class TestHardwareService:
 
     def test_bluetooth_detection(self, mock_sysfs: Path) -> None:
         """Test Bluetooth device detection."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         create_mock_keyboard(
             mock_sysfs,
@@ -169,7 +169,7 @@ class TestHardwareService:
 
     def test_internal_keyboard_detection(self, mock_sysfs: Path) -> None:
         """Test internal/laptop keyboard detection."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         create_mock_keyboard(
             mock_sysfs,
@@ -190,7 +190,7 @@ class TestHardwareService:
 
     def test_get_mac_keyboards(self, mock_sysfs: Path) -> None:
         """Test filtering for Mac keyboards only."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         # Create Apple keyboard
         create_mock_keyboard(
@@ -222,7 +222,7 @@ class TestHardwareService:
 
     def test_model_name_for_known_product(self, mock_sysfs: Path) -> None:
         """Test model name detection for known Apple products."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         create_mock_keyboard(
             mock_sysfs,
@@ -243,7 +243,7 @@ class TestHardwareService:
 
     def test_device_path(self, mock_sysfs: Path) -> None:
         """Test device path generation."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         create_mock_keyboard(
             mock_sysfs,
@@ -264,7 +264,7 @@ class TestHardwareService:
 
     def test_missing_sysfs(self) -> None:
         """Test behavior when /sys/class/input doesn't exist."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         service = HardwareService()
         service._input_path = Path("/nonexistent/path")
@@ -274,7 +274,7 @@ class TestHardwareService:
 
     def test_permission_errors(self, mock_sysfs: Path) -> None:
         """Test handling of permission errors."""
-        from dailydriver.services.hardware_service import HardwareService
+        from nightpanel.services.hardware_service import HardwareService
 
         # Create keyboard with unreadable name file
         event_dir = mock_sysfs / "class" / "input" / "event0"

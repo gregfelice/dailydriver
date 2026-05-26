@@ -12,7 +12,7 @@ class TestCapsLockBehavior:
 
     def test_all_behaviors_have_display_names(self) -> None:
         """Test that all behaviors have display names."""
-        from dailydriver.services.keyboard_config_service import CapsLockBehavior
+        from nightpanel.services.keyboard_config_service import CapsLockBehavior
 
         for behavior in CapsLockBehavior:
             assert behavior.display_name
@@ -20,7 +20,7 @@ class TestCapsLockBehavior:
 
     def test_display_name_values(self) -> None:
         """Test specific display name values."""
-        from dailydriver.services.keyboard_config_service import CapsLockBehavior
+        from nightpanel.services.keyboard_config_service import CapsLockBehavior
 
         assert CapsLockBehavior.CAPS_LOCK.display_name == "Caps Lock (default)"
         assert CapsLockBehavior.CTRL.display_name == "Control"
@@ -31,13 +31,13 @@ class TestCapsLockBehavior:
 
     def test_xkb_option_default_is_none(self) -> None:
         """Test that CAPS_LOCK (default) returns None for xkb_option."""
-        from dailydriver.services.keyboard_config_service import CapsLockBehavior
+        from nightpanel.services.keyboard_config_service import CapsLockBehavior
 
         assert CapsLockBehavior.CAPS_LOCK.xkb_option is None
 
     def test_xkb_option_non_default(self) -> None:
         """Test xkb_option for non-default behaviors."""
-        from dailydriver.services.keyboard_config_service import CapsLockBehavior
+        from nightpanel.services.keyboard_config_service import CapsLockBehavior
 
         assert CapsLockBehavior.CTRL.xkb_option == "caps:ctrl_modifier"
         assert CapsLockBehavior.ESCAPE.xkb_option == "caps:escape"
@@ -47,7 +47,7 @@ class TestCapsLockBehavior:
 
     def test_enum_values(self) -> None:
         """Test enum value strings."""
-        from dailydriver.services.keyboard_config_service import CapsLockBehavior
+        from nightpanel.services.keyboard_config_service import CapsLockBehavior
 
         assert CapsLockBehavior.CAPS_LOCK.value == "default"
         assert CapsLockBehavior.CTRL.value == "caps:ctrl_modifier"
@@ -59,7 +59,7 @@ class TestModifierConfig:
 
     def test_default_values(self) -> None:
         """Test default ModifierConfig values."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -73,7 +73,7 @@ class TestModifierConfig:
 
     def test_custom_values(self) -> None:
         """Test ModifierConfig with custom values."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -92,7 +92,7 @@ class TestModifierConfig:
 
     def test_to_dict(self) -> None:
         """Test serialization to dict."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -113,7 +113,7 @@ class TestModifierConfig:
 
     def test_from_dict_full(self) -> None:
         """Test deserialization from dict with all values."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -134,7 +134,7 @@ class TestModifierConfig:
 
     def test_from_dict_empty(self) -> None:
         """Test deserialization from empty dict uses defaults."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -148,7 +148,7 @@ class TestModifierConfig:
 
     def test_from_dict_partial(self) -> None:
         """Test deserialization with partial data."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -164,7 +164,7 @@ class TestModifierConfig:
 
     def test_from_dict_unknown_caps_lock(self) -> None:
         """Test deserialization with unknown caps_lock value defaults to CAPS_LOCK."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -177,7 +177,7 @@ class TestModifierConfig:
 
     def test_round_trip(self) -> None:
         """Test serialization round-trip."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             ModifierConfig,
         )
@@ -203,9 +203,9 @@ class TestKeyboardConfigService:
 
     def test_init_no_schemas(self) -> None:
         """Test initialization when schemas don't exist."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -218,9 +218,9 @@ class TestKeyboardConfigService:
 
     def test_init_with_schemas(self) -> None:
         """Test initialization when schemas exist."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()  # Schema exists
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -240,10 +240,10 @@ class TestKeyboardType:
 
     def test_get_keyboard_type_default(self) -> None:
         """Test getting default keyboard type when no settings."""
-        from dailydriver.models.keyboard import KeyboardType
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.models.keyboard import KeyboardType
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -256,10 +256,10 @@ class TestKeyboardType:
 
     def test_get_keyboard_type_from_settings(self) -> None:
         """Test getting keyboard type from settings."""
-        from dailydriver.models.keyboard import KeyboardType
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.models.keyboard import KeyboardType
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -275,10 +275,10 @@ class TestKeyboardType:
 
     def test_set_keyboard_type_success(self) -> None:
         """Test setting keyboard type successfully."""
-        from dailydriver.models.keyboard import KeyboardType
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.models.keyboard import KeyboardType
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -294,10 +294,10 @@ class TestKeyboardType:
 
     def test_set_keyboard_type_no_settings(self) -> None:
         """Test setting keyboard type when settings unavailable."""
-        from dailydriver.models.keyboard import KeyboardType
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.models.keyboard import KeyboardType
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -314,9 +314,9 @@ class TestXkbOptions:
 
     def test_get_xkb_options_empty(self) -> None:
         """Test getting XKB options when none set."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -332,9 +332,9 @@ class TestXkbOptions:
 
     def test_get_xkb_options_with_values(self) -> None:
         """Test getting XKB options with values."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -350,9 +350,9 @@ class TestXkbOptions:
 
     def test_get_xkb_options_no_settings(self) -> None:
         """Test getting XKB options when settings unavailable."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -365,9 +365,9 @@ class TestXkbOptions:
 
     def test_set_xkb_options_success(self) -> None:
         """Test setting XKB options successfully."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -383,9 +383,9 @@ class TestXkbOptions:
 
     def test_set_xkb_options_no_settings(self) -> None:
         """Test setting XKB options when settings unavailable."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -402,12 +402,12 @@ class TestCapsLockBehaviorService:
 
     def test_get_caps_lock_behavior_default(self) -> None:
         """Test getting Caps Lock behavior when no caps option set."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -423,12 +423,12 @@ class TestCapsLockBehaviorService:
 
     def test_get_caps_lock_behavior_escape(self) -> None:
         """Test getting Caps Lock behavior when set to escape."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -444,12 +444,12 @@ class TestCapsLockBehaviorService:
 
     def test_get_caps_lock_behavior_ctrl(self) -> None:
         """Test getting Caps Lock behavior when set to Ctrl."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -465,12 +465,12 @@ class TestCapsLockBehaviorService:
 
     def test_set_caps_lock_behavior_adds_option(self) -> None:
         """Test setting Caps Lock adds xkb option."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -489,12 +489,12 @@ class TestCapsLockBehaviorService:
 
     def test_set_caps_lock_behavior_replaces_existing(self) -> None:
         """Test setting Caps Lock replaces existing caps option."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -513,12 +513,12 @@ class TestCapsLockBehaviorService:
 
     def test_set_caps_lock_behavior_default_removes_option(self) -> None:
         """Test setting Caps Lock to default removes caps option."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -540,9 +540,9 @@ class TestAppleKeyboard:
 
     def test_get_apple_swap_cmd_opt_enabled(self, tmp_path: Path) -> None:
         """Test detecting Cmd/Option swap enabled."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -558,9 +558,9 @@ class TestAppleKeyboard:
 
     def test_get_apple_swap_cmd_opt_disabled(self) -> None:
         """Test detecting Cmd/Option swap disabled."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -575,9 +575,9 @@ class TestAppleKeyboard:
 
     def test_get_apple_swap_cmd_opt_not_found(self) -> None:
         """Test when hid_apple module not loaded."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -592,9 +592,9 @@ class TestAppleKeyboard:
 
     def test_get_apple_fn_mode_fkeys(self) -> None:
         """Test getting fn mode as fkeys (1)."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -609,9 +609,9 @@ class TestAppleKeyboard:
 
     def test_get_apple_fn_mode_media(self) -> None:
         """Test getting fn mode as media (2)."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -626,9 +626,9 @@ class TestAppleKeyboard:
 
     def test_get_apple_fn_mode_default_on_error(self) -> None:
         """Test fn mode defaults to 2 (media) on error."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -647,13 +647,13 @@ class TestModifierConfigApplication:
 
     def test_apply_modifier_config_success(self) -> None:
         """Test applying modifier config successfully."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
             ModifierConfig,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -672,12 +672,12 @@ class TestModifierConfigApplication:
 
     def test_apply_modifier_config_failure(self) -> None:
         """Test applying modifier config when settings unavailable."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             KeyboardConfigService,
             ModifierConfig,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -692,12 +692,12 @@ class TestModifierConfigApplication:
 
     def test_get_current_modifier_config(self) -> None:
         """Test getting current modifier config from system state."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
 
-        with patch("dailydriver.services.keyboard_config_service.Gio") as mock_gio:
+        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -730,7 +730,7 @@ class TestPresetConfigs:
 
     def test_get_preset_configs_returns_dict(self) -> None:
         """Test that get_preset_configs returns a dict."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
         presets = KeyboardConfigService.get_preset_configs()
 
@@ -739,7 +739,7 @@ class TestPresetConfigs:
 
     def test_preset_names(self) -> None:
         """Test expected preset names exist."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
         presets = KeyboardConfigService.get_preset_configs()
 
@@ -751,7 +751,7 @@ class TestPresetConfigs:
 
     def test_default_preset(self) -> None:
         """Test default preset has default values."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
@@ -766,7 +766,7 @@ class TestPresetConfigs:
 
     def test_vim_preset(self) -> None:
         """Test vim preset has Escape for Caps Lock."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
@@ -779,7 +779,7 @@ class TestPresetConfigs:
 
     def test_developer_preset(self) -> None:
         """Test developer preset has Ctrl for Caps Lock."""
-        from dailydriver.services.keyboard_config_service import (
+        from nightpanel.services.keyboard_config_service import (
             CapsLockBehavior,
             KeyboardConfigService,
         )
@@ -792,7 +792,7 @@ class TestPresetConfigs:
 
     def test_mac_to_pc_preset(self) -> None:
         """Test mac-to-pc preset swaps Cmd/Option."""
-        from dailydriver.services.keyboard_config_service import KeyboardConfigService
+        from nightpanel.services.keyboard_config_service import KeyboardConfigService
 
         presets = KeyboardConfigService.get_preset_configs()
         mac_to_pc = presets["mac-to-pc"]

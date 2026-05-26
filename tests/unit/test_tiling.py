@@ -11,7 +11,7 @@ class TestTilingStatus:
 
     def test_tiling_status_values(self) -> None:
         """Test TilingStatus enum exists with expected values."""
-        from dailydriver.services.tiling_service import TilingStatus
+        from nightpanel.services.tiling_service import TilingStatus
 
         assert TilingStatus.NONE
         assert TilingStatus.NATIVE_BASIC
@@ -23,7 +23,7 @@ class TestTilingInfo:
 
     def test_tiling_info_creation(self) -> None:
         """Test TilingInfo creation."""
-        from dailydriver.services.tiling_service import TilingInfo, TilingStatus
+        from nightpanel.services.tiling_service import TilingInfo, TilingStatus
 
         info = TilingInfo(status=TilingStatus.NONE)
         assert info.status == TilingStatus.NONE
@@ -32,7 +32,7 @@ class TestTilingInfo:
 
     def test_tiling_info_with_extension(self) -> None:
         """Test TilingInfo with extension info."""
-        from dailydriver.services.tiling_service import TilingInfo, TilingStatus
+        from nightpanel.services.tiling_service import TilingInfo, TilingStatus
 
         info = TilingInfo(
             status=TilingStatus.NONE,
@@ -47,7 +47,7 @@ class TestNativeTilingDefaults:
 
     def test_native_tiling_defaults_defined(self) -> None:
         """Test that native tiling defaults are defined."""
-        from dailydriver.services.tiling_service import NATIVE_TILING_DEFAULTS
+        from nightpanel.services.tiling_service import NATIVE_TILING_DEFAULTS
 
         assert "org.gnome.mutter.keybindings" in NATIVE_TILING_DEFAULTS
         assert "org.gnome.desktop.wm.keybindings" in NATIVE_TILING_DEFAULTS
@@ -67,9 +67,9 @@ class TestTilingService:
 
     def test_detect_status_no_tiling(self) -> None:
         """Test detecting no tiling configuration."""
-        from dailydriver.services.tiling_service import TilingService, TilingStatus
+        from nightpanel.services.tiling_service import TilingService, TilingStatus
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -90,9 +90,9 @@ class TestTilingService:
 
     def test_detect_status_tiling_assistant_enabled(self) -> None:
         """Test detecting Tiling Assistant enabled."""
-        from dailydriver.services.tiling_service import TilingService, TilingStatus
+        from nightpanel.services.tiling_service import TilingService, TilingStatus
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -109,9 +109,9 @@ class TestTilingService:
 
     def test_detect_status_native_tiling_bound(self) -> None:
         """Test detecting native GNOME tiling keys bound."""
-        from dailydriver.services.tiling_service import TilingService, TilingStatus
+        from nightpanel.services.tiling_service import TilingService, TilingStatus
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -133,9 +133,9 @@ class TestTilingService:
 
     def test_enable_extension(self) -> None:
         """Test enabling GNOME extension."""
-        from dailydriver.services.tiling_service import TilingService
+        from nightpanel.services.tiling_service import TilingService
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -153,9 +153,9 @@ class TestTilingService:
 
     def test_enable_extension_failure(self) -> None:
         """Test handling extension enable failure."""
-        from dailydriver.services.tiling_service import TilingService
+        from nightpanel.services.tiling_service import TilingService
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -169,9 +169,9 @@ class TestTilingService:
 
     def test_get_tiling_assistant_id_found(self) -> None:
         """Test finding Tiling Assistant extension ID."""
-        from dailydriver.services.tiling_service import TilingService
+        from nightpanel.services.tiling_service import TilingService
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -188,9 +188,9 @@ class TestTilingService:
 
     def test_get_tiling_assistant_id_not_found(self) -> None:
         """Test when Tiling Assistant is not installed."""
-        from dailydriver.services.tiling_service import TilingService
+        from nightpanel.services.tiling_service import TilingService
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -206,9 +206,9 @@ class TestTilingService:
 
     def test_enable_native_tiling(self) -> None:
         """Test enabling native GNOME tiling."""
-        from dailydriver.services.tiling_service import TilingService
+        from nightpanel.services.tiling_service import TilingService
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -225,9 +225,9 @@ class TestTilingService:
 
     def test_apply_tiling_assistant_defaults_schema_missing(self) -> None:
         """Test applying defaults when schema doesn't exist."""
-        from dailydriver.services.tiling_service import TilingService
+        from nightpanel.services.tiling_service import TilingService
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             # Schema doesn't exist
             mock_source.lookup.return_value = None
@@ -240,9 +240,9 @@ class TestTilingService:
 
     def test_apply_tiling_assistant_defaults_success(self) -> None:
         """Test applying Tiling Assistant defaults."""
-        from dailydriver.services.tiling_service import TilingService
+        from nightpanel.services.tiling_service import TilingService
 
-        with patch("dailydriver.services.tiling_service.Gio") as mock_gio:
+        with patch("nightpanel.services.tiling_service.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source

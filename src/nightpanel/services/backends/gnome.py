@@ -953,7 +953,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
             "browser": ["browser", "firefox", "chrome", "chromium", "brave", "vivaldi", "web"],
             "file_manager": ["files", "nautilus", "nemo", "thunar", "dolphin", "pcmanfm"],
             "music": ["music", "player", "spotify", "tidal", "rhythmbox"],
-            "cheat_sheet": ["cheat", "dailydriver"],
+            "cheat_sheet": ["cheat", "nightpanel"],
             "screenshot_full_file": ["screenshot to file"],
             "screenshot_full_clipboard": ["screenshot to clipboard"],
             "screenshot_area_file": ["screenshot area to file"],
@@ -1108,7 +1108,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         """Check if workspaces are configured for Hyprland-style (10 fixed)."""
         return self.get_workspace_count() == 10 and not self.is_dynamic_workspaces()
 
-    def detect_dailydriver(self) -> str | None:
+    def detect_nightpanel(self) -> str | None:
         """Detect DailyDriver installation."""
         try:
             result = subprocess.run(
@@ -1203,19 +1203,19 @@ class GnomeShortcutsBackend(ShortcutsBackend):
             results["music"] = "no music player found"
 
         # Cheat sheet
-        dailydriver = self.detect_dailydriver()
-        if dailydriver:
+        nightpanel_cmd = self.detect_nightpanel()
+        if nightpanel_cmd:
             existing = self.find_custom_keybinding_by_type("cheat_sheet")
             if existing:
                 self.update_custom_keybinding(
-                    existing["path"], command=dailydriver, binding="<Alt><Super>slash"
+                    existing["path"], command=nightpanel_cmd, binding="<Alt><Super>slash"
                 )
-                results["cheat_sheet"] = f"updated: {dailydriver}"
+                results["cheat_sheet"] = f"updated: {nightpanel_cmd}"
             else:
                 path = self.add_custom_keybinding(
-                    "keyboard cheat sheet", dailydriver, "<Alt><Super>slash"
+                    "keyboard cheat sheet", nightpanel_cmd, "<Alt><Super>slash"
                 )
-                results["cheat_sheet"] = f"added: {dailydriver}" if path else "failed to add"
+                results["cheat_sheet"] = f"added: {nightpanel_cmd}" if path else "failed to add"
         else:
             results["cheat_sheet"] = "nightpanel not found"
 

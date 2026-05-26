@@ -15,7 +15,7 @@ class TestHumanizeKeyName:
 
     def test_media_key_names(self) -> None:
         """Test media key humanization."""
-        from dailydriver.services.gsettings_service import _humanize_key_name
+        from nightpanel.services.gsettings_service import _humanize_key_name
 
         assert _humanize_key_name("next") == "Next Track"
         assert _humanize_key_name("previous") == "Previous Track"
@@ -25,14 +25,14 @@ class TestHumanizeKeyName:
 
     def test_strip_static_suffix(self) -> None:
         """Test stripping -static suffix."""
-        from dailydriver.services.gsettings_service import _humanize_key_name
+        from nightpanel.services.gsettings_service import _humanize_key_name
 
         assert _humanize_key_name("play-static") == "Play/Pause"
         assert _humanize_key_name("next-static") == "Next Track"
 
     def test_strip_prefixes(self) -> None:
         """Test stripping common prefixes."""
-        from dailydriver.services.gsettings_service import _humanize_key_name
+        from nightpanel.services.gsettings_service import _humanize_key_name
 
         # switch-to-workspace-N -> N
         assert _humanize_key_name("switch-to-workspace-1") == "1"
@@ -51,7 +51,7 @@ class TestHumanizeKeyName:
 
     def test_tiling_names(self) -> None:
         """Test tiling shortcut humanization."""
-        from dailydriver.services.gsettings_service import _humanize_key_name
+        from nightpanel.services.gsettings_service import _humanize_key_name
 
         assert _humanize_key_name("tile-left-half") == "Left Half"
         assert _humanize_key_name("tile-right-half") == "Right Half"
@@ -61,7 +61,7 @@ class TestHumanizeKeyName:
 
     def test_layout_numbering(self) -> None:
         """Test layout number conversion (0-indexed to 1-indexed)."""
-        from dailydriver.services.gsettings_service import _humanize_key_name
+        from nightpanel.services.gsettings_service import _humanize_key_name
 
         assert _humanize_key_name("layout0") == "Layout 1"
         assert _humanize_key_name("layout9") == "Layout 10"
@@ -69,13 +69,13 @@ class TestHumanizeKeyName:
 
     def test_skip_internal_keys(self) -> None:
         """Test that internal keys return empty string."""
-        from dailydriver.services.gsettings_service import _humanize_key_name
+        from nightpanel.services.gsettings_service import _humanize_key_name
 
         assert _humanize_key_name("tile-left-half-ignore-ta") == ""
 
     def test_general_humanization(self) -> None:
         """Test general hyphen-to-space conversion."""
-        from dailydriver.services.gsettings_service import _humanize_key_name
+        from nightpanel.services.gsettings_service import _humanize_key_name
 
         result = _humanize_key_name("some-random-key")
         assert "Some" in result
@@ -87,7 +87,7 @@ class TestGetShortcutGroup:
 
     def test_tiling_halves(self) -> None:
         """Test tiling halves grouping."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("tile-left-half") == "Tile Halves"
         assert _get_shortcut_group("tile-right-half") == "Tile Halves"
@@ -95,28 +95,28 @@ class TestGetShortcutGroup:
 
     def test_tiling_quarters(self) -> None:
         """Test tiling quarters grouping."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("tile-topleft-quarter") == "Tile Quarters"
         assert _get_shortcut_group("move-to-corner-nw") == "Tile Quarters"
 
     def test_workspace_switching(self) -> None:
         """Test workspace switching grouping."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("switch-to-workspace-1") == "Switch Workspace"
         assert _get_shortcut_group("switch-to-workspace-left") == "Switch Workspace"
 
     def test_workspace_moving(self) -> None:
         """Test workspace moving grouping."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("move-to-workspace-1") == "Move to Workspace"
         assert _get_shortcut_group("move-to-workspace-right") == "Move to Workspace"
 
     def test_volume_controls(self) -> None:
         """Test volume controls grouping."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("volume-up") == "Volume"
         assert _get_shortcut_group("volume-down") == "Volume"
@@ -124,7 +124,7 @@ class TestGetShortcutGroup:
 
     def test_media_playback(self) -> None:
         """Test media playback grouping."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("play") == "Playback"
         assert _get_shortcut_group("pause") == "Playback"
@@ -133,14 +133,14 @@ class TestGetShortcutGroup:
 
     def test_screenshots(self) -> None:
         """Test screenshot grouping."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("show-screenshot-ui") == "Screenshots"
         assert _get_shortcut_group("screenshot-window") == "Screenshots"
 
     def test_internal_keys(self) -> None:
         """Test internal keys are marked as such."""
-        from dailydriver.services.gsettings_service import _get_shortcut_group
+        from nightpanel.services.gsettings_service import _get_shortcut_group
 
         assert _get_shortcut_group("tile-left-half-ignore-ta") == "Internal"
 
@@ -150,7 +150,7 @@ class TestGetKeyCategory:
 
     def test_window_management(self) -> None:
         """Test window management category."""
-        from dailydriver.services.gsettings_service import _get_key_category
+        from nightpanel.services.gsettings_service import _get_key_category
 
         assert _get_key_category("close") == "window-management"
         assert _get_key_category("minimize") == "window-management"
@@ -158,7 +158,7 @@ class TestGetKeyCategory:
 
     def test_navigation(self) -> None:
         """Test navigation category."""
-        from dailydriver.services.gsettings_service import _get_key_category
+        from nightpanel.services.gsettings_service import _get_key_category
 
         assert _get_key_category("switch-windows") == "navigation"
         assert _get_key_category("switch-to-workspace-1") == "navigation"
@@ -166,14 +166,14 @@ class TestGetKeyCategory:
 
     def test_media(self) -> None:
         """Test media category."""
-        from dailydriver.services.gsettings_service import _get_key_category
+        from nightpanel.services.gsettings_service import _get_key_category
 
         assert _get_key_category("play") == "media"
         assert _get_key_category("volume-up") == "media"
 
     def test_shell(self) -> None:
         """Test shell category."""
-        from dailydriver.services.gsettings_service import _get_key_category
+        from nightpanel.services.gsettings_service import _get_key_category
 
         assert _get_key_category("toggle-overview") == "shell"
         assert _get_key_category("toggle-application-view") == "shell"
@@ -184,10 +184,10 @@ class TestGSettingsServiceCategories:
 
     def test_get_categories(self, mock_gi: dict) -> None:
         """Test getting all categories."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         # We need to mock the schema source
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -207,7 +207,7 @@ class TestCustomKeybindings:
 
     def test_custom_path_generation(self) -> None:
         """Test that custom paths are generated correctly."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         assert GSettingsService.CUSTOM_PATH_PREFIX.startswith("/org/gnome")
         assert "custom-keybindings" in GSettingsService.CUSTOM_PATH_PREFIX
@@ -218,7 +218,7 @@ class TestSchemaDetection:
 
     def test_shortcut_schemas_defined(self) -> None:
         """Test that shortcut schemas are defined."""
-        from dailydriver.services.gsettings_service import SHORTCUT_SCHEMAS
+        from nightpanel.services.gsettings_service import SHORTCUT_SCHEMAS
 
         assert len(SHORTCUT_SCHEMAS) > 0
 
@@ -230,7 +230,7 @@ class TestSchemaDetection:
 
     def test_categories_defined(self) -> None:
         """Test that categories are defined."""
-        from dailydriver.services.gsettings_service import CATEGORIES
+        from nightpanel.services.gsettings_service import CATEGORIES
 
         assert len(CATEGORIES) > 0
 
@@ -246,9 +246,9 @@ class TestGSettingsServiceInit:
 
     def test_init_creates_cache(self) -> None:
         """Test that initialization creates empty settings cache."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -259,9 +259,9 @@ class TestGSettingsServiceInit:
 
     def test_get_settings_caches(self) -> None:
         """Test that _get_settings caches settings objects."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -285,9 +285,9 @@ class TestGSettingsServiceInit:
 
     def test_get_settings_returns_none_for_missing_schema(self) -> None:
         """Test that _get_settings returns None for missing schemas."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None  # Schema not found
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -303,9 +303,9 @@ class TestIsShortcutKey:
 
     def test_string_array_is_shortcut(self) -> None:
         """Test that string array type is recognized as shortcut."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -329,9 +329,9 @@ class TestIsShortcutKey:
 
     def test_non_shortcut_patterns_rejected(self) -> None:
         """Test that non-shortcut patterns are rejected."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -352,9 +352,9 @@ class TestIsShortcutKey:
 
     def test_integer_type_rejected(self) -> None:
         """Test that integer type is not recognized as shortcut."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -376,9 +376,9 @@ class TestParseBindingValue:
 
     def test_parse_string_array(self) -> None:
         """Test parsing array of accelerator strings."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -397,9 +397,9 @@ class TestParseBindingValue:
 
     def test_parse_single_string(self) -> None:
         """Test parsing single accelerator string."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -416,9 +416,9 @@ class TestParseBindingValue:
 
     def test_parse_disabled_binding(self) -> None:
         """Test parsing disabled binding returns empty list."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -434,9 +434,9 @@ class TestParseBindingValue:
 
     def test_parse_none_value(self) -> None:
         """Test parsing None returns empty list."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -448,9 +448,9 @@ class TestParseBindingValue:
 
     def test_parse_empty_string(self) -> None:
         """Test parsing empty string returns empty list."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -470,10 +470,10 @@ class TestSaveShortcut:
 
     def test_save_shortcut_string_array(self) -> None:
         """Test saving shortcut with string array type."""
-        from dailydriver.models import KeyBinding, Shortcut
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import KeyBinding, Shortcut
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_key = MagicMock()
@@ -511,10 +511,10 @@ class TestSaveShortcut:
 
     def test_save_shortcut_disabled(self) -> None:
         """Test saving shortcut with no bindings sets disabled."""
-        from dailydriver.models import Shortcut
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import Shortcut
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_key = MagicMock()
@@ -529,7 +529,7 @@ class TestSaveShortcut:
             mock_gio.Settings.new.return_value = mock_settings
 
             # Mock GLib.Variant
-            with patch("dailydriver.services.backends.gnome.GLib") as mock_glib:
+            with patch("nightpanel.services.backends.gnome.GLib") as mock_glib:
                 mock_variant = MagicMock()
                 mock_glib.Variant.return_value = mock_variant
 
@@ -556,10 +556,10 @@ class TestSaveShortcut:
 
     def test_save_shortcut_missing_schema(self) -> None:
         """Test save returns False for missing schema."""
-        from dailydriver.models import Shortcut
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import Shortcut
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -589,10 +589,10 @@ class TestFindConflicts:
 
     def test_find_conflicts_detects_duplicate(self) -> None:
         """Test that conflicts are detected for duplicate bindings."""
-        from dailydriver.models import KeyBinding
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import KeyBinding
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None  # No schemas = no shortcuts to load
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -624,10 +624,10 @@ class TestFindConflicts:
 
     def test_find_conflicts_excludes_self(self) -> None:
         """Test that the excluded shortcut is not returned as conflict."""
-        from dailydriver.models import KeyBinding
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import KeyBinding
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -650,10 +650,10 @@ class TestFindConflicts:
 
     def test_find_conflicts_no_conflicts(self) -> None:
         """Test that no conflicts returns empty list."""
-        from dailydriver.models import KeyBinding
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import KeyBinding
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -682,10 +682,10 @@ class TestResetShortcut:
 
     def test_reset_shortcut_calls_reset(self) -> None:
         """Test that reset_shortcut resets the GSettings key."""
-        from dailydriver.models import Shortcut
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import Shortcut
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -716,10 +716,10 @@ class TestResetShortcut:
 
     def test_reset_shortcut_missing_schema(self) -> None:
         """Test that reset returns False for missing schema."""
-        from dailydriver.models import Shortcut
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.models import Shortcut
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -749,9 +749,9 @@ class TestCustomKeybindingOperations:
 
     def test_get_custom_keybindings(self) -> None:
         """Test getting custom keybindings."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -784,9 +784,9 @@ class TestCustomKeybindingOperations:
 
     def test_add_custom_keybinding(self) -> None:
         """Test adding a custom keybinding."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -811,9 +811,9 @@ class TestCustomKeybindingOperations:
 
     def test_add_custom_keybinding_finds_next_slot(self) -> None:
         """Test that add finds the next available slot number."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -837,9 +837,9 @@ class TestCustomKeybindingOperations:
 
     def test_update_custom_keybinding(self) -> None:
         """Test updating a custom keybinding."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
@@ -859,9 +859,9 @@ class TestCustomKeybindingOperations:
 
     def test_delete_custom_keybinding(self) -> None:
         """Test deleting a custom keybinding."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -892,9 +892,9 @@ class TestCustomKeybindingOperations:
 
     def test_delete_custom_keybinding_not_found(self) -> None:
         """Test deleting non-existent keybinding returns False."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -912,9 +912,9 @@ class TestCustomKeybindingOperations:
 
     def test_find_custom_keybinding_by_name(self) -> None:
         """Test finding custom keybinding by name."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -944,9 +944,9 @@ class TestCustomKeybindingOperations:
 
     def test_find_custom_keybinding_by_type(self) -> None:
         """Test finding custom keybinding by app type."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -989,10 +989,10 @@ class TestAppDetection:
 
     def testdetect_terminal_finds_ghostty(self) -> None:
         """Test that detect_terminal finds ghostty first."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("shutil.which") as mock_which,
         ):
             mock_source = MagicMock()
@@ -1007,10 +1007,10 @@ class TestAppDetection:
 
     def testdetect_terminal_finds_kitty(self) -> None:
         """Test that detect_terminal finds kitty when ghostty unavailable."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("shutil.which") as mock_which,
         ):
             mock_source = MagicMock()
@@ -1030,10 +1030,10 @@ class TestAppDetection:
 
     def testdetect_terminal_returns_none_when_none_found(self) -> None:
         """Test that detect_terminal returns None when no terminal found."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("shutil.which") as mock_which,
         ):
             mock_source = MagicMock()
@@ -1048,10 +1048,10 @@ class TestAppDetection:
 
     def testdetect_file_manager_fallback(self) -> None:
         """Test that detect_file_manager falls back to shutil.which."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("shutil.which") as mock_which,
         ):
             mock_source = MagicMock()
@@ -1073,10 +1073,10 @@ class TestAppDetection:
 
     def testdetect_browser_via_xdg_settings(self) -> None:
         """Test that detect_browser uses xdg-settings."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("subprocess.run") as mock_run,
             patch("shutil.which") as mock_which,
         ):
@@ -1097,10 +1097,10 @@ class TestAppDetection:
 
     def testdetect_music_player_flatpak_spotify(self) -> None:
         """Test that detect_music_player finds Flatpak Spotify."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("subprocess.run") as mock_run,
             patch("shutil.which") as mock_which,
         ):
@@ -1120,10 +1120,10 @@ class TestAppDetection:
 
     def testdetect_music_player_native_spotify(self) -> None:
         """Test that detect_music_player finds native Spotify."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("subprocess.run") as mock_run,
             patch("shutil.which") as mock_which,
         ):
@@ -1148,12 +1148,12 @@ class TestAppDetection:
 
             assert player == "spotify"
 
-    def testdetect_dailydriver_flatpak(self) -> None:
-        """Test that detect_dailydriver finds Flatpak installation."""
-        from dailydriver.services.gsettings_service import GSettingsService
+    def testdetect_nightpanel_flatpak(self) -> None:
+        """Test that detect_nightpanel finds Flatpak installation."""
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("subprocess.run") as mock_run,
             patch("shutil.which") as mock_which,
         ):
@@ -1167,16 +1167,16 @@ class TestAppDetection:
             mock_which.return_value = None
 
             service = GSettingsService()
-            dd = service.detect_dailydriver()
+            dd = service.detect_nightpanel()
 
             assert dd == "flatpak run io.github.gregfelice.DailyDriver --cheat-sheet"
 
-    def testdetect_dailydriver_system(self) -> None:
-        """Test that detect_dailydriver finds system installation."""
-        from dailydriver.services.gsettings_service import GSettingsService
+    def testdetect_nightpanel_system(self) -> None:
+        """Test that detect_nightpanel finds system installation."""
+        from nightpanel.services.gsettings_service import GSettingsService
 
         with (
-            patch("dailydriver.services.backends.gnome.Gio") as mock_gio,
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
             patch("subprocess.run") as mock_run,
             patch("shutil.which") as mock_which,
         ):
@@ -1189,16 +1189,16 @@ class TestAppDetection:
             mock_run.return_value = mock_result
 
             def which_side_effect(cmd: str) -> str | None:
-                if cmd == "dailydriver":
-                    return "/usr/bin/dailydriver"
+                if cmd == "nightpanel":
+                    return "/usr/bin/nightpanel"
                 return None
 
             mock_which.side_effect = which_side_effect
 
             service = GSettingsService()
-            dd = service.detect_dailydriver()
+            dd = service.detect_nightpanel()
 
-            assert dd == "dailydriver --cheat-sheet"
+            assert dd == "nightpanel --cheat-sheet"
 
 
 class TestSetupDefaultCustomShortcuts:
@@ -1206,9 +1206,9 @@ class TestSetupDefaultCustomShortcuts:
 
     def test_setup_adds_terminal(self) -> None:
         """Test that setup adds terminal shortcut."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1227,7 +1227,7 @@ class TestSetupDefaultCustomShortcuts:
                 patch.object(service, "detect_file_manager", return_value="nautilus --new-window"),
                 patch.object(service, "detect_browser", return_value="firefox --new-window"),
                 patch.object(service, "detect_music_player", return_value=None),
-                patch.object(service, "detect_dailydriver", return_value=None),
+                patch.object(service, "detect_nightpanel", return_value=None),
                 patch.object(service, "find_custom_keybinding_by_type", return_value=None),
                 patch.object(
                     service, "add_custom_keybinding", return_value="/path/custom0/"
@@ -1241,9 +1241,9 @@ class TestSetupDefaultCustomShortcuts:
 
     def test_setup_updates_existing(self) -> None:
         """Test that setup updates existing shortcuts."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1268,7 +1268,7 @@ class TestSetupDefaultCustomShortcuts:
                 patch.object(service, "detect_file_manager", return_value=None),
                 patch.object(service, "detect_browser", return_value=None),
                 patch.object(service, "detect_music_player", return_value=None),
-                patch.object(service, "detect_dailydriver", return_value=None),
+                patch.object(service, "detect_nightpanel", return_value=None),
                 patch.object(
                     service,
                     "find_custom_keybinding_by_type",
@@ -1286,9 +1286,9 @@ class TestSetupDefaultCustomShortcuts:
 
     def test_setup_reports_not_found(self) -> None:
         """Test that setup reports when apps not found."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -1300,7 +1300,7 @@ class TestSetupDefaultCustomShortcuts:
                 patch.object(service, "detect_file_manager", return_value=None),
                 patch.object(service, "detect_browser", return_value=None),
                 patch.object(service, "detect_music_player", return_value=None),
-                patch.object(service, "detect_dailydriver", return_value=None),
+                patch.object(service, "detect_nightpanel", return_value=None),
             ):
                 results = service.setup_default_custom_shortcuts()
 
@@ -1316,9 +1316,9 @@ class TestLoadAllShortcuts:
 
     def test_load_all_shortcuts_from_schema(self) -> None:
         """Test loading shortcuts from a schema."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
 
             # Create mock schema with shortcut key
@@ -1375,9 +1375,9 @@ class TestLoadAllShortcuts:
 
     def test_load_all_shortcuts_skips_missing_schemas(self) -> None:
         """Test that load_all_shortcuts skips missing schemas gracefully."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None  # All schemas missing
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -1390,9 +1390,9 @@ class TestLoadAllShortcuts:
 
     def test_load_all_shortcuts_includes_custom(self) -> None:
         """Test that load_all_shortcuts includes custom keybindings."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None  # No standard schemas
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -1418,9 +1418,9 @@ class TestWorkspaceManagement:
 
     def test_get_workspace_count(self) -> None:
         """Test getting the current workspace count."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1438,9 +1438,9 @@ class TestWorkspaceManagement:
 
     def test_get_workspace_count_returns_default_on_missing_schema(self) -> None:
         """Test that get_workspace_count returns 4 when schema is missing."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -1452,9 +1452,9 @@ class TestWorkspaceManagement:
 
     def test_set_workspace_count(self) -> None:
         """Test setting the workspace count."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1471,9 +1471,9 @@ class TestWorkspaceManagement:
 
     def test_set_workspace_count_returns_false_on_missing_schema(self) -> None:
         """Test that set_workspace_count returns False when schema is missing."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -1485,9 +1485,9 @@ class TestWorkspaceManagement:
 
     def test_is_dynamic_workspaces(self) -> None:
         """Test checking if dynamic workspaces is enabled."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1505,9 +1505,9 @@ class TestWorkspaceManagement:
 
     def test_is_dynamic_workspaces_returns_default_on_missing_schema(self) -> None:
         """Test that is_dynamic_workspaces returns True when schema is missing."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -1519,9 +1519,9 @@ class TestWorkspaceManagement:
 
     def test_set_dynamic_workspaces(self) -> None:
         """Test setting dynamic workspaces mode."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1538,9 +1538,9 @@ class TestWorkspaceManagement:
 
     def test_set_dynamic_workspaces_returns_false_on_missing_schema(self) -> None:
         """Test that set_dynamic_workspaces returns False when schema is missing."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -1552,9 +1552,9 @@ class TestWorkspaceManagement:
 
     def test_setup_workspaces_for_hyprland(self) -> None:
         """Test setting up 10 fixed workspaces for Hyprland-style."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1572,9 +1572,9 @@ class TestWorkspaceManagement:
 
     def test_restore_default_workspaces(self) -> None:
         """Test restoring default workspace settings."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1592,9 +1592,9 @@ class TestWorkspaceManagement:
 
     def test_has_hyprland_workspace_setup_true(self) -> None:
         """Test detecting Hyprland-style workspace setup (10 fixed)."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1612,9 +1612,9 @@ class TestWorkspaceManagement:
 
     def test_has_hyprland_workspace_setup_false_wrong_count(self) -> None:
         """Test that has_hyprland_workspace_setup returns False for non-10 count."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema
@@ -1632,9 +1632,9 @@ class TestWorkspaceManagement:
 
     def test_has_hyprland_workspace_setup_false_dynamic_enabled(self) -> None:
         """Test that has_hyprland_workspace_setup returns False when dynamic is True."""
-        from dailydriver.services.gsettings_service import GSettingsService
+        from nightpanel.services.gsettings_service import GSettingsService
 
-        with patch("dailydriver.services.backends.gnome.Gio") as mock_gio:
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
             mock_source = MagicMock()
             mock_schema = MagicMock()
             mock_source.lookup.return_value = mock_schema

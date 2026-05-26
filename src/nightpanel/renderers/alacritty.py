@@ -12,7 +12,7 @@ def render(p: Palette) -> str:
 
 [colors.primary]
 background = "{p.bg}"
-foreground = "{p.fg_mid}"   # dim green for default text — added/emphasized text uses brighter shades via slot remaps
+foreground = "{p.border_s}"   # grey default — diff state (slot 77 green / ANSI red) is the only color signal in code
 
 [colors.cursor]
 text    = "{p.bg}"
@@ -50,28 +50,33 @@ background = "{p.fg_dim}"
 foreground = "None"
 background = "None"
 
-# Saab instrument cluster discipline — every ANSI slot is green, amber, or red.
-# No grays, no blues, no purples. Apps that render syntax tokens via the 16
-# ANSI slots (Claude Code, less, git, vim/nvim, etc.) inherit the discipline.
+# Saab instrument cluster — minimal three-state coloring.
+# Code is GREY by default. Diff line-state carries all the signal:
+#   green = added (slot 77)
+#   red   = removed (ANSI red, kept)
+#   grey  = unchanged / context (everything else)
+# Every syntax-token slot (keywords, strings, booleans, numbers, function
+# names) is folded into grey so token highlighting doesn't compete with
+# the diff signal. Status indicators stay amber via slot remaps below.
 [colors.normal]
 black   = "{p.bg}"
 red     = "{p.red}"
-green   = "{p.fg_mid}"     # dim green — explicit ANSI 2 matches default fg
-yellow  = "{p.fg_amber}"
-blue    = "{p.fg_dim}"
-magenta = "{p.fg_mid}"
-cyan    = "{p.fg_bright}"
-white   = "{p.fg_light}"
+green   = "{p.border_s}"   # was syntax green — folded to grey
+yellow  = "{p.border_s}"   # was strings amber — folded to grey
+blue    = "{p.border_s}"
+magenta = "{p.border_s}"
+cyan    = "{p.border_s}"
+white   = "{p.border_s}"
 
 [colors.bright]
-black   = "{p.fg_dim}"
+black   = "{p.border_d}"
 red     = "{p.red}"
-green   = "{p.fg_bright}"
-yellow  = "{p.amber_warm}"
-blue    = "{p.fg_mid}"
-magenta = "{p.fg_light}"
-cyan    = "{p.fg_bright}"
-white   = "{p.fg_light}"
+green   = "{p.border_s}"   # was keyword red — folded to grey
+yellow  = "{p.border_s}"   # was warm amber — folded to grey
+blue    = "{p.border_s}"
+magenta = "{p.border_s}"
+cyan    = "{p.border_s}"
+white   = "{p.border_s}"
 
 # 256-color extended palette overrides — some apps (Claude Code) draw UI
 # chrome with specific slots in the 6x6x6 cube + grayscale ramp. Remap them
@@ -107,23 +112,32 @@ color = "{p.bg}"
 index = 237   # dark grey — context-line bg / user-echo bg
 color = "{p.bg}"
 
-# Diff foreground emphasis
+# Added-line text (carries the green signal)
 [[colors.indexed_colors]]
 index = 77    # bright lime — added-line text → palette bright-green
 color = "{p.fg_bright}"
 
-# Stray non-palette colors that Claude Code emits via 256-color slots
+# Fold every other Claude Code syntax-token slot into grey. None of these
+# carry signal under the three-state rule (grey / red / green).
 [[colors.indexed_colors]]
-index = 153   # pale blue — file paths / accents → palette bright-green
-color = "{p.fg_bright}"
+index = 81    # bright cyan — function / class names
+color = "{p.border_s}"
 
 [[colors.indexed_colors]]
-index = 186   # wheat / pale yellow — keyword highlight → palette amber
-color = "{p.fg_amber}"
+index = 141   # bright purple — booleans / None constants
+color = "{p.border_s}"
 
 [[colors.indexed_colors]]
-index = 231   # pure white — explicit white text → palette green
-color = "{p.fg}"
+index = 153   # pale blue — file paths / accents
+color = "{p.border_s}"
+
+[[colors.indexed_colors]]
+index = 186   # wheat / pale yellow — number / keyword highlight
+color = "{p.border_s}"
+
+[[colors.indexed_colors]]
+index = 231   # pure white — explicit white text
+color = "{p.border_s}"
 
 [window]
 decorations               = "None"   # hide the title bar entirely in NP mode

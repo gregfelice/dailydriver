@@ -26,6 +26,7 @@ from ..adapters import (
     NvimAdapter,
     TmuxAdapter,
 )
+from ..adapters.firefox import find_default_profile as _find_ff_profile
 from ..palette import NIGHTPANEL, Palette
 
 _LOG = logging.getLogger(__name__)
@@ -38,9 +39,26 @@ _NP_COMMAND  = Path.home() / ".config" / "nightpanel" / "np-command.json"
 _NP_HOST_SRC  = Path(__file__).parent / "np-host.py"
 _NP_HOST_DEST = Path.home() / ".config" / "nightpanel" / "np-host.py"
 _NM_MANIFEST  = Path.home() / ".mozilla" / "native-messaging-hosts" / "nightpanel.json"
-_FF_PROFILE   = Path.home() / ".mozilla" / "firefox" / "x7sc2l5o.default-esr"
 _EXT_SRC      = Path(__file__).parent / "firefox-extension"
 _EXT_ID       = "nightpanel-bridge@nightpanel"
+
+# Security implication shown when the user requests Firefox bridge install.
+_FF_CONSENT_TEXT = """\
+Installing the nightpanel Firefox bridge requires lowering Firefox's
+extension-signature requirement (xpinstall.signatures.required=false).
+
+This is a global Firefox security setting. It applies to ALL extensions
+in your profile — not just nightpanel's bridge. While it's set to false,
+Firefox will install unsigned extensions, which weakens its security posture.
+
+The bridge extension itself is unsigned because it isn't published on
+Mozilla AMO yet. Until it's signed, this pref must stay flipped for the
+bridge to load.
+
+To opt in, pass confirmed=True to install_bridge(), e.g.:
+    NightpanelOrchestrator().install_bridge(confirmed=True)
+
+Default install does NOT touch Firefox."""
 
 
 def _run(cmd):
@@ -69,22 +87,50 @@ class NightpanelOrchestrator:
 
     # ── Public API ────────────────────────────────────────────────
 
-    def apply(self) -> None:
-        """Snapshot current state then apply nightpanel via every adapter."""
-        # Only snapshot if not already engaged — protects against double-apply
-        # corrupting the saved baseline.
-        if not _ACTIVE_FILE.exists():
-            state = {a.name: a.snapshot() for a in self._active_adapters()}
-            self._save_state(state)
+    def apply(self) -> dict[str, bool]:
+        """Snapshot current state then apply nightpanel via every adapter.
 
+        Returns a ``{adapter_name: success}`` dict. ACTIVE_FILE is only
+        touched if at least one adapter succeeded — otherwise the state
+        machine would lie about being on while nothing changed.
+        """
+        # Only snapshot if not already engaged — protects against double-apply
+        # corrupting the saved baseline. Defense in depth: if ACTIVE_FILE went
+        # missing while the world is still in nightpanel state (interrupted
+        # revert, manual cleanup), trust the existing snapshot over the live
+        # world, otherwise we'd capture the applied palette as the baseline.
+        if not _ACTIVE_FILE.exists():
+            verdict = {a.name: a.verify("on") for a in self._active_adapters()}
+            already_on = {k: v for k, v in verdict.items() if v}
+            if already_on:
+                _LOG.warning(
+                    "nightpanel: apply() with no ACTIVE_FILE but adapters look "
+                    "already-on (%s) — keeping existing snapshot",
+                    already_on,
+                )
+            else:
+                state = {a.name: a.snapshot() for a in self._active_adapters()}
+                self._save_state(state)
+
+        outcomes: dict[str, bool] = {}
         for a in self._active_adapters():
             try:
                 a.apply(self.palette)
+                outcomes[a.name] = True
             except Exception as e:
                 _LOG.warning("nightpanel: %s apply failed: %s", a.name, e)
+                outcomes[a.name] = False
 
-        _ACTIVE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        _ACTIVE_FILE.touch()
+        if any(outcomes.values()):
+            _ACTIVE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            _ACTIVE_FILE.touch()
+        else:
+            _LOG.error(
+                "nightpanel: every adapter failed during apply() — not marking "
+                "ACTIVE_FILE so state machine doesn't lie. Outcomes: %s",
+                outcomes,
+            )
+        return outcomes
 
     def revert(self) -> None:
         """Restore every adapter to its pre-apply state."""
@@ -189,10 +235,22 @@ class NightpanelOrchestrator:
             return 0
         return len(ghosts)
 
-    def install_bridge(self) -> bool:
+    def install_bridge(self, *, confirmed: bool = False) -> bool:
         """Install Firefox native-messaging host + companion extension.
+
+        Requires explicit ``confirmed=True`` because the bridge install lowers
+        Firefox's global ``xpinstall.signatures.required`` pref. The caller
+        (CLI handler, Setup-panel button) is responsible for presenting the
+        security implication and obtaining user consent before passing True.
+
         Idempotent. Returns True if anything changed (Firefox restart needed).
+        Raises ConsentRequired if ``confirmed`` is not True.
         """
+        if not confirmed:
+            raise ConsentRequired(_FF_CONSENT_TEXT)
+        if _find_ff_profile() is None:
+            _LOG.warning("nightpanel: no Firefox profile found; bridge not installed")
+            return False
         return self._install_native_host() | self._install_extension()
 
     # ── State persistence ────────────────────────────────────────
@@ -241,8 +299,12 @@ class NightpanelOrchestrator:
             return False
 
     def _install_extension(self) -> bool:
+        profile = _find_ff_profile()
+        if profile is None:
+            _LOG.warning("nightpanel: no Firefox profile discovered, skipping extension")
+            return False
         try:
-            ext_dest = _FF_PROFILE / "extensions" / _EXT_ID
+            ext_dest = profile / "extensions" / _EXT_ID
             if not _EXT_SRC.exists():
                 _LOG.warning("nightpanel: extension source not found at %s", _EXT_SRC)
                 return False
@@ -253,14 +315,14 @@ class NightpanelOrchestrator:
                 if not dst.exists() or dst.read_bytes() != src_file.read_bytes():
                     shutil.copy2(src_file, dst)
                     changed = True
-            changed |= self._ensure_user_js_pref("xpinstall.signatures.required", "false")
+            changed |= self._ensure_user_js_pref(profile, "xpinstall.signatures.required", "false")
             return changed
         except Exception as e:
             _LOG.warning("nightpanel: extension install failed: %s", e)
             return False
 
-    def _ensure_user_js_pref(self, key: str, value: str) -> bool:
-        user_js = _FF_PROFILE / "user.js"
+    def _ensure_user_js_pref(self, profile: Path, key: str, value: str) -> bool:
+        user_js = profile / "user.js"
         try:
             existing = user_js.read_text() if user_js.exists() else ""
             if f'user_pref("{key}"' in existing:
@@ -271,3 +333,11 @@ class NightpanelOrchestrator:
         except OSError as e:
             _LOG.warning("nightpanel: user.js update failed: %s", e)
             return False
+
+
+class ConsentRequired(Exception):
+    """Raised when an action requires explicit user consent and didn't get it.
+
+    Carries a human-readable message describing the security/privacy
+    implication and how to opt in.
+    """

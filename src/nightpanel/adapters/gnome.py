@@ -11,14 +11,13 @@ from typing import Literal
 
 from ..palette import Palette
 from ..renderers import gtk as _renderer
+from ..renderers.gtk import END_SENTINEL, START_SENTINEL
 from .base import Adapter
 
 _LOG = logging.getLogger(__name__)
 
 _GTK4_CSS = Path.home() / ".config" / "gtk-4.0" / "gtk.css"
 _GTK3_CSS = Path.home() / ".config" / "gtk-3.0" / "gtk.css"
-
-_MARKER = "/* nightpanel"  # sentinel comment in our rendered CSS
 
 
 def _run(cmd):
@@ -82,56 +81,46 @@ class GnomeAdapter(Adapter):
     def verify(self, expected: Literal["on", "off"]) -> bool:
         cs = _gsettings_get("org.gnome.desktop.interface", "color-scheme") or ""
         gtk = _GTK4_CSS.read_text() if _GTK4_CSS.exists() else ""
-        on = cs == "prefer-dark" and _MARKER in gtk
+        on = cs == "prefer-dark" and START_SENTINEL in gtk
         return on if expected == "on" else not on
 
     # ── helpers ──
     def _apply_gtk_css(self, palette: Palette) -> None:
         """Render the NP CSS from the palette and prepend it to gtk.css.
 
-        If a previous NP block is already present, strip it first so palette
-        edits actually take effect on re-apply. Without this strip the file
-        would only ever contain the NP block from the very first apply.
+        Strips any prior NP-sentinel-wrapped block first so palette edits
+        propagate on re-apply (without the strip, the file would only ever
+        contain the very first apply's CSS).
         """
         css = _renderer.render(palette)
         for path in (_GTK4_CSS, _GTK3_CSS):
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 existing = path.read_text() if path.exists() else ""
-                if _MARKER in existing:
-                    existing = self._strip_np_block(existing)
+                existing = self._strip_np_block(existing)
                 path.write_text(css + existing)
             except OSError as e:
                 _LOG.warning("nightpanel: gtk css apply (%s) failed: %s", path, e)
-        try:
-            _run(["pkill", "nautilus"])
-        except Exception:
-            pass
 
     @staticmethod
     def _strip_np_block(text: str) -> str:
-        """Remove the prior NP-prepended block. Conservatively: drop everything
-        up to and including the last NP-related directive (icon-filter scope)."""
-        # The block ends with the closing brace of the `scrolledwindow image`
-        # rule we always emit. Find the LAST occurrence of "opacity: 0.35;}"
-        # (formatted output) or fall back to splitting on the marker if we
-        # can't find the end.
-        marker_idx = text.find(_MARKER)
-        if marker_idx < 0:
-            return text
-        # Find the end of our block: the last opacity rule we emit closes with
-        # "}". Search forward for the closing brace after our scrolledwindow
-        # rule, then everything before that is ours.
-        end_marker = "opacity: 0.35;\n}"
-        end_idx = text.find(end_marker, marker_idx)
-        if end_idx < 0:
-            # Fall back: drop only up to the next blank line
-            return text[text.find("\n\n", marker_idx) + 2:] if "\n\n" in text[marker_idx:] else ""
-        # Strip our block (including the closing brace + any trailing newline)
-        cut = end_idx + len(end_marker)
-        if cut < len(text) and text[cut] == "\n":
-            cut += 1
-        return text[:marker_idx] + text[cut:]
+        """Remove every NP block between paired sentinels (inclusive).
+
+        Robust to multiple blocks (defensive — shouldn't happen, but if it
+        ever did during an interrupted apply, we want re-apply to be idempotent).
+        Idempotent: returns ``text`` unchanged when no sentinels are present.
+        """
+        out = text
+        while True:
+            start = out.find(START_SENTINEL)
+            end   = out.find(END_SENTINEL, start)
+            if start < 0 or end < 0:
+                break
+            cut_end = end + len(END_SENTINEL)
+            if cut_end < len(out) and out[cut_end] == "\n":
+                cut_end += 1
+            out = out[:start] + out[cut_end:]
+        return out
 
     def _revert_gtk_css(self, snapshot: dict) -> None:
         for path, key in ((_GTK4_CSS, "gtk4_css"), (_GTK3_CSS, "gtk3_css")):
@@ -143,7 +132,3 @@ class GnomeAdapter(Adapter):
                     path.write_text(prev)
             except OSError as e:
                 _LOG.warning("nightpanel: gtk css revert (%s) failed: %s", path, e)
-        try:
-            _run(["pkill", "nautilus"])
-        except Exception:
-            pass

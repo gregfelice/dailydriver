@@ -5,6 +5,7 @@ project)."""
 
 from __future__ import annotations
 
+import configparser
 import json
 import logging
 import subprocess
@@ -18,10 +19,46 @@ from .base import Adapter
 _LOG = logging.getLogger(__name__)
 
 _COMMAND_FILE   = Path.home() / ".config" / "nightpanel" / "np-command.json"
-_FF_PROFILE     = Path.home() / ".mozilla" / "firefox" / "x7sc2l5o.default-esr"
-_USER_CHROME    = _FF_PROFILE / "chrome" / "userChrome.css"
-_USER_JS        = _FF_PROFILE / "user.js"
+_FF_ROOT        = Path.home() / ".mozilla" / "firefox"
 _CHROME_PREF    = "toolkit.legacyUserProfileCustomizations.stylesheets"
+
+
+def find_default_profile(ff_root: Path = _FF_ROOT) -> Path | None:
+    """Locate the default Firefox profile dir from ``profiles.ini``.
+
+    Priority (matches what Firefox itself picks):
+      1. ``[Install*]`` section's ``Default=`` value (the active install's profile)
+      2. First ``[Profile*]`` section with ``Default=1``
+      3. First ``[Profile*]`` section in file order
+
+    Returns the absolute Path, or None if no profile is discoverable.
+    """
+    ini = ff_root / "profiles.ini"
+    if not ini.exists():
+        return None
+    cp = configparser.ConfigParser()
+    try:
+        cp.read(ini)
+    except configparser.Error as e:
+        _LOG.debug("nightpanel: profiles.ini parse failed: %s", e)
+        return None
+
+    def _resolve(rel_or_abs: str) -> Path:
+        p = Path(rel_or_abs)
+        return p if p.is_absolute() else ff_root / p
+
+    for section in cp.sections():
+        if section.startswith("Install") and cp[section].get("Default"):
+            return _resolve(cp[section]["Default"])
+
+    profiles = [s for s in cp.sections() if s.startswith("Profile")]
+    for section in profiles:
+        if cp[section].get("Default") == "1" and cp[section].get("Path"):
+            return _resolve(cp[section]["Path"])
+    for section in profiles:
+        if cp[section].get("Path"):
+            return _resolve(cp[section]["Path"])
+    return None
 
 
 def _run(cmd):
@@ -84,19 +121,22 @@ class FirefoxAdapter(Adapter):
     def _install_user_chrome(self, palette: Palette) -> None:
         """Write userChrome.css from the palette and ensure the FF pref that
         lets userChrome load is set. Replaces the old slimfox installer."""
-        if not _FF_PROFILE.exists():
+        profile = find_default_profile()
+        if profile is None or not profile.exists():
+            _LOG.debug("nightpanel: no Firefox profile found, skipping userChrome")
             return
+        user_chrome = profile / "chrome" / "userChrome.css"
+        user_js     = profile / "user.js"
         try:
-            _USER_CHROME.parent.mkdir(parents=True, exist_ok=True)
-            _USER_CHROME.write_text(_chrome_renderer.render(palette))
+            user_chrome.parent.mkdir(parents=True, exist_ok=True)
+            user_chrome.write_text(_chrome_renderer.render(palette))
         except OSError as e:
             _LOG.warning("nightpanel: userChrome.css write failed: %s", e)
             return
-        # Ensure the pref that lets userChrome.css be loaded.
         try:
-            existing = _USER_JS.read_text() if _USER_JS.exists() else ""
+            existing = user_js.read_text() if user_js.exists() else ""
             if f'user_pref("{_CHROME_PREF}"' not in existing:
-                with _USER_JS.open("a") as f:
+                with user_js.open("a") as f:
                     f.write(f'\nuser_pref("{_CHROME_PREF}", true);\n')
         except OSError as e:
             _LOG.warning("nightpanel: user.js update failed: %s", e)

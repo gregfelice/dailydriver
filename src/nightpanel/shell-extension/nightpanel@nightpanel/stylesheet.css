@@ -7,6 +7,15 @@
     border-radius: 4px;
 }
 
+/* When NP is active, the rest of the panel actors are hidden — only this
+   button remains on the panel. Drop the chip background so the button
+   blends into the panel's pure-black canvas; only the green NIGHT PANEL
+   text floats. */
+.nightpanel-btn-active {
+    background-color: transparent;
+    border-radius: 0;
+}
+
 .nightpanel-label {
     font-family: "Inter", sans-serif;
     font-weight: 300;

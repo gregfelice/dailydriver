@@ -48,12 +48,12 @@ class GnomeAdapter(Adapter):
     def snapshot(self) -> dict:
         return {
             "color_scheme": _gsettings_get("org.gnome.desktop.interface", "color-scheme"),
-            "bg_uri":       _gsettings_get("org.gnome.desktop.background", "picture-uri"),
-            "bg_uri_dark":  _gsettings_get("org.gnome.desktop.background", "picture-uri-dark"),
-            "bg_color":     _gsettings_get("org.gnome.desktop.background", "primary-color"),
-            "bg_options":   _gsettings_get("org.gnome.desktop.background", "picture-options"),
-            "gtk4_css":     _GTK4_CSS.read_text() if _GTK4_CSS.exists() else None,
-            "gtk3_css":     _GTK3_CSS.read_text() if _GTK3_CSS.exists() else None,
+            "bg_uri": _gsettings_get("org.gnome.desktop.background", "picture-uri"),
+            "bg_uri_dark": _gsettings_get("org.gnome.desktop.background", "picture-uri-dark"),
+            "bg_color": _gsettings_get("org.gnome.desktop.background", "primary-color"),
+            "bg_options": _gsettings_get("org.gnome.desktop.background", "picture-options"),
+            "gtk4_css": _GTK4_CSS.read_text() if _GTK4_CSS.exists() else None,
+            "gtk3_css": _GTK3_CSS.read_text() if _GTK3_CSS.exists() else None,
         }
 
     def apply(self, palette: Palette) -> None:
@@ -73,10 +73,14 @@ class GnomeAdapter(Adapter):
         if snapshot.get("bg_uri"):
             _gsettings_set("org.gnome.desktop.background", "picture-uri", snapshot["bg_uri"])
         if snapshot.get("bg_uri_dark"):
-            _gsettings_set("org.gnome.desktop.background", "picture-uri-dark", snapshot["bg_uri_dark"])
+            _gsettings_set(
+                "org.gnome.desktop.background", "picture-uri-dark", snapshot["bg_uri_dark"]
+            )
         if snapshot.get("bg_color"):
             _gsettings_set("org.gnome.desktop.background", "primary-color", snapshot["bg_color"])
-        _gsettings_set("org.gnome.desktop.background", "picture-options", snapshot.get("bg_options") or "zoom")
+        _gsettings_set(
+            "org.gnome.desktop.background", "picture-options", snapshot.get("bg_options") or "zoom"
+        )
 
     def verify(self, expected: Literal["on", "off"]) -> bool:
         cs = _gsettings_get("org.gnome.desktop.interface", "color-scheme") or ""
@@ -113,7 +117,7 @@ class GnomeAdapter(Adapter):
         out = text
         while True:
             start = out.find(START_SENTINEL)
-            end   = out.find(END_SENTINEL, start)
+            end = out.find(END_SENTINEL, start)
             if start < 0 or end < 0:
                 break
             cut_end = end + len(END_SENTINEL)

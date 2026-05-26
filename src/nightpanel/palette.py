@@ -21,30 +21,30 @@ class Palette:
     name: str = "nightpanel"
 
     # ── Backgrounds (darkest → lightest) ─────────────────────────────
-    bg: str         = "#0A0A0A"   # main canvas
-    bg_card: str    = "#111111"   # cards, headerbars, message bg
-    bg_header: str  = "#000000"   # tmux/nvim status bars — pure black
-    bg_select: str  = "#1A3020"   # selection — dark green
-    bg_accent: str  = "#0A5C35"   # deeper accent green
+    bg: str = "#0A0A0A"  # main canvas
+    bg_card: str = "#111111"  # cards, headerbars, message bg
+    bg_header: str = "#000000"  # tmux/nvim status bars — pure black
+    bg_select: str = "#1A3020"  # selection — dark green
+    bg_accent: str = "#0A5C35"  # deeper accent green
 
     # ── Greens (instrument cluster scale) ────────────────────────────
-    fg: str         = "#7DB890"   # default text — instrument scale
-    fg_bright: str  = "#26DE81"   # active / live reading / accent
-    fg_dim: str     = "#2E5040"   # ghost ticks / disabled
-    fg_mid: str     = "#5A8A6A"   # secondary text
-    fg_light: str   = "#9EC8A8"   # type names / params
+    fg: str = "#7DB890"  # default text — instrument scale
+    fg_bright: str = "#26DE81"  # active / live reading / accent
+    fg_dim: str = "#2E5040"  # ghost ticks / disabled
+    fg_mid: str = "#5A8A6A"  # secondary text
+    fg_light: str = "#9EC8A8"  # type names / params
 
     # ── Ambers (the amber needle) ────────────────────────────────────
-    fg_amber: str   = "#B08030"   # standard amber / odometer
-    amber_warm: str = "#E8930A"   # warm needle — focused match
+    fg_amber: str = "#B08030"  # standard amber / odometer
+    amber_warm: str = "#E8930A"  # warm needle — focused match
 
     # ── Status ───────────────────────────────────────────────────────
-    red: str        = "#EF4444"   # turbo redline — error
+    red: str = "#EF4444"  # turbo redline — error
 
     # ── Borders (quiet → strong) ─────────────────────────────────────
-    border_q: str   = "#2A2A2A"   # quiet
-    border_d: str   = "#383838"   # default
-    border_s: str   = "#5A5A5A"   # strong
+    border_q: str = "#2A2A2A"  # quiet
+    border_d: str = "#383838"  # default
+    border_s: str = "#5A5A5A"  # strong
 
 
 # The canonical nightpanel palette. Importers should use this unless they

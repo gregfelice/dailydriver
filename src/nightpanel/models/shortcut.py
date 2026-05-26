@@ -73,6 +73,7 @@ class KeyBinding:
 
     keyval: int  # GDK keyval
     modifiers: Modifier = Modifier.NONE
+
     @classmethod
     def from_accelerator(cls, accelerator: str) -> Self | None:
         """Parse a GTK accelerator string like '<Super>a' or '<Control><Shift>c'."""
@@ -96,7 +97,6 @@ class KeyBinding:
 
         return cls(keyval=keyval, modifiers=Modifier.from_gtk(mods))
 
-
     def to_accelerator(self) -> str:
         """Convert to GTK accelerator string."""
         from gi.repository import Gtk
@@ -108,6 +108,7 @@ class KeyBinding:
         from gi.repository import Gtk
 
         return Gtk.accelerator_get_label(self.keyval, self.modifiers.to_gtk())
+
     @property
     def key_name(self) -> str:
         """Get the key name without modifiers."""

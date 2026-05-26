@@ -21,8 +21,8 @@ from .base import Adapter
 _LOG = logging.getLogger(__name__)
 
 _AFTER_PLUGIN = Path.home() / ".config" / "nvim" / "after" / "plugin" / "nightpanel_active.lua"
-_DEFAULT_CS   = "tokyonight"
-_NP_CS        = "nightpanel"
+_DEFAULT_CS = "tokyonight"
+_NP_CS = "nightpanel"
 
 
 def _run(cmd):
@@ -83,7 +83,6 @@ class NvimAdapter(Adapter):
     def _send_cmd(self, cmd: str) -> None:
         for sock in self._sockets():
             try:
-                _run(["nvim", "--server", sock, "--remote-send",
-                      f"<Esc>:silent! {cmd}<CR>"])
+                _run(["nvim", "--server", sock, "--remote-send", f"<Esc>:silent! {cmd}<CR>"])
             except Exception:
                 continue

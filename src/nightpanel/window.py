@@ -124,6 +124,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._nightpanel_btn.set_tooltip_text("nightpanel")
         self._nightpanel_btn.add_css_class("nightpanel-toggle")
         from pathlib import Path
+
         _active = (Path.home() / ".config" / "nightpanel" / "nightpanel-active").exists()
         self._nightpanel_btn.set_active(_active)
         self._nightpanel_btn.connect("toggled", self._on_nightpanel_toggled)
@@ -235,9 +236,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             on_brightness_update=self._orchestrator.update_brightness,
         )
 
-    def _show_toast_with_undo(
-        self, message: str, undo_label: str | None, undo_cb
-    ) -> None:
+    def _show_toast_with_undo(self, message: str, undo_label: str | None, undo_cb) -> None:
         """Show a toast, optionally with an undo button."""
         toast = Adw.Toast(title=message)
         toast.set_timeout(4)
@@ -399,7 +398,9 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         kbd_info.append(kbd_icon)
 
         kbd_name = (
-            self._detected_keyboard.display_name.lower() if self._detected_keyboard else "standard keyboard"
+            self._detected_keyboard.display_name.lower()
+            if self._detected_keyboard
+            else "standard keyboard"
         )
         kbd_label = Gtk.Label(label=kbd_name)
         kbd_label.add_css_class("dim-label")
@@ -931,6 +932,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
     def _on_nightpanel_toggled(self, btn: Gtk.ToggleButton) -> None:
         """Handle nightpanel on/off toggle."""
         from pathlib import Path
+
         active = Path.home() / ".config" / "nightpanel" / "nightpanel-active"
         if active.exists():
             self._orchestrator.revert()

@@ -473,9 +473,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         for schema_dir in sorted(glob.glob(f"{ext_base}/*/schemas")):
             if os.path.isdir(schema_dir):
                 try:
-                    source = Gio.SettingsSchemaSource.new_from_directory(
-                        schema_dir, source, False
-                    )
+                    source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, source, False)
                 except Exception:
                     pass
         return source
@@ -670,10 +668,7 @@ class GnomeShortcutsBackend(ShortcutsBackend):
                     bindings.append(kb)
 
             name_lower = (name or "").lower()
-            if "screenshot" in name_lower:
-                group = "Screenshots"
-            else:
-                group = "Launchers"
+            group = "Screenshots" if "screenshot" in name_lower else "Launchers"
 
             shortcut = Shortcut(
                 id=shortcut_id,
@@ -1125,7 +1120,6 @@ class GnomeShortcutsBackend(ShortcutsBackend):
             return "nightpanel --cheat-sheet"
 
         # Check for development environment
-        import os
         from pathlib import Path
 
         # Search upwards for run-dev.sh
@@ -1262,7 +1256,9 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         existing = self.find_custom_keybinding_by_type("screenshot_area_clipboard")
         if existing:
             self.update_custom_keybinding(
-                existing["path"], command="gnome-screenshot -a -c", binding="<Control><Shift><Super>a"
+                existing["path"],
+                command="gnome-screenshot -a -c",
+                binding="<Control><Shift><Super>a",
             )
             results["screenshot_area_clipboard"] = "updated"
         else:

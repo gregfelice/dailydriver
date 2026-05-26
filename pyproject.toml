@@ -72,6 +72,7 @@ ignore = [
 "src/nightpanel/__main__.py" = ["E402"]
 "src/nightpanel/application.py" = ["E402"]
 "src/nightpanel/window.py" = ["E402"]
+"src/nightpanel/player_app.py" = ["E402"]
 "src/nightpanel/models/shortcut.py" = ["E402"]
 "src/nightpanel/models/keyboard.py" = ["E402"]
 "src/nightpanel/services/*.py" = ["E402"]

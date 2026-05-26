@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from gi.repository import Adw, GLib, Gio, Gtk
+from gi.repository import Adw, Gio, GLib, Gtk
 
 
 class ProfilesView(Gtk.Box):
@@ -72,9 +72,7 @@ class ProfilesView(Gtk.Box):
         # Placeholder shown when user has no profiles
         self._user_placeholder = Adw.ActionRow()
         self._user_placeholder.set_title("no saved profiles yet")
-        self._user_placeholder.set_subtitle(
-            'click "save current state" to snapshot your setup'
-        )
+        self._user_placeholder.set_subtitle('click "save current state" to snapshot your setup')
         self._user_placeholder.set_sensitive(False)
         self._user_group.add(self._user_placeholder)
 
@@ -133,9 +131,7 @@ class ProfilesView(Gtk.Box):
             except Exception:
                 pass
 
-    def _make_profile_row(
-        self, profile, *, is_preset: bool, is_active: bool
-    ) -> Adw.ActionRow:
+    def _make_profile_row(self, profile, *, is_preset: bool, is_active: bool) -> Adw.ActionRow:
         row = Adw.ActionRow()
         row.set_title(self._display_name(profile.name))
         shortcut_count = len(profile.shortcuts)
@@ -218,9 +214,7 @@ class ProfilesView(Gtk.Box):
                 self._gs.setup_workspaces_for_hyprland()
             if self._settings:
                 self._settings.set_string("current-preset", profile.name)
-                self._settings.set_boolean(
-                    "tiling-enabled", profile.name != "vanilla-gnome"
-                )
+                self._settings.set_boolean("tiling-enabled", profile.name != "vanilla-gnome")
             GLib.idle_add(self._after_apply, profile.name, old_name)
 
         GLib.Thread.new("profiles-apply", apply)
@@ -355,7 +349,14 @@ class ProfilesView(Gtk.Box):
         )
 
     def _show_export_dialog(
-        self, profile, *, title: str, default_name: str, suffix: str, filter_name: str, is_script: bool
+        self,
+        profile,
+        *,
+        title: str,
+        default_name: str,
+        suffix: str,
+        filter_name: str,
+        is_script: bool,
     ) -> None:
         fd = Gtk.FileDialog()
         fd.set_title(title)
@@ -370,7 +371,8 @@ class ProfilesView(Gtk.Box):
         fd.set_filters(filters)
 
         fd.save(
-            self._window, None,
+            self._window,
+            None,
             lambda d, r: self._on_export_file_chosen(d, r, profile, is_script),
         )
 

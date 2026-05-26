@@ -118,8 +118,8 @@ class KeyboardConfigService:
         """Apply a modifier configuration to the system."""
         success = self.set_caps_lock_behavior(config.caps_lock)
         # Apply Apple-specific settings if available
-        from nightpanel.services.hid_apple_service import HidAppleService
         from nightpanel.models.profile import FnMode, MacKeyboardConfig
+        from nightpanel.services.hid_apple_service import HidAppleService
 
         hid_apple = HidAppleService()
         if hid_apple.is_available():

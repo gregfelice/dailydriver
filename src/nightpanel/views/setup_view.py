@@ -76,7 +76,9 @@ class SetupView(Adw.PreferencesPage):
         brightness_row = Adw.ActionRow()
         brightness_row.set_title("brightness")
 
-        self._brightness_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0.3, 1.5, 0.05)
+        self._brightness_scale = Gtk.Scale.new_with_range(
+            Gtk.Orientation.HORIZONTAL, 0.3, 1.5, 0.05
+        )
         self._brightness_scale.set_hexpand(True)
         self._brightness_scale.set_draw_value(False)
         self._brightness_scale.set_valign(Gtk.Align.CENTER)
@@ -127,8 +129,7 @@ class SetupView(Adw.PreferencesPage):
             row = Adw.ActionRow()
             if meta["hyprland_bundle"]:
                 row.set_title(
-                    f'{meta["label"]}  '
-                    f'<span size="small" foreground="#26DE81">recommended</span>'
+                    f'{meta["label"]}  <span size="small" foreground="#26DE81">recommended</span>'
                 )
             else:
                 row.set_title(meta["label"])
@@ -177,7 +178,9 @@ class SetupView(Adw.PreferencesPage):
                 self._tiling_status_icon.set_from_icon_name("emblem-ok-symbolic")
                 self._tiling_status_icon.add_css_class("success")
             else:
-                self._tiling_status_row.set_subtitle("not installed — install from gnome extensions")
+                self._tiling_status_row.set_subtitle(
+                    "not installed — install from gnome extensions"
+                )
                 self._tiling_status_icon.set_from_icon_name("dialog-warning-symbolic")
                 self._tiling_status_icon.add_css_class("warning")
                 self._tile_groups_row.set_sensitive(False)
@@ -291,9 +294,7 @@ class SetupView(Adw.PreferencesPage):
 
         GLib.Thread.new("setup-apply-preset", do_apply)
 
-    def _after_apply(
-        self, label: str, old_key: str, old_tiling: bool, was_hyprland: bool
-    ) -> bool:
+    def _after_apply(self, label: str, old_key: str, old_tiling: bool, was_hyprland: bool) -> bool:
         self._on_reload()
 
         def undo():

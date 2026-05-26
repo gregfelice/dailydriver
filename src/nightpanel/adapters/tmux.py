@@ -16,7 +16,7 @@ from .base import Adapter
 _LOG = logging.getLogger(__name__)
 
 _NP_OVERLAY = Path.home() / ".config" / "nightpanel" / "themes" / "tmux-nightpanel.conf"
-_BASE_CONF  = Path.home() / ".tmux.conf"
+_BASE_CONF = Path.home() / ".tmux.conf"
 
 
 def _run(cmd):

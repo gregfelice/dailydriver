@@ -70,9 +70,7 @@ class TilingService:
         for schema_dir in sorted(glob.glob(f"{ext_base}/*/schemas")):
             if os.path.isdir(schema_dir):
                 try:
-                    source = Gio.SettingsSchemaSource.new_from_directory(
-                        schema_dir, source, False
-                    )
+                    source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, source, False)
                 except Exception:
                     pass
         return source
@@ -157,7 +155,7 @@ class TilingService:
         if not s:
             return False
         try:
-            s.set_boolean("disable-tile-groups", False)   # tile groups ON
+            s.set_boolean("disable-tile-groups", False)  # tile groups ON
             s.set_boolean("enable-raise-tile-group", True)  # raise group together
             return True
         except Exception:

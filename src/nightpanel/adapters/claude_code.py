@@ -30,13 +30,13 @@ from .base import Adapter
 
 _LOG = logging.getLogger(__name__)
 
-_SETTINGS    = Path.home() / ".claude" / "settings.json"
-_NP_THEME    = "dark"  # the preset we engage when nightpanel is on
+_SETTINGS = Path.home() / ".claude" / "settings.json"
+_NP_THEME = "dark"  # the preset we engage when nightpanel is on
 
 # Wrapper install paths
-_WRAPPER     = Path.home() / ".local" / "bin" / "claude"
-_REAL_DIR    = Path.home() / ".local" / "share" / "claude" / "versions"
-_NP_ACTIVE   = Path.home() / ".config" / "nightpanel" / "nightpanel-active"
+_WRAPPER = Path.home() / ".local" / "bin" / "claude"
+_REAL_DIR = Path.home() / ".local" / "share" / "claude" / "versions"
+_NP_ACTIVE = Path.home() / ".config" / "nightpanel" / "nightpanel-active"
 
 _WRAPPER_MARKER = "# nightpanel-claude-wrapper"
 
@@ -74,10 +74,10 @@ class ClaudeCodeAdapter(Adapter):
 
     def snapshot(self) -> dict:
         return {
-            "theme":            self._read_theme(),
-            "wrapper_existed":  _WRAPPER.exists(),
+            "theme": self._read_theme(),
+            "wrapper_existed": _WRAPPER.exists(),
             "wrapper_was_link": _WRAPPER.is_symlink(),
-            "wrapper_link_to":  os.readlink(_WRAPPER) if _WRAPPER.is_symlink() else None,
+            "wrapper_link_to": os.readlink(_WRAPPER) if _WRAPPER.is_symlink() else None,
         }
 
     def apply(self, palette: Palette) -> None:
@@ -92,7 +92,7 @@ class ClaudeCodeAdapter(Adapter):
 
     def verify(self, expected: Literal["on", "off"]) -> bool:
         # Theme-on AND wrapper-installed both required for strict mode.
-        theme_on   = self._read_theme() == _NP_THEME
+        theme_on = self._read_theme() == _NP_THEME
         wrapper_on = self._wrapper_installed()
         on = theme_on and wrapper_on
         return on if expected == "on" else not on

@@ -9,7 +9,6 @@ and that a fully-failed apply() still touched ACTIVE_FILE.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Literal
 
 import pytest
@@ -87,8 +86,9 @@ def test_apply_all_fail_does_not_mark_active(tmp_state):
     outcomes = o.apply()
 
     assert outcomes == {"a": False, "b": False}
-    assert not tmp_state["active"].exists(), \
+    assert not tmp_state["active"].exists(), (
         "ACTIVE_FILE must not be marked when every adapter failed"
+    )
 
 
 def test_apply_partial_success_marks_active(tmp_state):

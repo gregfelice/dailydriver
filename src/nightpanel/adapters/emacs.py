@@ -21,10 +21,10 @@ from .base import Adapter
 
 _LOG = logging.getLogger(__name__)
 
-_THEME_DIR  = Path.home() / ".emacs.d" / "themes"
+_THEME_DIR = Path.home() / ".emacs.d" / "themes"
 _THEME_FILE = _THEME_DIR / "nightpanel-theme.el"
-_SENTINEL   = Path.home() / ".config" / "nightpanel" / "emacs-active"
-_NP_THEME   = "nightpanel"
+_SENTINEL = Path.home() / ".config" / "nightpanel" / "emacs-active"
+_NP_THEME = "nightpanel"
 
 
 def _run(cmd):
@@ -76,7 +76,7 @@ class EmacsAdapter(Adapter):
         theme_dir = str(_THEME_DIR).rstrip("/") + "/"
         _emacsclient(
             f'(progn (add-to-list (quote custom-theme-load-path) "{theme_dir}") '
-            f'(load-theme (quote {_NP_THEME}) t))'
+            f"(load-theme (quote {_NP_THEME}) t))"
         )
 
     def revert(self, snapshot: dict) -> None:

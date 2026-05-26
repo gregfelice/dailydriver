@@ -31,16 +31,16 @@ from ..palette import NIGHTPANEL, Palette
 
 _LOG = logging.getLogger(__name__)
 
-_STATE_PATH  = Path.home() / ".config" / "nightpanel" / "nightpanel-state.json"
+_STATE_PATH = Path.home() / ".config" / "nightpanel" / "nightpanel-state.json"
 _ACTIVE_FILE = Path.home() / ".config" / "nightpanel" / "nightpanel-active"
-_NP_COMMAND  = Path.home() / ".config" / "nightpanel" / "np-command.json"
+_NP_COMMAND = Path.home() / ".config" / "nightpanel" / "np-command.json"
 
 # Firefox bridge install paths
-_NP_HOST_SRC  = Path(__file__).parent / "np-host.py"
+_NP_HOST_SRC = Path(__file__).parent / "np-host.py"
 _NP_HOST_DEST = Path.home() / ".config" / "nightpanel" / "np-host.py"
-_NM_MANIFEST  = Path.home() / ".mozilla" / "native-messaging-hosts" / "nightpanel.json"
-_EXT_SRC      = Path(__file__).parent / "firefox-extension"
-_EXT_ID       = "nightpanel-bridge@nightpanel"
+_NM_MANIFEST = Path.home() / ".mozilla" / "native-messaging-hosts" / "nightpanel.json"
+_EXT_SRC = Path(__file__).parent / "firefox-extension"
+_EXT_ID = "nightpanel-bridge@nightpanel"
 
 # Security implication shown when the user requests Firefox bridge install.
 _FF_CONSENT_TEXT = """\
@@ -75,15 +75,19 @@ class NightpanelOrchestrator:
 
     def __init__(self, palette: Palette = NIGHTPANEL, adapters: list[Adapter] | None = None):
         self.palette = palette
-        self.adapters: list[Adapter] = adapters if adapters is not None else [
-            AlacrittyAdapter(),
-            TmuxAdapter(),
-            NvimAdapter(),
-            EmacsAdapter(),
-            ClaudeCodeAdapter(),
-            GnomeAdapter(),
-            FirefoxAdapter(),
-        ]
+        self.adapters: list[Adapter] = (
+            adapters
+            if adapters is not None
+            else [
+                AlacrittyAdapter(),
+                TmuxAdapter(),
+                NvimAdapter(),
+                EmacsAdapter(),
+                ClaudeCodeAdapter(),
+                GnomeAdapter(),
+                FirefoxAdapter(),
+            ]
+        )
 
     # ── Public API ────────────────────────────────────────────────
 
@@ -171,8 +175,14 @@ class NightpanelOrchestrator:
         """
         changed = False
         ext_src = Path(__file__).parent.parent / "shell-extension" / "nightpanel@nightpanel"
-        ext_dest = Path.home() / ".local" / "share" / "gnome-shell" / \
-                   "extensions" / "nightpanel@nightpanel"
+        ext_dest = (
+            Path.home()
+            / ".local"
+            / "share"
+            / "gnome-shell"
+            / "extensions"
+            / "nightpanel@nightpanel"
+        )
         try:
             if ext_src.exists() and ext_src != ext_dest:
                 ext_dest.mkdir(parents=True, exist_ok=True)
@@ -211,7 +221,7 @@ class NightpanelOrchestrator:
             return 0
 
         home_ext = Path.home() / ".local" / "share" / "gnome-shell" / "extensions"
-        sys_ext  = Path("/usr/share/gnome-shell/extensions")
+        sys_ext = Path("/usr/share/gnome-shell/extensions")
 
         keep, ghosts = [], []
         for ext in exts:
@@ -228,8 +238,9 @@ class NightpanelOrchestrator:
         new_list = "[" + ", ".join(f"'{e}'" for e in keep) + "]"
         try:
             _run(["gsettings", "set", "org.gnome.shell", "enabled-extensions", new_list])
-            _LOG.info("nightpanel: pruned %d ghost extension(s): %s",
-                      len(ghosts), ", ".join(ghosts))
+            _LOG.info(
+                "nightpanel: pruned %d ghost extension(s): %s", len(ghosts), ", ".join(ghosts)
+            )
         except Exception as e:
             _LOG.warning("nightpanel: prune write failed: %s", e)
             return 0
@@ -276,8 +287,10 @@ class NightpanelOrchestrator:
     def _install_native_host(self) -> bool:
         try:
             _NP_HOST_DEST.parent.mkdir(parents=True, exist_ok=True)
-            changed = (not _NP_HOST_DEST.exists()
-                       or _NP_HOST_DEST.read_bytes() != _NP_HOST_SRC.read_bytes())
+            changed = (
+                not _NP_HOST_DEST.exists()
+                or _NP_HOST_DEST.read_bytes() != _NP_HOST_SRC.read_bytes()
+            )
             if changed:
                 shutil.copy2(_NP_HOST_SRC, _NP_HOST_DEST)
                 _NP_HOST_DEST.chmod(0o755)

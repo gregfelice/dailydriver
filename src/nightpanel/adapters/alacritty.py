@@ -15,8 +15,8 @@ from .base import Adapter
 
 _LOG = logging.getLogger(__name__)
 
-_CFG       = Path.home() / ".config" / "alacritty" / "alacritty.toml"
-_NP_THEME  = Path.home() / ".config" / "alacritty" / "themes" / "themes" / "nightpanel.toml"
+_CFG = Path.home() / ".config" / "alacritty" / "alacritty.toml"
+_NP_THEME = Path.home() / ".config" / "alacritty" / "themes" / "themes" / "nightpanel.toml"
 
 
 class AlacrittyAdapter(Adapter):
@@ -42,7 +42,9 @@ class AlacrittyAdapter(Adapter):
             text = _CFG.read_text() if _CFG.exists() else ""
             text = re.sub(r"^[ \t]*import\s*=.*\n?", "", text, flags=re.MULTILINE)
             if re.search(r"^\[general\]", text, re.MULTILINE):
-                text = re.sub(r"^(\[general\][ \t]*)$", rf"\1\n{import_line}", text, flags=re.MULTILINE)
+                text = re.sub(
+                    r"^(\[general\][ \t]*)$", rf"\1\n{import_line}", text, flags=re.MULTILINE
+                )
             else:
                 text = f"[general]\n{import_line}\n\n" + text.lstrip()
             _CFG.write_text(text)

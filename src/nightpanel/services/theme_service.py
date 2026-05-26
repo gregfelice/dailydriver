@@ -8,10 +8,10 @@ from gi.repository import Adw, Gdk, Gio, Gtk
 # name → (accent_color, accent_bg_color, accent_fg_color, tagline)
 # Colors sourced from Saab Night Panel reference photography.
 ACCENTS: dict[str, tuple[str, str, str, str]] = {
-    "green": ("#26DE81", "#0A5C35", "#000000", "saab instruments"),   # gauge face green
-    "amber": ("#E8930A", "#6B3800", "#000000", "night needle"),        # needle / odometer
-    "cyan":  ("#00C8D4", "#064E57", "#000000", "ice"),
-    "red":   ("#EF4444", "#7F1D1D", "#FFFFFF", "warning"),
+    "green": ("#26DE81", "#0A5C35", "#000000", "saab instruments"),  # gauge face green
+    "amber": ("#E8930A", "#6B3800", "#000000", "night needle"),  # needle / odometer
+    "cyan": ("#00C8D4", "#064E57", "#000000", "ice"),
+    "red": ("#EF4444", "#7F1D1D", "#FFFFFF", "warning"),
     "white": ("#E0E0E0", "#484848", "#000000", "bone"),
 }
 
@@ -40,12 +40,12 @@ def _build_theme_css(accent_name: str, brightness: float = 1.0) -> str:
     b = max(0.3, min(1.5, brightness))
 
     # Scale foreground/accent palette only — backgrounds and borders stay pure black
-    fg_primary   = _scale_hex("#7DB890", b)
+    fg_primary = _scale_hex("#7DB890", b)
     fg_secondary = _scale_hex("#B08030", b)
-    fg_active    = _scale_hex("#26DE81", b)
-    fg_dim       = _scale_hex("#2E5040", b)
-    color        = _scale_hex(color_raw, b)
-    accent_bg    = _scale_hex(bg_raw, b)
+    fg_active = _scale_hex("#26DE81", b)
+    fg_dim = _scale_hex("#2E5040", b)
+    color = _scale_hex(color_raw, b)
+    accent_bg = _scale_hex(bg_raw, b)
 
     return f"""
 /* nightpanel — pure black base */

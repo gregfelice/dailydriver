@@ -18,9 +18,9 @@ from .base import Adapter
 
 _LOG = logging.getLogger(__name__)
 
-_COMMAND_FILE   = Path.home() / ".config" / "nightpanel" / "np-command.json"
-_FF_ROOT        = Path.home() / ".mozilla" / "firefox"
-_CHROME_PREF    = "toolkit.legacyUserProfileCustomizations.stylesheets"
+_COMMAND_FILE = Path.home() / ".config" / "nightpanel" / "np-command.json"
+_FF_ROOT = Path.home() / ".mozilla" / "firefox"
+_CHROME_PREF = "toolkit.legacyUserProfileCustomizations.stylesheets"
 
 
 def find_default_profile(ff_root: Path = _FF_ROOT) -> Path | None:
@@ -126,7 +126,7 @@ class FirefoxAdapter(Adapter):
             _LOG.debug("nightpanel: no Firefox profile found, skipping userChrome")
             return
         user_chrome = profile / "chrome" / "userChrome.css"
-        user_js     = profile / "user.js"
+        user_js = profile / "user.js"
         try:
             user_chrome.parent.mkdir(parents=True, exist_ok=True)
             user_chrome.write_text(_chrome_renderer.render(palette))

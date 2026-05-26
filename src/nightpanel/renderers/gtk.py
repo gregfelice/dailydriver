@@ -13,7 +13,7 @@ from __future__ import annotations
 from ..palette import Palette
 
 START_SENTINEL = "/* nightpanel:start — do not edit between sentinels; this block is regenerated on every apply() */"
-END_SENTINEL   = "/* nightpanel:end */"
+END_SENTINEL = "/* nightpanel:end */"
 
 
 def render(p: Palette) -> str:

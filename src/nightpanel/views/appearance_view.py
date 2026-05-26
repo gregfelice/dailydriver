@@ -42,9 +42,7 @@ class AppearanceView(Adw.PreferencesPage):
     def _build_ui(self) -> None:
         accent_group = Adw.PreferencesGroup()
         accent_group.set_title("accent color")
-        accent_group.set_description(
-            "all-black canvas. one color — everything else fades."
-        )
+        accent_group.set_description("all-black canvas. one color — everything else fades.")
         self.add(accent_group)
 
         current = self._current_accent()

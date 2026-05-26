@@ -53,9 +53,16 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # Apply dark theme + stored accent before first paint
         self._theme_service.apply_from_settings(self._settings)
 
-        # Apply system-wide nightpanel if it was active at last exit
+        # Apply system-wide nightpanel if it was active at last exit.
+        # NB: orchestrator.apply() returns a {adapter: success} dict that
+        # is truthy; GLib.idle_add interprets a truthy return as "stay in
+        # the idle queue" and re-invokes the callback forever. Wrap so the
+        # callback returns False after one apply.
         if self._theme_service.enabled:
-            GLib.idle_add(self._orchestrator.apply)
+            def _apply_once() -> bool:
+                self._orchestrator.apply()
+                return False
+            GLib.idle_add(_apply_once)
 
         # Build UI
         self._build_ui()

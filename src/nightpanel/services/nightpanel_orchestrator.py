@@ -137,14 +137,26 @@ class NightpanelOrchestrator:
         return outcomes
 
     def revert(self) -> None:
-        """Restore every adapter to its pre-apply state."""
+        """Restore every adapter to its pre-apply state.
+
+        ACTIVE_FILE is unlinked BEFORE the adapter reverts run, not after.
+        Reason: adapter reverts take real time (gsettings round-trips, file
+        writes, daemon round-trips), and during that window any incoming
+        ``update_brightness`` call would see ACTIVE_FILE still present and
+        write ``{"action":"apply", ...}`` to np-command.json — re-engaging
+        Firefox while the rest of the world is mid-revert. The visible
+        symptom was a "goes bright for a sec, then snaps back to dark"
+        cycle when toggling off via the panel button while the config app
+        was open emitting brightness-slider events on GTK re-layout.
+        Unlinking first closes the race.
+        """
+        _ACTIVE_FILE.unlink(missing_ok=True)
         state = self._load_state()
         for a in self._active_adapters():
             try:
                 a.revert(state.get(a.name, {}))
             except Exception as e:
                 _LOG.warning("nightpanel: %s revert failed: %s", a.name, e)
-        _ACTIVE_FILE.unlink(missing_ok=True)
 
     def verify(self, expected: Literal["on", "off"]) -> dict[str, bool]:
         """Return ``{adapter_name: matches_expected}`` for every active adapter."""

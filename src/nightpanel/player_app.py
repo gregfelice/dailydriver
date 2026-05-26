@@ -11,29 +11,20 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 from gi.repository import Adw, Gdk, GLib, Gio, Gtk
 
+from .palette import NIGHTPANEL
+from .renderers import player as _player_r
+
 MPRIS_PATH   = '/org/mpris/MediaPlayer2'
 PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
 
 _PREFERRED  = 'org.mpris.MediaPlayer2.spotify'
 _NP_ACTIVE  = Path.home() / '.config' / 'nightpanel' / 'nightpanel-active'
 
-# Always active: Inter Light header title (green) + green controls.
-_PLAYER_CSS = b"""
-.np-header-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
-    letter-spacing: 3px;
-    font-size: 11pt;
-    color: #26DE81;
-}
-.np-control { color: #26DE81; }
-"""
+# Always active: Inter Light header title + controls in the palette accent.
+_PLAYER_CSS = _player_r.render_player_css(NIGHTPANEL).encode()
 
-# Applied when nightpanel is active: green for title, amber for artist.
-_NP_CSS = b"""
-.np-title  { color: #26DE81; }
-.np-artist { color: #FFB300; }
-"""
+# Applied when nightpanel is active: accent green for title, amber for artist.
+_NP_CSS = _player_r.render_np_css(NIGHTPANEL).encode()
 
 
 def _find_mpris_players() -> list[str]:

@@ -126,7 +126,8 @@ index = 231   # pure white — explicit white text → palette green
 color = "{p.fg}"
 
 [window]
-decorations_theme_variant = "Dark"
+decorations               = "None"   # hide the title bar entirely in NP mode
+decorations_theme_variant = "Dark"   # keep dark style if compositor ignores `decorations`
 
 [font]
 size = 13.0

@@ -140,8 +140,12 @@ index = 231   # pure white — explicit white text
 color = "{p.fg}"
 
 [window]
-decorations               = "None"   # hide the title bar entirely in NP mode
-decorations_theme_variant = "Dark"   # keep dark style if compositor ignores `decorations`
+# Decorations on so Mutter draws the window border + provides edge-resize
+# affordances. Linux alacritty doesn't support a "border-only" mode, so the
+# title bar reappears with this setting. The thin Adwaita-dark titlebar is
+# the lesser evil vs losing edge resize.
+decorations               = "Full"
+decorations_theme_variant = "Dark"
 
 [font]
 size = 13.0

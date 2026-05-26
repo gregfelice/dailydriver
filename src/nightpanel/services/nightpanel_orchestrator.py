@@ -113,7 +113,13 @@ class NightpanelOrchestrator:
     # ── Install (one-time setup, not part of apply/revert cycle) ──
 
     def install_gnome_extension(self) -> bool:
-        """Install + enable the GNOME Shell panel extension.
+        """Install + enable the GNOME Shell panel extension. Also prunes
+        ghost entries from the enabled-extensions gsettings list.
+
+        Ghost entries (enabled UUIDs whose dirs are missing) accumulate
+        after renames or uninstalls and can prevent newer extensions from
+        loading. The prune is cheap (one gsettings read + a few stats) and
+        defensive — runs on every install_gnome_extension() call.
 
         Returns True if anything changed (shell refresh needed).
         """
@@ -136,7 +142,52 @@ class NightpanelOrchestrator:
                 changed = True
         except Exception as e:
             _LOG.warning("nightpanel: GNOME extension install failed: %s", e)
+        if self._prune_ghost_extensions() > 0:
+            changed = True
         return changed
+
+    def _prune_ghost_extensions(self) -> int:
+        """Remove enabled-extensions entries that point at missing dirs.
+
+        Walks the gsettings ``org.gnome.shell enabled-extensions`` list,
+        drops any UUID whose extension dir exists in neither the user
+        prefix nor the system prefix, and writes the cleaned list back.
+        Returns the number of ghosts removed.
+        """
+        try:
+            r = _run(["gsettings", "get", "org.gnome.shell", "enabled-extensions"])
+            if r.returncode != 0:
+                return 0
+            raw = r.stdout.strip().strip("[]")
+            exts = [e.strip().strip("'") for e in raw.split(",") if e.strip()]
+        except Exception as e:
+            _LOG.debug("nightpanel: prune read failed: %s", e)
+            return 0
+
+        home_ext = Path.home() / ".local" / "share" / "gnome-shell" / "extensions"
+        sys_ext  = Path("/usr/share/gnome-shell/extensions")
+
+        keep, ghosts = [], []
+        for ext in exts:
+            if not ext:
+                continue
+            if (home_ext / ext).is_dir() or (sys_ext / ext).is_dir():
+                keep.append(ext)
+            else:
+                ghosts.append(ext)
+
+        if not ghosts:
+            return 0
+
+        new_list = "[" + ", ".join(f"'{e}'" for e in keep) + "]"
+        try:
+            _run(["gsettings", "set", "org.gnome.shell", "enabled-extensions", new_list])
+            _LOG.info("nightpanel: pruned %d ghost extension(s): %s",
+                      len(ghosts), ", ".join(ghosts))
+        except Exception as e:
+            _LOG.warning("nightpanel: prune write failed: %s", e)
+            return 0
+        return len(ghosts)
 
     def install_bridge(self) -> bool:
         """Install Firefox native-messaging host + companion extension.

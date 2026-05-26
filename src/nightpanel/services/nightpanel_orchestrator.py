@@ -164,7 +164,7 @@ class NightpanelOrchestrator:
         """Return ``{adapter_name: matches_expected}`` for every active adapter."""
         return {a.name: a.verify(expected) for a in self._active_adapters()}
 
-    _BRIGHTNESS_MIN_INTERVAL = 0.1   # seconds; rate-limit FF command writes to 10/s
+    _BRIGHTNESS_MIN_INTERVAL = 0.1  # seconds; rate-limit FF command writes to 10/s
 
     def update_brightness(self, brightness: float) -> None:
         """Push a brightness update to the Firefox extension.
@@ -181,6 +181,7 @@ class NightpanelOrchestrator:
         if not _ACTIVE_FILE.exists():
             return
         import time
+
         now = time.monotonic()
         if now - getattr(self, "_last_brightness_write", 0.0) < self._BRIGHTNESS_MIN_INTERVAL:
             return

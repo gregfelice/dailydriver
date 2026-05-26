@@ -59,9 +59,11 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # the idle queue" and re-invokes the callback forever. Wrap so the
         # callback returns False after one apply.
         if self._theme_service.enabled:
+
             def _apply_once() -> bool:
                 self._orchestrator.apply()
                 return False
+
             GLib.idle_add(_apply_once)
 
         # Build UI

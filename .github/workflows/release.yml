@@ -9,6 +9,11 @@ jobs:
   publish:
     name: Publish GitHub Release
     runs-on: ubuntu-latest
+    # Required so the auto-issued GITHUB_TOKEN can create the release.
+    # Default token has read-only `contents` scope; without this, the
+    # softprops action gets 403 from the releases API.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:

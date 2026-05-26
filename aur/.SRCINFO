@@ -22,6 +22,6 @@ pkgbase = nightpanel
 	conflicts = dailydriver
 	replaces = dailydriver
 	source = nightpanel-0.2.1.tar.gz::https://github.com/gregfelice/nightpanel/archive/refs/tags/v0.2.1.tar.gz
-	sha256sums = SKIP
+	sha256sums = 332a5639370a426bf2f8721040ba2168d06f64618a14881508107561926a9e48
 
 pkgname = nightpanel

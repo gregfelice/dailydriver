@@ -29,7 +29,7 @@ provides=('dailydriver')
 conflicts=('dailydriver')
 replaces=('dailydriver')
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/gregfelice/nightpanel/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('SKIP')  # TODO: replace with real sha256 after v0.2.1 GH Release tarball lands
+sha256sums=('332a5639370a426bf2f8721040ba2168d06f64618a14881508107561926a9e48')
 
 build() {
     cd "${pkgname}-${pkgver}"

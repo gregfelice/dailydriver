@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "nightpanel bridge",
-  "version": "2.3",
+  "version": "2.5",
   "description": "nightpanel bridge — Inter Light text, amber links, NP green, dim desaturated images",
   "browser_specific_settings": {
     "gecko": {

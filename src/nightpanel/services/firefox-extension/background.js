@@ -70,8 +70,10 @@ body h1 *, body h2 *, body h3 *, body h4 *, body h5 *, body h6 * {
     color: #26DE81 !important;
 }
 
-/* Images: heavy desaturation + slight green tint so they harmonize */
-img, video, canvas, iframe, picture, embed, object {
+/* Images: heavy desaturation + slight green tint so they harmonize.
+ * <video> is excluded — videos are active content the user is watching
+ * (YouTube, etc.); dimming them to half-brightness defeats the point. */
+img, canvas, iframe, picture, embed, object {
     filter: saturate(0.2) sepia(0.4) hue-rotate(60deg) brightness(${imgBrightness}) !important;
 }
 
@@ -196,9 +198,16 @@ async function deactivate() {
     }
 }
 
-// Re-inject on new page loads while active
+// Re-inject on new page loads while active.
+// 'loading' is the critical event: the previous document has unloaded (taking
+// our user-origin CSS with it) and the new one is about to render. insertCSS
+// with runAt:'document_start' grabs the new document before the page's own
+// stylesheets paint, eliminating the flash users see during navigation.
+// 'complete' is a defensive re-inject in case a late-arriving stylesheet
+// from the page knocked our rules out of effective stacking order.
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (active && changeInfo.status === 'complete' && isInjectable(tab.url)) {
+    if (!active || !isInjectable(tab.url)) return;
+    if (changeInfo.status === 'loading' || changeInfo.status === 'complete') {
         injectTab(tabId, brightness);
     }
 });

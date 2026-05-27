@@ -78,14 +78,14 @@ popover > arrow,
 popover > contents,
 menu,
 .menu {{
-    border-radius: 0px !important;
+    border-radius: 0;
     border: 1px solid {p.border_q};
 }}
 
 window > headerbar,
 window > .titlebar,
 headerbar {{
-    border-radius: 0px !important;
+    border-radius: 0;
     border-bottom: 1px solid {p.border_q};
 }}
 

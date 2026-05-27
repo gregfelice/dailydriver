@@ -6,6 +6,7 @@ from .base import Adapter
 from .claude_code import ClaudeCodeAdapter
 from .emacs import EmacsAdapter
 from .firefox import FirefoxAdapter
+from .gemini_cli import GeminiCliAdapter
 from .gnome import GnomeAdapter
 from .gws import GwsAdapter
 from .nvim import NvimAdapter
@@ -17,6 +18,7 @@ __all__ = [
     "ClaudeCodeAdapter",
     "EmacsAdapter",
     "FirefoxAdapter",
+    "GeminiCliAdapter",
     "GnomeAdapter",
     "GwsAdapter",
     "NvimAdapter",

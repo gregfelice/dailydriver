@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Classify every DEBOUNCED entry in ~/.config/nightpanel/toggle.log.
+
+The debounce in nightpanel-toggle exists to swallow a theoretical
+PanelMenu.Button stale-grab re-dispatch: ~5 s after a real panel-button
+press, the user's next click *anywhere* gets re-routed to the panel
+button as a phantom press. extension.js forwards each event's coords,
+source actor, and an explicit "did this hit my button" flag into the
+toggle-script argv; those land in toggle.log via the script's argv echo.
+
+This analyzer pairs adjacent invocations and classifies each DEBOUNCED
+event using the strongest signal available:
+
+  spurious-redispatch : coords.y > 40   (click landed outside the top panel)
+  deliberate-retap    : coords.y <= 40  (click was inside the panel button row)
+  unknown             : no metadata (old log entry / CLI invocation)
+
+evt-on-btn is recorded but NOT used for classification — Clutter delivers
+events to the implicit-grab holder regardless of cursor position, so the
+source actor commonly resolves to the panel button in both cases.
+
+If "deliberate-retap" dominates, the debounce is eating legitimate clicks
+— shorten or remove it. If "spurious-redispatch" shows up, the debounce
+is doing its real job.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from collections import Counter
+from datetime import datetime
+from pathlib import Path
+
+LOG_DEFAULT = Path.home() / ".config" / "nightpanel" / "toggle.log"
+
+INVOKE_RE = re.compile(
+    r"^(?P<ts>\S+)\s+pid=(?P<pid>\d+)\s+ppid=\d+\s+=== invoked argv=\[(?P<argv>.*)\]"
+)
+DECISION_RE = re.compile(r"^(?P<ts>\S+)\s+pid=(?P<pid>\d+)\s+ppid=\d+\s+decision:\s+(?P<d>\S+)")
+
+_ARG_RES = {
+    "evt_time":     re.compile(r"'--evt-time',\s*'(\d+)'"),
+    "evt_button":   re.compile(r"'--evt-button',\s*'(\d+)'"),
+    "evt_emulated": re.compile(r"'--evt-emulated',\s*'([01])'"),
+    "evt_coords":   re.compile(r"'--evt-coords',\s*'(-?\d+,-?\d+)'"),
+    "evt_source":   re.compile(r"'--evt-source',\s*'([^']+)'"),
+    "evt_on_btn":   re.compile(r"'--evt-on-btn',\s*'([01])'"),
+}
+
+
+def parse(log_path: Path) -> list[dict]:
+    records: dict[str, dict] = {}
+    order: list[str] = []
+    for line in log_path.read_text().splitlines():
+        m = INVOKE_RE.match(line)
+        if m:
+            pid = m["pid"]
+            rec = {"ts": datetime.fromisoformat(m["ts"]), "pid": pid, "decision": None}
+            for k, r in _ARG_RES.items():
+                hit = r.search(m["argv"])
+                rec[k] = hit.group(1) if hit else None
+            records[pid] = rec
+            order.append(pid)
+            continue
+        m = DECISION_RE.match(line)
+        if m and m["pid"] in records:
+            records[m["pid"]]["decision"] = m["d"]
+    return [records[p] for p in order if records[p]["decision"]]
+
+
+PANEL_HEIGHT_PX = 40  # GNOME top-panel height; clicks at y > this are outside it
+
+
+def classify(rec: dict) -> str:
+    coords = rec["evt_coords"]
+    if not coords:
+        return "unknown"
+    try:
+        _, y = (int(v) for v in coords.split(","))
+    except ValueError:
+        return "unknown"
+    return "spurious-redispatch" if y > PANEL_HEIGHT_PX else "deliberate-retap"
+
+
+def main(argv: list[str]) -> int:
+    log_path = Path(argv[1]) if len(argv) > 1 else LOG_DEFAULT
+    if not log_path.exists():
+        print(f"no log at {log_path}", file=sys.stderr)
+        return 1
+
+    records = parse(log_path)
+    if not records:
+        print("no parseable records")
+        return 0
+
+    print(f"== {log_path} ==")
+    print(f"total invocations: {len(records)}")
+    counts = Counter(r["decision"] for r in records)
+    for k in ("apply", "revert", "debounce-revert"):
+        print(f"  {k:18s} {counts.get(k, 0)}")
+
+    classifications: Counter[str] = Counter()
+    print("\nDEBOUNCED events:")
+    for prev, cur in zip([None, *records], records):
+        if cur["decision"] != "debounce-revert":
+            continue
+        wall_delta = (cur["ts"] - prev["ts"]).total_seconds() if prev else None
+        kind = classify(cur)
+        classifications[kind] += 1
+        wall_s = f"wall={wall_delta:5.2f}s" if wall_delta is not None else "wall=  N/A"
+        coords = cur["evt_coords"] or "?"
+        on_btn = cur["evt_on_btn"] or "?"
+        print(
+            f"  {cur['ts'].time()}  {wall_s}  coords={coords:10s}  "
+            f"on_btn={on_btn}  {kind}"
+        )
+
+    if not classifications:
+        print("  (none)")
+
+    print("\nverdict:")
+    for k, n in classifications.most_common():
+        print(f"  {k:22s} {n}")
+
+    unknown = classifications.get("unknown", 0)
+    if unknown == sum(classifications.values()) and unknown:
+        print(
+            "\nAll debounced events lack instrumentation. Restart GNOME Shell\n"
+            "(Wayland: log out + back in) to pick up the new extension.js,\n"
+            "then re-run this analyzer after some normal usage."
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

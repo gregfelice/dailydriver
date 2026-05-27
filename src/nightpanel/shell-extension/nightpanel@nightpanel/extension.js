@@ -39,7 +39,16 @@ export default class NightpanelExtension extends Extension {
         });
 
         this._btn.add_child(this._label);
-        this._btn.connect('button-press-event', () => this._toggle());
+        // Every press fires _toggle(). Filtering re-dispatched clicks here
+        // proved fragile (source actor identity unreliable across GNOME 48);
+        // the debounce lives in nightpanel-toggle. Event metadata is forwarded
+        // as argv purely as evidence — toggle.log records it so we can later
+        // distinguish a real second click from a stale-grab re-dispatch by
+        // comparing event-times across invocations.
+        this._btn.connect('button-press-event', (_actor, event) => {
+            this._toggle(event);
+            return Clutter.EVENT_STOP;
+        });
 
         // Position: right side of panel, after system indicators
         Main.panel.addToStatusArea(this.uuid, this._btn, 1, 'right');
@@ -63,9 +72,45 @@ export default class NightpanelExtension extends Extension {
 
     // ── Toggle ──────────────────────────────────────────────────────
 
-    _toggle() {
+    _toggle(event) {
+        // Forward event metadata as argv purely for post-hoc analysis (see
+        // bin/analyze-toggle-log). The toggle script ignores these flags.
+        //
+        // The primary discriminator between a real click and a stale-grab
+        // re-dispatch is COORDS: a real panel-button click lands inside the
+        // top panel (y < ~40), a re-dispatched click carries the cursor's
+        // actual screen position (typically y >> 40). evt-on-btn is recorded
+        // too but is expected to be unreliable — Clutter delivers grabbed
+        // events to the grab holder regardless of cursor position, so the
+        // source actor often points at the panel button in BOTH cases.
+        //
+        // Metadata gathering is isolated in its own try so a Clutter API
+        // shift (e.g. get_coords / is_pointer_emulated renamed in a future
+        // GNOME) degrades to evidence-less invocation rather than breaking
+        // the toggle entirely.
+        const argv = [TOGGLE_SCRIPT];
+        if (event) {
+            try {
+                argv.push('--evt-time', String(event.get_time()));
+                argv.push('--evt-button', String(event.get_button()));
+                argv.push('--evt-emulated', event.is_pointer_emulated() ? '1' : '0');
+                const [x, y] = event.get_coords();
+                argv.push('--evt-coords', `${Math.round(x)},${Math.round(y)}`);
+                const src = event.get_source();
+                const srcName = src
+                    ? (src.get_name() || src.toString()).replace(/\s+/g, '_')
+                    : 'null';
+                argv.push('--evt-source', srcName);
+                argv.push(
+                    '--evt-on-btn',
+                    src && (src === this._btn || this._btn.contains(src)) ? '1' : '0',
+                );
+            } catch (e) {
+                logError(e, 'nightpanel: event metadata capture failed (toggle still fires)');
+            }
+        }
         try {
-            Gio.Subprocess.new([TOGGLE_SCRIPT], Gio.SubprocessFlags.NONE);
+            Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
             // Visual updates via the file monitor once the script finishes
         } catch (e) {
             logError(e, 'nightpanel: toggle script failed');

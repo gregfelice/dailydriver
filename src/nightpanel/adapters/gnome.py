@@ -1,5 +1,31 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""GNOME adapter — gsettings color-scheme + background + GTK CSS overlay."""
+"""GNOME adapter — gsettings color-scheme + background + GTK CSS overlay.
+
+GTK4 reads ``~/.config/gtk-4.0/gtk.css`` exactly once per display in
+``settings_init_style()`` (gtk/gtksettings.c). The static ``GtkCssProvider``
+it allocates is never reloaded — there is no GFileMonitor on the file and
+no documented out-of-process hook (DBus, signal, XSettings) to ask a
+running GTK4 app to re-parse it.
+
+libadwaita's color-scheme change channel (XDG portal
+``org.freedesktop.portal.Settings`` → ``org.freedesktop.appearance``
+``color-scheme``) re-renders the *already-parsed* CSS through media
+queries, so gsettings dark-mode toggles propagate live — but the on-disk
+gtk.css is not re-read. That's why a long-running Nautilus shows
+"standard Adwaita dark" after toggling NP on but doesn't pick up the NP
+overrides written between its startup and the toggle.
+
+The only reliable recipe is to bounce the running GTK4 app. We do this
+for Nautilus specifically (``gapplication action org.gnome.Nautilus
+kill`` → ``g_application_quit()``) on both apply and revert. Other
+GTK4 apps started before nightpanel applies will keep stale CSS until
+the user restarts them — documented caveat.
+
+Refs:
+  https://gitlab.gnome.org/GNOME/gtk/-/raw/main/gtk/gtksettings.c
+  https://gitlab.gnome.org/GNOME/libadwaita/-/raw/main/src/adw-style-manager.c
+  https://gitlab.gnome.org/GNOME/nautilus/-/raw/main/src/nautilus-application.c
+"""
 
 from __future__ import annotations
 
@@ -39,6 +65,21 @@ def _gsettings_set(schema: str, key: str, value: str) -> None:
         _LOG.debug("nightpanel: gsettings %s %s failed: %s", schema, key, e)
 
 
+def _bounce_nautilus() -> None:
+    """Force a running Nautilus to re-read gtk.css by quitting it.
+
+    GTK4 only re-parses ``~/.config/gtk-4.0/gtk.css`` at app startup; see
+    module docstring. ``gapplication action org.gnome.Nautilus kill``
+    routes to ``g_application_quit()`` and is the supported clean exit
+    (same as ``nautilus --quit``). Non-zero exit is normal when Nautilus
+    isn't registered on the bus — no instance to bounce, nothing to do.
+    """
+    try:
+        _run(["gapplication", "action", "org.gnome.Nautilus", "kill"])
+    except Exception as e:
+        _LOG.debug("nightpanel: nautilus bounce skipped: %s", e)
+
+
 class GnomeAdapter(Adapter):
     name = "gnome"
 
@@ -63,10 +104,12 @@ class GnomeAdapter(Adapter):
         _gsettings_set("org.gnome.desktop.background", "picture-uri", "")
         _gsettings_set("org.gnome.desktop.background", "picture-uri-dark", "")
         self._apply_gtk_css(palette)
+        _bounce_nautilus()
 
     def revert(self, snapshot: dict) -> None:
         # Restore CSS before color-scheme so GTK reloads with the right file in one pass.
         self._revert_gtk_css(snapshot)
+        _bounce_nautilus()
         cs = snapshot.get("color_scheme", "default")
         if cs:
             _gsettings_set("org.gnome.desktop.interface", "color-scheme", cs)

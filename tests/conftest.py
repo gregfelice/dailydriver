@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from collections.abc import Generator
 from pathlib import Path
@@ -10,6 +11,79 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# =============================================================================
+# Privilege-escalation guardrail (autouse — applies to every test)
+# =============================================================================
+#
+# If a unit test reaches production code that shells out to `pkexec`/`sudo`/
+# `doas`, the real binary runs and prompts the developer for a password.
+# This has happened (see test_apply_modifier_config_success in
+# test_keyboard_config.py: it mocks Gio but the code path also instantiates
+# HidAppleService, which runs `pkexec sh -c "modprobe -r hid_apple ..."` in
+# apply_config). The right move is to make the test harness *incapable* of
+# triggering a real elevation prompt — not to play whack-a-mole patching
+# each new test as it pops up.
+#
+# The guard wraps the five subprocess entry points (`run`, `Popen`, `call`,
+# `check_call`, `check_output`). When the first command token resolves to a
+# known privilege-escalator, the wrapper raises a noisy RuntimeError instead
+# of executing. Everything else (modinfo, the nightpanel-toggle integration
+# script, etc.) passes through unchanged.
+#
+# Tests that legitimately need to exercise those paths can override the
+# wrapper by doing their own `patch("subprocess.run", ...)` — the test-level
+# patch wins because it applies inside the test body, after this autouse
+# fixture has installed the guard.
+
+_PRIVILEGE_ESCALATORS = frozenset({"pkexec", "sudo", "doas"})
+
+
+def _command_looks_privileged(args: object) -> bool:
+    """Return True if the subprocess command's argv[0] is a known elevator."""
+    if isinstance(args, (str, bytes)):
+        # shell=True string form — pull off the first token.
+        text = args.decode("ascii", "replace") if isinstance(args, bytes) else args
+        tokens = text.split()
+        first = tokens[0] if tokens else ""
+    elif isinstance(args, (list, tuple)) and args:
+        first = args[0]
+        if isinstance(first, bytes):
+            first = first.decode("ascii", "replace")
+        first = str(first)
+    else:
+        return False
+    # Match both "pkexec" and "/usr/bin/pkexec".
+    return Path(first).name in _PRIVILEGE_ESCALATORS
+
+
+@pytest.fixture(autouse=True)
+def _block_privileged_subprocess(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[None, None, None]:
+    """Refuse any subprocess call that would prompt for elevated privileges."""
+
+    def _make_guard(real: Any, name: str) -> Any:
+        def wrapped(args: Any, *rest: Any, **kw: Any) -> Any:
+            if _command_looks_privileged(args):
+                raise RuntimeError(
+                    f"nightpanel test guard: refused subprocess.{name}({args!r}). "
+                    "A test reached production code that invokes pkexec/sudo/doas. "
+                    "Mock the offending call (e.g. patch('subprocess.run') or "
+                    "patch the service object that owns the shell-out) rather "
+                    "than letting the real elevator run."
+                )
+            return real(args, *rest, **kw)
+
+        return wrapped
+
+    for fn_name in ("run", "Popen", "call", "check_call", "check_output"):
+        monkeypatch.setattr(
+            subprocess,
+            fn_name,
+            _make_guard(getattr(subprocess, fn_name), fn_name),
+        )
+    yield
 
 # =============================================================================
 # Early GI Mocking (before any dailydriver imports)

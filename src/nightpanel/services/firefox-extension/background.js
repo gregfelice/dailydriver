@@ -38,6 +38,13 @@ function makeCss(brightness) {
     // Images get aggressively dimmed — half the base brightness — so photos
     // and brand graphics don't pull the eye away from the muted text.
     const imgBrightness = (brightness * 0.5).toFixed(2);
+    // Functional <canvas> surfaces (spreadsheet grids, maps, drawing apps) are
+    // content the user reads, not decoration. The artistic desaturate+sepia+
+    // hue-rotate that flatters photos turns a data grid into an unreadable
+    // green smear, so canvas gets only a plain, moderate dim. Fixed (not
+    // brightness*factor) so a white grid lands at a legible ~80% regardless of
+    // the slider — the user asked for "slightly reduced, still legible".
+    const surfaceBrightness = '0.80';
     // PER-CALL NONCE in a CSS comment. Without this, makeCss is
     // brightness-deterministic — same brightness → byte-identical CSS.
     // Empirically (FF 140 ESR): when the same code is inserted twice into
@@ -99,11 +106,47 @@ body h1 *, body h2 *, body h3 *, body h4 *, body h5 *, body h6 * {
     color: #26DE81 !important;
 }
 
-/* Images: heavy desaturation + slight green tint so they harmonize.
- * <video> is excluded — videos are active content the user is watching
- * (YouTube, etc.); dimming them to half-brightness defeats the point. */
-img, canvas, iframe, picture, embed, object {
+/* Decorative imagery: heavy desaturation + slight green tint so photos and
+ * brand graphics harmonize and don't pull the eye away from the muted text.
+ * <video> is excluded everywhere — it's active content the user is watching
+ * (YouTube, etc.); dimming it to half-brightness defeats the point. */
+img, picture, embed, object {
     filter: saturate(0.2) sepia(0.4) hue-rotate(60deg) brightness(${imgBrightness}) !important;
+}
+
+/* Functional <canvas> surfaces (Google Sheets grid, maps, drawing apps): a
+ * plain moderate dim, no tint. The grid is drawn on the canvas, so the
+ * green/transparent text rules can't touch it — this filter is the only lever
+ * on its brightness. Heavy desaturation here makes cell values unreadable. */
+canvas {
+    filter: brightness(${surfaceBrightness}) !important;
+}
+
+/* General iframes are dimmed as embedded imagery. We KEEP this (rather than
+ * relying solely on allFrames injection theming the inner doc) because frame
+ * injection is unreliable on FF ESR — see the insertCSS sync-barrier note in
+ * injectTab — and an un-dimmed frame would flash as a bright rectangle. */
+iframe {
+    filter: saturate(0.2) sepia(0.4) hue-rotate(60deg) brightness(${imgBrightness}) !important;
+}
+
+/* …but video-player embeds are the content the user is watching. Leave the
+ * picture crisp: the inner document is themed via allFrames injection (its own
+ * <video> stays excluded), so the player chrome is dark while the video itself
+ * is untouched. Scoped to KNOWN video hosts on purpose — a generic /embed/
+ * match would also exempt Maps/Disqus/Twitter widgets and reintroduce the
+ * bright-rectangle problem the bare iframe rule exists to prevent. Attribute
+ * selectors out-specify and follow the bare iframe rule, so they win. */
+iframe[src*="youtube.com/embed"],
+iframe[src*="youtube-nocookie.com/embed"],
+iframe[src*="player.vimeo.com"] {
+    filter: none !important;
+}
+
+/* Defensive: <video> is already kept out of every rule above, but pin it to
+ * no-filter in case a future rule or site wrapper would otherwise dim it. */
+video {
+    filter: none !important;
 }
 
 /* Selection: NP dark green bg, bright green text */

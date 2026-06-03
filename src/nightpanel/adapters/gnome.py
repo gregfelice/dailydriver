@@ -99,10 +99,11 @@ class GnomeAdapter(Adapter):
 
     def apply(self, palette: Palette) -> None:
         _gsettings_set("org.gnome.desktop.interface", "color-scheme", "prefer-dark")
-        _gsettings_set("org.gnome.desktop.background", "picture-options", "none")
-        _gsettings_set("org.gnome.desktop.background", "primary-color", palette.bg)
-        _gsettings_set("org.gnome.desktop.background", "picture-uri", "")
-        _gsettings_set("org.gnome.desktop.background", "picture-uri-dark", "")
+        # Leave the desktop wallpaper untouched. We used to clear picture-uri
+        # and paint primary-color black, but blacking out the wallpaper is too
+        # heavy-handed — the user keeps their chosen background. snapshot() and
+        # revert() still carry the bg keys so anyone toggled on under the old
+        # behaviour gets their wallpaper restored on the next toggle-off.
         self._apply_gtk_css(palette)
         _bounce_nautilus()
 

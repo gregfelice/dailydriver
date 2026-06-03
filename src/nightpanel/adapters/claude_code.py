@@ -22,7 +22,6 @@ import json
 import logging
 import os
 import shutil
-import subprocess
 from pathlib import Path
 from typing import Literal
 
@@ -91,13 +90,16 @@ class ClaudeCodeAdapter(Adapter):
             # so they're still rendering bgcolors via the full RGB palette
             # instead of routing through alacritty's NP-tinted 16-color
             # palette. The only fix is for the user to relaunch claude.
+            # Log-only: the journal is the durable signal. The desktop
+            # notification was removed — it fired on every toggle-on for any
+            # long-lived pre-wrapper session, spamming the message tray and
+            # the lock screen. See _notify_stale's docstring.
             _LOG.warning(
                 "nightpanel: %d claude session(s) pre-date the wrapper "
                 "(COLORTERM still set); user needs to relaunch: pids=%s",
                 len(stale),
                 stale,
             )
-            self._notify_stale(len(stale))
 
     def revert(self, snapshot: dict) -> None:
         prev = snapshot.get("theme") or "auto"
@@ -169,26 +171,6 @@ class ClaudeCodeAdapter(Adapter):
             except OSError:
                 continue
         return stale
-
-    def _notify_stale(self, count: int) -> None:
-        """Fire a desktop notification telling the user to relaunch claude.
-
-        Best-effort — silently no-ops if notify-send is missing (headless
-        sessions, minimal installs). The warning log is the durable signal.
-        """
-        body = (
-            f"{count} claude session(s) launched before nightpanel — "
-            "still rendering via truecolor instead of the NP palette. "
-            "Relaunch claude to fully theme."
-        )
-        try:
-            subprocess.Popen(  # noqa: S603 — fixed argv, no shell
-                ["notify-send", "-a", "nightpanel", "Nightpanel: claude session stale", body],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except (FileNotFoundError, OSError) as e:
-            _LOG.debug("nightpanel: notify-send unavailable: %s", e)
 
     def _install_wrapper(self) -> None:
         """Replace ~/.local/bin/claude with the NP wrapper script.

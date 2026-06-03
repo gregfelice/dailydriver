@@ -2,10 +2,12 @@
 """Tests for ClaudeCodeAdapter — focus on stale-session detection.
 
 The adapter's theme-flip path is exercised end-to-end by orchestrator
-tests; these tests target the new ``_find_stale_claude_pids`` helper and
-the notify-send invocation introduced to surface the design gap where a
-claude session pre-dating nightpanel-active keeps its inherited
-COLORTERM and bypasses the NP-tinted ANSI palette.
+tests; these tests target the ``_find_stale_claude_pids`` helper that
+surfaces the design gap where a claude session pre-dating
+nightpanel-active keeps its inherited COLORTERM and bypasses the
+NP-tinted ANSI palette. The gap is reported log-only — a desktop
+notification was removed because it re-fired on every toggle-on for any
+long-lived pre-wrapper session (spamming the tray and lock screen).
 """
 
 from __future__ import annotations
@@ -144,8 +146,12 @@ def test_find_stale_returns_empty_when_proc_unreadable(tmp_path):
     assert stale == []
 
 
-def test_apply_notifies_when_stale_present(tmp_path, monkeypatch):
-    """End-to-end: apply() detects stale claudes and fires notify-send."""
+def test_apply_logs_when_stale_present(tmp_path, monkeypatch, caplog):
+    """apply() detects stale claudes and reports them log-only.
+
+    No desktop notification is fired — the journal warning is the durable
+    signal (a popup re-fired on every toggle, spamming tray/lock screen).
+    """
     settings = tmp_path / "settings.json"
     wrapper = tmp_path / "claude"
     real_dir = tmp_path / "claude-versions"
@@ -160,21 +166,18 @@ def test_apply_notifies_when_stale_present(tmp_path, monkeypatch):
 
     with (
         patch.object(adapter, "_find_stale_claude_pids", return_value=[1234, 5678]),
-        patch("nightpanel.adapters.claude_code.subprocess.Popen") as mock_popen,
+        caplog.at_level("WARNING"),
     ):
         from nightpanel.palette import NIGHTPANEL
 
         adapter.apply(NIGHTPANEL)
 
-    assert mock_popen.called
-    argv = mock_popen.call_args.args[0]
-    assert argv[0] == "notify-send"
-    # Body mentions the count so the user knows the scope.
-    body = argv[-1]
-    assert "2 claude session(s)" in body
+    # The warning names the count so the journal records the scope.
+    assert "2 claude session(s)" in caplog.text
+    assert "1234" in caplog.text
 
 
-def test_apply_does_not_notify_when_no_stale(tmp_path, monkeypatch):
+def test_apply_silent_when_no_stale(tmp_path, monkeypatch, caplog):
     settings = tmp_path / "settings.json"
     wrapper = tmp_path / "claude"
     real_dir = tmp_path / "claude-versions"
@@ -189,23 +192,10 @@ def test_apply_does_not_notify_when_no_stale(tmp_path, monkeypatch):
 
     with (
         patch.object(adapter, "_find_stale_claude_pids", return_value=[]),
-        patch("nightpanel.adapters.claude_code.subprocess.Popen") as mock_popen,
+        caplog.at_level("WARNING"),
     ):
         from nightpanel.palette import NIGHTPANEL
 
         adapter.apply(NIGHTPANEL)
 
-    assert not mock_popen.called
-
-
-def test_notify_silent_when_notify_send_missing(monkeypatch):
-    """Headless / minimal hosts may not have libnotify installed.
-    The adapter must swallow FileNotFoundError silently."""
-
-    def explode(*a, **kw):
-        raise FileNotFoundError("notify-send")
-
-    monkeypatch.setattr("nightpanel.adapters.claude_code.subprocess.Popen", explode)
-
-    # No exception → pass.
-    ClaudeCodeAdapter()._notify_stale(3)
+    assert "claude session(s)" not in caplog.text

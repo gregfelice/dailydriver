@@ -5,6 +5,17 @@ repo/
 *.flatpak
 .flatpak-builder/
 
+# Debian packaging build artifacts (dpkg-buildpackage)
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.debhelper
+debian/*.substvars
+debian/nightpanel/
+*.deb
+*.buildinfo
+*.changes
+
 # Python
 __pycache__/
 *.py[cod]

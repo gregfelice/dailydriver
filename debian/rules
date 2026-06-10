@@ -2,6 +2,4 @@
 
 %:
 	dh $@ --with python3 --buildsystem=meson
-
-override_dh_auto_configure:
-	dh_auto_configure -- -Dprefix=/usr
+# dh's meson buildsystem already configures --prefix=/usr; no override needed.

@@ -1,0 +1,43 @@
+#!/bin/sh
+# Best-effort revert of an active nightpanel theme before the package's files are
+# removed, so removing the package while it is toggled ON doesn't leave the
+# user's configs themed with no tool left to undo it.
+#
+# Runs ONLY on `remove` (exact match). NOT on `upgrade`: on an upgrade it is the
+# OLD package's prerm that runs (with $1=upgrade), and nothing re-applies after,
+# so reverting there would strip the live theme on every `apt upgrade`. (`remove`
+# also covers `apt purge`, which runs `prerm remove` then `postrm purge`.)
+#
+# prerm runs as root with no desktop session, so re-enter as the invoking desktop
+# user ($SUDO_USER) with their D-Bus session bus. Never fail the removal (|| true):
+# file-based adapters (alacritty/tmux/gtk-css/claude wrapper) revert regardless;
+# gsettings/Firefox need the session bus and degrade silently when it is absent
+# (e.g. SSH sudo). The package files are still present during prerm (dpkg removes
+# them afterwards), so nightpanel-toggle is still runnable here.
+set -e
+
+if [ "$1" = remove ]; then
+    if [ -n "${SUDO_USER:-}" ]; then
+        uhome=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+        uid=$(id -u "$SUDO_USER" 2>/dev/null || true)
+        if [ -n "$uhome" ] && [ -e "$uhome/.config/nightpanel/nightpanel-active" ]; then
+            echo "nightpanel: active theme detected — reverting as $SUDO_USER before removal..."
+            # nightpanel-toggle reverts when the active marker exists; its panel
+            # double-click debounce cannot trigger here (marker mtime is old).
+            bus="/run/user/$uid/bus"
+            if [ -n "$uid" ] && [ -S "$bus" ]; then
+                runuser -u "$SUDO_USER" -- env \
+                    XDG_RUNTIME_DIR="/run/user/$uid" \
+                    DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" \
+                    nightpanel-toggle || true
+            else
+                runuser -u "$SUDO_USER" -- nightpanel-toggle || true
+                echo "nightpanel: no D-Bus session for $SUDO_USER; GNOME/Firefox parts may need a manual revert."
+            fi
+        fi
+    else
+        echo "nightpanel: removing with no \$SUDO_USER set — if a theme is still active, run 'nightpanel-toggle' as your user to revert it."
+    fi
+fi
+
+#DEBHELPER#

@@ -69,6 +69,50 @@ sudo pacman -R dailydriver
 yay -S nightpanel
 ```
 
+### Debian / Ubuntu (apt)
+
+Nightpanel can be published as a `.deb` to a [Forgejo Debian package registry](https://forgejo.org/docs/latest/user/packages/debian/) (or any apt repo). Register the repo once, then `install` / `update` / `upgrade` / `remove` it with plain apt. Fill in your own values:
+
+- `FORGEJO_HOST` — your Forgejo host (e.g. `git.example.com`)
+- `OWNER` — the user or org that owns the package registry
+- `DIST` — the distribution you uploaded under (e.g. `trixie`)
+- `TOKEN` — a Forgejo access token with `read:package` scope (only needed if the registry is private)
+
+```bash
+FORGEJO_HOST=git.example.com
+OWNER=youruser
+DIST=trixie
+TOKEN=<your-forgejo-read-token>
+
+# 1. signing key
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL -u "$OWNER:$TOKEN" \
+  "https://$FORGEJO_HOST/api/packages/$OWNER/debian/repository.key" \
+  | sudo tee /etc/apt/keyrings/forgejo-nightpanel.asc >/dev/null
+
+# 2. apt credentials (private registry only)
+echo "machine $FORGEJO_HOST/api/packages/$OWNER/debian login $OWNER password $TOKEN" \
+  | sudo tee /etc/apt/auth.conf.d/forgejo-nightpanel.conf >/dev/null
+sudo chmod 600 /etc/apt/auth.conf.d/forgejo-nightpanel.conf
+
+# 3. apt source
+echo "deb [signed-by=/etc/apt/keyrings/forgejo-nightpanel.asc] https://$FORGEJO_HOST/api/packages/$OWNER/debian $DIST main" \
+  | sudo tee /etc/apt/sources.list.d/nightpanel.list >/dev/null
+
+# 4. install
+sudo apt update
+sudo apt install nightpanel
+```
+
+Then the usual lifecycle:
+
+```bash
+sudo apt update && sudo apt upgrade   # new builds are picked up automatically
+sudo apt remove nightpanel            # reverts an active theme first, then removes cleanly
+```
+
+After installing, log out/in once so GNOME Shell loads the panel-button extension, then `gnome-extensions enable nightpanel@nightpanel`.
+
 ### From Source
 
 ```bash

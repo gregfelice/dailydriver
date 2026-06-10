@@ -1,8 +1,9 @@
-Source: dailydriver
+Source: nightpanel
 Section: utils
 Priority: optional
 Maintainer: Greg Felice <greg@gregfelice.com>
 Build-Depends: debhelper-compat (= 13),
+               dh-python,
                meson,
                ninja-build,
                pkg-config,
@@ -13,10 +14,10 @@ Build-Depends: debhelper-compat (= 13),
                gobject-introspection,
                libgirepository1.0-dev
 Standards-Version: 4.6.2
-Homepage: https://github.com/gregfelice/dailydriver
+Homepage: https://github.com/gregfelice/nightpanel
 Rules-Requires-Root: no
 
-Package: dailydriver
+Package: nightpanel
 Architecture: any
 Depends: ${python3:Depends},
          ${misc:Depends},
@@ -24,10 +25,15 @@ Depends: ${python3:Depends},
          python3-gi,
          python3-pydantic,
          python3-tomli-w,
+         python3-tomlkit,
          dconf-gsettings-backend | dconf-service,
          gir1.2-gtk-4.0,
          gir1.2-adw-1
-Description: Visual keyboard shortcut configuration for GNOME
- Daily Driver provides a videogame-like options UI for keyboard configuration.
- Easily customize your keyboard shortcuts, create profiles, and configure
- Mac keyboards on Linux.
+Recommends: gnome-shell
+Description: Keyboard configuration + system-wide dark-mode orchestrator for GNOME
+ Nightpanel is two tools in one. A theming orchestrator flips alacritty, tmux,
+ nvim, emacs, GNOME (GTK CSS + background), Claude Code and Firefox into a
+ coordinated dark palette with one click from a panel button or the CLI, and
+ reverts to the pre-apply state on the next click. A keyboard configurator
+ provides a videogame-like options UI to customize GNOME shortcuts, create
+ profiles, apply curated presets and view an on-screen cheat sheet.

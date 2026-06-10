@@ -2,7 +2,8 @@
 //
 // Adds a night-light button to the right side of the panel.
 // State is read from ~/.config/nightpanel/nightpanel-active (presence = on).
-// Toggle runs ~/.local/bin/nightpanel-toggle (the standalone orchestrator script).
+// Toggle runs `nightpanel-toggle`, resolved from PATH (system package →
+// /usr/bin) with a ~/.local/bin fallback for dev-stow / pipx checkouts.
 // File monitor on the config dir keeps the icon in sync when toggled from
 // the nightpanel app or CLI without needing a poll loop.
 // When active, all other panel elements are hidden — only this button remains.
@@ -15,7 +16,10 @@ import St from 'gi://St';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-const TOGGLE_SCRIPT = GLib.get_home_dir() + '/.local/bin/nightpanel-toggle';
+// System install lands the toggle in /usr/bin; resolve via PATH so the panel
+// button works for distro users. Fall back to ~/.local/bin (dev-stow / pipx).
+const TOGGLE_SCRIPT = GLib.find_program_in_path('nightpanel-toggle')
+    || (GLib.get_home_dir() + '/.local/bin/nightpanel-toggle');
 const STATE_FILE    = GLib.get_home_dir() + '/.config/nightpanel/nightpanel-active';
 const WATCH_DIR     = GLib.get_home_dir() + '/.config/nightpanel';
 

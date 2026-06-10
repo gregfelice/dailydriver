@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+# nightpanel-toggle - flip the system-wide nightpanel theme on/off
+#
+# Copyright 2025 Greg Felice
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Minimal launcher: deliberately NO gi / gresource. The toggle drives the
+# theming orchestrator, which is a plain file-editing path (adapters/renderers/
+# palette import no gi). Mirrors nightpanel.in's @pythondir@ insert so the
+# installed nightpanel package imports regardless of prefix.
+
+import sys
+
+sys.path.insert(1, '@pythondir@')
+
+from nightpanel import toggle
+
+if __name__ == '__main__':
+    sys.exit(toggle.main())

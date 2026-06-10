@@ -1,3 +1,20 @@
+nightpanel (0.2.5-2) unstable; urgency=low
+
+  * prerm: best-effort revert of an active theme as the invoking desktop user
+    on `remove` only (never on upgrade), so removing while toggled on does not
+    leave the system themed with no revert tool.
+
+ -- Greg Felice <greg@gregfelice.com>  Tue, 09 Jun 2026 20:15:00 -0400
+
+nightpanel (0.2.5-1) unstable; urgency=low
+
+  * Rename source/binary package dailydriver -> nightpanel.
+  * Package the theming half: install the nightpanel-toggle launcher to
+    /usr/bin and the GNOME Shell extension to the system extensions dir.
+  * Add python3-tomlkit dependency (alacritty adapter).
+
+ -- Greg Felice <greg@gregfelice.com>  Tue, 09 Jun 2026 16:01:04 -0400
+
 dailydriver (0.2.0-1) unstable; urgency=low
 
   * Initial release.

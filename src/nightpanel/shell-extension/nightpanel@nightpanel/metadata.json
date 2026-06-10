@@ -3,6 +3,6 @@
   "description": "Panel button to toggle the Nightpanel system-wide dark-mode orchestrator. When active, the rest of the GNOME top panel hides and the button serves as both indicator and toggle. Companion to the Nightpanel desktop app.",
   "uuid": "nightpanel@nightpanel",
   "shell-version": ["45", "46", "47", "48"],
-  "version": 2,
+  "version": 3,
   "url": "https://github.com/gregfelice/nightpanel"
 }

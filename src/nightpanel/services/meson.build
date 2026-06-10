@@ -4,6 +4,7 @@ services_sources = [
   'hardware_service.py',
   'hid_apple_service.py',
   'keyboard_config_service.py',
+  'nightpanel_orchestrator.py',
   'profile_service.py',
 ]
 

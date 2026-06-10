@@ -5,10 +5,14 @@ nightpanel_sources = [
   'nightpanel/__init__.py',
   'nightpanel/application.py',
   'nightpanel/window.py',
+  'nightpanel/palette.py',
+  'nightpanel/toggle.py',
 ]
 
 install_data(nightpanel_sources, install_dir: moduledir)
 
+subdir('nightpanel/adapters')
+subdir('nightpanel/renderers')
 subdir('nightpanel/models')
 subdir('nightpanel/services')
 subdir('nightpanel/views')

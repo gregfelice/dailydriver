@@ -36,6 +36,23 @@ configure_file(
   install_mode: 'rwxr-xr-x'
 )
 
+# Toggle launcher - gi-free entry point the GNOME panel button and CLI invoke.
+configure_file(
+  input: 'src/nightpanel-toggle.in',
+  output: 'nightpanel-toggle',
+  configuration: conf,
+  install: true,
+  install_dir: get_option('bindir'),
+  install_mode: 'rwxr-xr-x'
+)
+
+# GNOME Shell extension - the panel button. Installed system-wide; it resolves
+# the toggle binary via PATH at runtime (see extension.js).
+install_subdir(
+  'src/nightpanel/shell-extension/nightpanel@nightpanel',
+  install_dir: get_option('datadir') / 'gnome-shell' / 'extensions'
+)
+
 subdir('data')
 subdir('src')
 subdir('po')

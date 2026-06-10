@@ -19,13 +19,19 @@ config is untouched, and a short debounce window keeps the suite fast.
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
 
 import pytest
 
-SCRIPT = Path.home() / ".local" / "bin" / "nightpanel-toggle"
+# Resolve the installed toggle from PATH (system pkg → /usr/bin), falling back to
+# the dev-stow location. The autouse script_exists fixture skips when neither is
+# present (e.g. CI without install).
+SCRIPT = Path(
+    shutil.which("nightpanel-toggle") or Path.home() / ".local" / "bin" / "nightpanel-toggle"
+)
 DEBOUNCE_S = 0.5  # short window keeps tests under ~2 s
 
 

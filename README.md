@@ -13,36 +13,21 @@ Nightpanel is two tools under one roof:
 
 ## Quick install (Debian / Ubuntu)
 
-Register the apt repo, then install. Set the four variables to match your registry — a `read:package` token is only needed if it is private — and the rest is copy-paste:
+Register the apt repo and install — copy-paste, no account or token needed. The repo is GPG-signed (the `signed-by` keyring is the trust anchor), so it's served over plain HTTP:
 
 ```bash
-# --- configure ---
-FORGEJO_HOST=git.example.com   # your Forgejo host
-OWNER=youruser                 # registry owner (user or org)
-DIST=trixie                    # your Debian/Ubuntu release codename
-TOKEN=                         # read:package token; leave empty for a public registry
-
-# --- register the repo ---
-AUTH=""; [ -n "$TOKEN" ] && AUTH="-u $OWNER:$TOKEN"
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL $AUTH "https://$FORGEJO_HOST/api/packages/$OWNER/debian/repository.key" \
-  | sudo tee /etc/apt/keyrings/forgejo-nightpanel.asc >/dev/null
-
-if [ -n "$TOKEN" ]; then
-  echo "machine $FORGEJO_HOST/api/packages/$OWNER/debian login $OWNER password $TOKEN" \
-    | sudo tee /etc/apt/auth.conf.d/forgejo-nightpanel.conf >/dev/null
-  sudo chmod 600 /etc/apt/auth.conf.d/forgejo-nightpanel.conf
-fi
-
-echo "deb [signed-by=/etc/apt/keyrings/forgejo-nightpanel.asc] https://$FORGEJO_HOST/api/packages/$OWNER/debian $DIST main" \
+curl -fsSL http://apt.rizlabs.com/nightpanel.gpg \
+  | sudo tee /etc/apt/keyrings/nightpanel.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/nightpanel.gpg] http://apt.rizlabs.com trixie main" \
   | sudo tee /etc/apt/sources.list.d/nightpanel.list >/dev/null
-
-# --- install ---
 sudo apt update
 sudo apt install nightpanel
 ```
 
 Then it's plain apt: `sudo apt update && sudo apt upgrade` to update, `sudo apt remove nightpanel` to remove (it reverts an active theme first). After the first install, log out/in once so GNOME Shell loads the panel button, then `gnome-extensions enable nightpanel@nightpanel`.
+
+> Self-hosting your own registry instead? Point the key/source URLs at your host; if it's a private Forgejo Debian registry, add an `/etc/apt/auth.conf.d/` entry with a `read:package` token.
 
 ![Nightpanel — Keyboard Visualization](data/screenshots/keyboard-view.png)
 

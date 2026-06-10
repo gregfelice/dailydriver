@@ -29,7 +29,9 @@ Depends: ${python3:Depends},
          dconf-gsettings-backend | dconf-service,
          gir1.2-gtk-4.0,
          gir1.2-adw-1
-Recommends: gnome-shell
+Recommends: gnome-shell,
+            fonts-inter,
+            fonts-jetbrains-mono
 Description: Keyboard configuration + system-wide dark-mode orchestrator for GNOME
  Nightpanel is two tools in one. A theming orchestrator flips alacritty, tmux,
  nvim, emacs, GNOME (GTK CSS + background), Claude Code and Firefox into a

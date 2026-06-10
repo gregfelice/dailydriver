@@ -55,6 +55,18 @@ jobs:
           dpkg-buildpackage -us -uc -b
           # dpkg-buildpackage writes artifacts to the parent dir (workspace root).
 
+      - name: Smoke-test the installed package (GUI construct + fonts + extension)
+        run: |
+          set -eux
+          export DEBIAN_FRONTEND=noninteractive
+          # Install the deb + design fonts explicitly. Not --install-recommends:
+          # nightpanel also Recommends gnome-shell, which would drag a whole
+          # desktop into CI. The smoke test validates the font Recommends are
+          # *declared* via dpkg, and that the installed fonts are usable.
+          apt-get install -y --no-install-recommends \
+            ./nightpanel_*.deb fonts-inter fonts-jetbrains-mono
+          bash src/tests/smoke/gui-smoke.sh
+
       - name: Publish to the Forgejo Debian registry
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}

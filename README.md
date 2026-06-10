@@ -8,8 +8,41 @@
 
 Nightpanel is two tools under one roof:
 
-1. **Theming orchestrator** — one click flips alacritty, tmux, nvim, emacs, GNOME (GTK CSS + background), Claude Code, and Firefox into a coordinated dark palette. Toggle from a panel button or a CLI. Reverts to your pre-apply state on click.
+1. **Theming orchestrator** — one click flips alacritty, tmux, nvim, emacs, GNOME (GTK CSS + background), Claude Code, Gemini CLI, Firefox, and gws into a coordinated dark palette. Toggle from a panel button or a CLI. Reverts to your pre-apply state on click.
 2. **Keyboard configurator** (the original DailyDriver functionality) — visually edit GNOME keyboard shortcuts, apply curated presets (Hyprland-style, GNOME+Tiling, Vanilla), see everything on a cheat sheet overlay (Alt+Super+/).
+
+## Quick install (Debian / Ubuntu)
+
+Register the apt repo, then install. Set the four variables to match your registry — a `read:package` token is only needed if it is private — and the rest is copy-paste:
+
+```bash
+# --- configure ---
+FORGEJO_HOST=git.example.com   # your Forgejo host
+OWNER=youruser                 # registry owner (user or org)
+DIST=trixie                    # your Debian/Ubuntu release codename
+TOKEN=                         # read:package token; leave empty for a public registry
+
+# --- register the repo ---
+AUTH=""; [ -n "$TOKEN" ] && AUTH="-u $OWNER:$TOKEN"
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL $AUTH "https://$FORGEJO_HOST/api/packages/$OWNER/debian/repository.key" \
+  | sudo tee /etc/apt/keyrings/forgejo-nightpanel.asc >/dev/null
+
+if [ -n "$TOKEN" ]; then
+  echo "machine $FORGEJO_HOST/api/packages/$OWNER/debian login $OWNER password $TOKEN" \
+    | sudo tee /etc/apt/auth.conf.d/forgejo-nightpanel.conf >/dev/null
+  sudo chmod 600 /etc/apt/auth.conf.d/forgejo-nightpanel.conf
+fi
+
+echo "deb [signed-by=/etc/apt/keyrings/forgejo-nightpanel.asc] https://$FORGEJO_HOST/api/packages/$OWNER/debian $DIST main" \
+  | sudo tee /etc/apt/sources.list.d/nightpanel.list >/dev/null
+
+# --- install ---
+sudo apt update
+sudo apt install nightpanel
+```
+
+Then it's plain apt: `sudo apt update && sudo apt upgrade` to update, `sudo apt remove nightpanel` to remove (it reverts an active theme first). After the first install, log out/in once so GNOME Shell loads the panel button, then `gnome-extensions enable nightpanel@nightpanel`.
 
 ![Nightpanel — Keyboard Visualization](data/screenshots/keyboard-view.png)
 
@@ -48,7 +81,9 @@ The theming side is built around the **Adapter** contract — one Python class p
 | emacs | Renders `nightpanel-theme.el`, drives daemons via `emacsclient`. |
 | GNOME (GTK CSS + background) | Writes a sentinel-wrapped block into `~/.config/gtk-{3,4}.0/gtk.css`; swaps `color-scheme` + background color via `gsettings`. |
 | Claude Code | Flips `theme` in `~/.claude/settings.json`; installs a `~/.local/bin/claude` wrapper that strips `COLORTERM` while NP is active. |
+| Gemini CLI | Writes a custom theme to `~/.gemini/settings.json` + installs a `~/.local/bin/gemini` wrapper that strips `COLORTERM` (mirrors the Claude Code strategy). |
 | Firefox | Installs a tiny extension + native-messaging host; CSS overrides via `tabs.insertCSS` with `cssOrigin: "user"`. **Opt-in** — bridge install requires explicit consent because it lowers `xpinstall.signatures.required`. |
+| gws | Flips the `theme:` line in *Getting Work Sorted*'s state file (`~/.gws/todo.state`) to its bundled `Nightpanel` theme. |
 
 Want to add an adapter for kitty / wezterm / ghostty / helix / chromium / your editor? See `src/nightpanel/adapters/base.py` for the contract and any of the existing adapters for shape. PRs welcome.
 
@@ -71,47 +106,7 @@ yay -S nightpanel
 
 ### Debian / Ubuntu (apt)
 
-Nightpanel can be published as a `.deb` to a [Forgejo Debian package registry](https://forgejo.org/docs/latest/user/packages/debian/) (or any apt repo). Register the repo once, then `install` / `update` / `upgrade` / `remove` it with plain apt. Fill in your own values:
-
-- `FORGEJO_HOST` — your Forgejo host (e.g. `git.example.com`)
-- `OWNER` — the user or org that owns the package registry
-- `DIST` — the distribution you uploaded under (e.g. `trixie`)
-- `TOKEN` — a Forgejo access token with `read:package` scope (only needed if the registry is private)
-
-```bash
-FORGEJO_HOST=git.example.com
-OWNER=youruser
-DIST=trixie
-TOKEN=<your-forgejo-read-token>
-
-# 1. signing key
-sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL -u "$OWNER:$TOKEN" \
-  "https://$FORGEJO_HOST/api/packages/$OWNER/debian/repository.key" \
-  | sudo tee /etc/apt/keyrings/forgejo-nightpanel.asc >/dev/null
-
-# 2. apt credentials (private registry only)
-echo "machine $FORGEJO_HOST/api/packages/$OWNER/debian login $OWNER password $TOKEN" \
-  | sudo tee /etc/apt/auth.conf.d/forgejo-nightpanel.conf >/dev/null
-sudo chmod 600 /etc/apt/auth.conf.d/forgejo-nightpanel.conf
-
-# 3. apt source
-echo "deb [signed-by=/etc/apt/keyrings/forgejo-nightpanel.asc] https://$FORGEJO_HOST/api/packages/$OWNER/debian $DIST main" \
-  | sudo tee /etc/apt/sources.list.d/nightpanel.list >/dev/null
-
-# 4. install
-sudo apt update
-sudo apt install nightpanel
-```
-
-Then the usual lifecycle:
-
-```bash
-sudo apt update && sudo apt upgrade   # new builds are picked up automatically
-sudo apt remove nightpanel            # reverts an active theme first, then removes cleanly
-```
-
-After installing, log out/in once so GNOME Shell loads the panel-button extension, then `gnome-extensions enable nightpanel@nightpanel`.
+See [Quick install](#quick-install-debian--ubuntu) at the top — register the [Forgejo Debian package registry](https://forgejo.org/docs/latest/user/packages/debian/) (or any apt repo) once, then manage nightpanel with plain `apt install` / `apt upgrade` / `apt remove`.
 
 ### From Source
 

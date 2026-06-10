@@ -3,9 +3,11 @@ moduledir = MODULE_DIR
 
 nightpanel_sources = [
   'nightpanel/__init__.py',
+  'nightpanel/__main__.py',
   'nightpanel/application.py',
   'nightpanel/window.py',
   'nightpanel/palette.py',
+  'nightpanel/player_app.py',
   'nightpanel/toggle.py',
 ]
 

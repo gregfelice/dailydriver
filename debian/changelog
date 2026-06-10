@@ -1,3 +1,12 @@
+nightpanel (0.2.5-3) unstable; urgency=low
+
+  * Fix GUI crash on launch (ModuleNotFoundError): ship the modules the desktop
+    app needs but the meson install lists omitted — services/theme_service +
+    tiling_service + np-host, views/appearance + profiles + setup, and the
+    package __main__ + player_app. The toggle path was unaffected.
+
+ -- Greg Felice <greg@gregfelice.com>  Tue, 09 Jun 2026 23:30:00 -0400
+
 nightpanel (0.2.5-2) unstable; urgency=low
 
   * prerm: best-effort revert of an active theme as the invoking desktop user

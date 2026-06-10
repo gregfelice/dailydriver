@@ -10,6 +10,30 @@ Scope of latest audit (2026-05-25, extended through 2026-05-26 by testing): orch
 
 ---
 
+## Distribution / packaging — apt.rizlabs.com (ADR-048 in ~/ops)
+
+Ships as a signed `.deb` from the public repo `http://apt.rizlabs.com` (HTTP +
+GPG-signed Release; served by droplet nginx). Live + verified on rivulet
+2026-06-10. Forgejo registry stays private. Open follow-ups:
+
+- [ ] **CI auto-publish to apt.rizlabs.com** — `.forgejo/workflows/release-deb.yml`
+  still uploads only to the private Forgejo registry; add a step running
+  `~/ops/ansible/scripts/build-apt-repo` into `/srv/apt/nightpanel` on `v*` tags
+  (needs signing key + write access on the droplet runner).
+- [ ] **Signing key → Ansible vault** — `apt@rizlabs.com` (ed25519) private half is
+  only in droplet `~/.gnupg`; lose droplet → can't sign updates. Store as
+  `nightpanel_apt_signing_key` for DR + CI. (ADR-048 checklist.)
+- [ ] **GUI applies theme on launch** — starting `nightpanel` runs the orchestrator
+  apply path (sets `org.gnome.desktop.interface color-scheme`, kills Nautilus,
+  pokes extensions) rather than just opening the config window. Confirm intended —
+  the config UI probably shouldn't flip the whole session on open. (`window.py` /
+  `services/theme_service.py`, still unaudited.)
+- [ ] **HTTPS for apt.rizlabs.com** (optional, low) — currently HTTP + GPG (signature
+  is the trust anchor). Would need the domain added to the SAN cert via
+  `ssl_wildcard` on wasa.
+
+---
+
 ## Theming layer — P0 (shipping blockers)
 
 **Completed in v0.2.1 → v0.2.5 (private on Forgejo; see [[project-release-state]] for public-push status):**
@@ -72,9 +96,9 @@ Scope of latest audit (2026-05-25, extended through 2026-05-26 by testing): orch
 
 - [ ] Screenshots for hypr / apple presets don't work — should show equivalent of apple keys
 - [ ] `<D-/>` shortcut bug (slash key with Super modifier)
-- [ ] Fix ~34 failing `test_gsettings.py` tests — mock-setup mismatches surfaced by the dailydriver→nightpanel rename (was 6 pre-rename; the rename surfaced more)
 
 **Completed:**
+- [x] **Green the whole suite (2026-06-02)** — full `tests/` now 298 passing, 5× stable, hermetic, `ruff` clean (was ~44 failures + a process-killing segfault). The ~34 `test_gsettings` failures were mostly stale mocks (backend moved to a composite schema source + `Gio.Settings.new_full`); rewrote them and made them host-independent via a `glob→[]` fixture so they no longer pass/fail based on installed GNOME extensions. Same composite-source fix applied to `test_tiling`; `test_keyboard_config` pkexec tests now mock the hid_apple shell-out. See "source regressions" + "segfault" + "toggle" notes below.
 - [x] Test compositor shortcut grabs on a live GNOME Wayland session (tested, doesn't work — GNOME limitation)
 - [x] Update `ShortcutGrabberService` to detect GNOME and skip portal attempt
 - [x] AppStream metainfo (`data/io.github.gregfelice.Nightpanel.metainfo.xml.in`) finalized
@@ -108,6 +132,35 @@ Scope of latest audit (2026-05-25, extended through 2026-05-26 by testing): orch
 - [ ] Keyboard layout auto-detection (QWERTY/Dvorak/Colemak)
 - [ ] User-contributed preset marketplace / sharing
 - [ ] Multi-monitor shortcut awareness
+
+---
+
+## Testing infrastructure (the path to "done with quality issues")
+
+Layered plan (agreed 2026-06-02). The instinct toward VM-based stress testing is right, but it's step 4, not step 1 — building it first inverts the cost/value order.
+
+1. [x] **Green the suite** — done 2026-06-02 (298 passing, stable, hermetic). A red suite can't tell a regression from pre-existing breakage; greening already surfaced 3 live source regressions (below).
+2. [ ] **Cheap logic-bug wins** — the enumerated tier-1 bugs (`_load_state()` JSON-decode swallow, `TmuxAdapter`/`FirefoxAdapter.snapshot()` returning `{}`, etc.). Pure unit tests, no environment.
+3. [ ] **NEXT ROUND — spike the ephemeral-isolated-env stress loop.** HOME/XDG → tmpdir, `dbus-run-session` + `python-dbusmock`, then hammer apply/revert/toggle thousands of times with randomized timing to flush out the dbus singleton race + concurrent `apply()`/`revert()` race (both still open under Theming P1). Runs in the GitHub-mirror CI, nothing to babysit. We now have a real `bin/nightpanel-toggle` to hammer.
+   - **Open question to settle during the spike:** can `gnome-shell --headless --virtual-monitor` (or a nested compositor) actually load/exercise the panel extension in CI? If not, extension testing falls into the VM tier.
+4. [ ] **VM** — only for the visual + shell-extension residue (Firefox flash, panel button, event re-dispatch). Must be scripted (libvirt/QEMU + `virsh snapshot` revert + SSH runner), not click-driven, or it's a safer manual bench, not automation. Heavy on this box (OOM history + og-llama ~24GB) — runs when og-llama is down.
+
+### Source regressions the green-up uncovered (fixed 2026-06-02, in source, not by bending tests)
+
+All from the `dailydriver→nightpanel` rename (`9e5f57c`) — a "guilty source" sweep that silently lowercased/renamed live behavior:
+
+- [x] **Shortcut names rendered lowercase** in the keyboard UI — `_humanize_key_name` (backends/gnome.py) lost its Title-Case block (`"left half"` not `"Left Half"`).
+- [x] **Setup status messages + keybinding names lowercased** — `"added: kitty"` / `"launch terminal"` → `"Added: kitty"` / `"Launch Terminal"`.
+- [x] **Flatpak cheat-sheet detection broken** — `detect_nightpanel()` queried `io.github.gregfelice.Nightpanel`, but the published App ID is still `…DailyDriver` (manifest deliberately kept). The Flatpak launch path silently never matched. Restored to `DailyDriver`.
+
+### Other testing work done 2026-06-02
+
+- [x] **`nightpanel-toggle` debounce script implemented** — was a half-landed feature (`fdae607` committed the tests + `bin/analyze-toggle-log` but never the script; deployed copy was a simple apply/revert). Wrote `bin/nightpanel-toggle` (repo is its home, per Platform Compliance). Debounce = accidental-double-click guard capped ~200ms (a longer window is the "click twice to toggle" bug); `NP_DEBOUNCE_S` only tightens it. Deployed via a dotfiles-stow symlink → repo `bin/`; script self-resolves `NIGHTPANEL_HOME` from its own path so it survives project moves. See [[toggle-script-deployment]].
+- [x] **`test_profiles` segfault fixed** — was a test hitting real dconf via `Gio.Settings.new()`; GIO isn't fork-safe so pytest-forked *caused* the crash. Fix was mocking `Gio` (hermetic). `active_profile` reading `current-preset` from dconf is intentional (UI writes it); the integration `active_profile == preset` assertion was a stale service-level test of UI responsibility — fixed test-side, `apply_profile` left correctly pure.
+
+**Notes / loose ends:**
+- **dotfiles-stow has an uncommitted change** — the deployed `nightpanel-toggle` regular file was replaced with a symlink into this repo; the old 36-line script was removed (tracked, recoverable). Commit/keep is Greg's call.
+- **Unused `active-profile` gschema key** sits next to the used `current-preset` — naming smell, cleanup someday.
 
 ---
 

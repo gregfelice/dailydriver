@@ -102,6 +102,8 @@ class GnomeAdapter(Adapter):
             "bg_uri": _gsettings_get("org.gnome.desktop.background", "picture-uri"),
             "bg_uri_dark": _gsettings_get("org.gnome.desktop.background", "picture-uri-dark"),
             "bg_color": _gsettings_get("org.gnome.desktop.background", "primary-color"),
+            "bg_color2": _gsettings_get("org.gnome.desktop.background", "secondary-color"),
+            "bg_shading": _gsettings_get("org.gnome.desktop.background", "color-shading-type"),
             "bg_options": _gsettings_get("org.gnome.desktop.background", "picture-options"),
             "gtk4_css": _GTK4_CSS.read_text() if _GTK4_CSS.exists() else None,
             "gtk3_css": _GTK3_CSS.read_text() if _GTK3_CSS.exists() else None,
@@ -114,12 +116,18 @@ class GnomeAdapter(Adapter):
         # <config-dir>/keep-wallpaper (see _keep_wallpaper). Clear BOTH picture-uri
         # and picture-uri-dark (dark mode reads the -dark key, so clearing only
         # picture-uri leaves the wallpaper up) and set picture-options=none so the
-        # solid primary-color shows. snapshot()/revert() restore the user's
-        # wallpaper on toggle-off regardless.
+        # solid primary-color shows. Also force color-shading-type=solid: if the
+        # user's pre-existing shading is horizontal/vertical, GNOME paints a
+        # gradient from primary-color to secondary-color (observed as a black→blue
+        # gradient), NOT a solid fill — so pin both shading and secondary to the
+        # canvas. snapshot()/revert() restore the user's wallpaper + shading on
+        # toggle-off regardless.
         if not _keep_wallpaper():
             _gsettings_set("org.gnome.desktop.background", "picture-uri", "")
             _gsettings_set("org.gnome.desktop.background", "picture-uri-dark", "")
             _gsettings_set("org.gnome.desktop.background", "primary-color", palette.bg)
+            _gsettings_set("org.gnome.desktop.background", "secondary-color", palette.bg)
+            _gsettings_set("org.gnome.desktop.background", "color-shading-type", "solid")
             _gsettings_set("org.gnome.desktop.background", "picture-options", "none")
         self._apply_gtk_css(palette)
         _bounce_nautilus()
@@ -139,6 +147,14 @@ class GnomeAdapter(Adapter):
             )
         if snapshot.get("bg_color"):
             _gsettings_set("org.gnome.desktop.background", "primary-color", snapshot["bg_color"])
+        if snapshot.get("bg_color2"):
+            _gsettings_set(
+                "org.gnome.desktop.background", "secondary-color", snapshot["bg_color2"]
+            )
+        if snapshot.get("bg_shading"):
+            _gsettings_set(
+                "org.gnome.desktop.background", "color-shading-type", snapshot["bg_shading"]
+            )
         _gsettings_set(
             "org.gnome.desktop.background", "picture-options", snapshot.get("bg_options") or "zoom"
         )

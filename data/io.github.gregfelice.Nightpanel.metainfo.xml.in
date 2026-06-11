@@ -59,6 +59,15 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.6" date="2026-06-10">
+      <description>
+        <p>Theming fixes and a new control:</p>
+        <ul>
+          <li>GNOME desktop now blacks out to a solid canvas (fixes a black-to-blue gradient).</li>
+          <li>New "video brightness" slider dims YouTube / HTML5 video in Firefox, independently of page brightness.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-03-05">
       <description>
         <p>New release</p>

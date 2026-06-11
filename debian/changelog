@@ -1,3 +1,18 @@
+nightpanel (0.2.6-1) unstable; urgency=low
+
+  * gnome adapter: force color-shading-type=solid (and pin secondary-color to
+    the canvas) on apply. Without this, a pre-existing horizontal/vertical
+    shading made GNOME paint a gradient from primary-color to secondary-color
+    (a black->blue gradient) instead of the solid black canvas. snapshot()/
+    revert() now also capture and restore shading + secondary-color.
+  * firefox bridge: new "video brightness" slider (0.1-1.0, default 1.0) that
+    dims HTML5 <video> (YouTube etc.) independently of page brightness. At the
+    1.0 default <video> stays untouched (filter:none, GPU overlay preserved);
+    below 1.0 it dims. New video-brightness gsettings key; extension bumped to
+    2.8 (keep-last-per-field commands so the two sliders don't clobber).
+
+ -- Greg Felice <greg@gregfelice.com>  Wed, 10 Jun 2026 22:05:00 -0400
+
 nightpanel (0.2.5-5) unstable; urgency=low
 
   * gnome adapter: restore the pure-black desktop background on apply (the Saab

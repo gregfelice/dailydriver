@@ -76,6 +76,21 @@ def _read_brightness() -> float:
     return 0.9
 
 
+def _read_video_brightness() -> float:
+    """Read the dedicated <video> brightness from gsettings; clamp to range.
+
+    Crash-safe via subprocess (unlike in-process Gio.Settings.get_double, which
+    aborts the process on a missing key): if the schema predates this key,
+    `gsettings get` returns non-zero and we fall back to 1.0 (untouched)."""
+    try:
+        r = _run(["gsettings", "get", "io.github.gregfelice.Nightpanel", "video-brightness"])
+        if r.returncode == 0:
+            return max(0.1, min(1.0, float(r.stdout.strip())))
+    except Exception:
+        pass
+    return 1.0
+
+
 class FirefoxAdapter(Adapter):
     name = "firefox"
 
@@ -89,7 +104,13 @@ class FirefoxAdapter(Adapter):
         return {}
 
     def apply(self, palette: Palette) -> None:
-        self._write({"action": "apply", "brightness": _read_brightness()})
+        self._write(
+            {
+                "action": "apply",
+                "brightness": _read_brightness(),
+                "videoBrightness": _read_video_brightness(),
+            }
+        )
         # Re-sync userChrome.css from the palette on every apply so palette
         # edits propagate. Firefox requires a full restart to pick the change
         # up (it doesn't hot-reload chrome.css), but the file is correct at

@@ -243,6 +243,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             on_shortcuts_reload=self._reload_shortcuts,
             theme_service=self._theme_service,
             on_brightness_update=self._orchestrator.update_brightness,
+            on_video_brightness_update=self._orchestrator.update_video_brightness,
         )
 
     def _show_toast_with_undo(self, message: str, undo_label: str | None, undo_cb) -> None:

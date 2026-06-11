@@ -45,6 +45,7 @@ class SetupView(Adw.PreferencesPage):
         on_shortcuts_reload: Callable[[], None],
         theme_service=None,
         on_brightness_update: Callable[[float], None] | None = None,
+        on_video_brightness_update: Callable[[float], None] | None = None,
     ) -> None:
         super().__init__()
         self._gs = gsettings_service
@@ -56,6 +57,7 @@ class SetupView(Adw.PreferencesPage):
         self._on_reload = on_shortcuts_reload
         self._theme = theme_service
         self._on_brightness_update = on_brightness_update
+        self._on_video_brightness_update = on_video_brightness_update
         self._loading = True
         self._preset_radios: dict[str, Gtk.CheckButton] = {}
 
@@ -100,6 +102,36 @@ class SetupView(Adw.PreferencesPage):
         self._brightness_scale.add_controller(_no_scroll)
         brightness_row.add_suffix(self._brightness_scale)
         nightpanel_group.add(brightness_row)
+
+        # Video brightness — a SEPARATE control for HTML5 <video> (YouTube etc.)
+        # dimming via the Firefox bridge. 1.0 = untouched (video stays crisp,
+        # the long-standing default); drag down to dim a bright player at night.
+        video_brightness_row = Adw.ActionRow()
+        video_brightness_row.set_title("video brightness")
+        video_brightness_row.set_subtitle("dims YouTube / HTML5 video in Firefox")
+
+        self._video_brightness_scale = Gtk.Scale.new_with_range(
+            Gtk.Orientation.HORIZONTAL, 0.1, 1.0, 0.05
+        )
+        self._video_brightness_scale.set_hexpand(True)
+        self._video_brightness_scale.set_draw_value(False)
+        self._video_brightness_scale.set_valign(Gtk.Align.CENTER)
+        self._video_brightness_scale.set_size_request(200, -1)
+        self._video_brightness_scale.add_mark(0.1, Gtk.PositionType.BOTTOM, None)
+        self._video_brightness_scale.add_mark(1.0, Gtk.PositionType.BOTTOM, None)
+        self._video_brightness_scale.connect(
+            "value-changed", self._on_video_brightness_changed
+        )
+        # Same scroll-capture guard as the brightness slider above — stops
+        # wheel/touchpad scroll passing through the row from drifting the value.
+        _no_scroll_video = Gtk.EventControllerScroll.new(
+            Gtk.EventControllerScrollFlags.BOTH_AXES
+        )
+        _no_scroll_video.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        _no_scroll_video.connect("scroll", lambda *_: True)
+        self._video_brightness_scale.add_controller(_no_scroll_video)
+        video_brightness_row.add_suffix(self._video_brightness_scale)
+        nightpanel_group.add(video_brightness_row)
 
         # ── Tiling Manager ────────────────────────────────────────────────
         tiling_group = Adw.PreferencesGroup()
@@ -239,6 +271,17 @@ class SetupView(Adw.PreferencesPage):
             brightness = self._theme.brightness if self._theme else 1.0
         self._brightness_scale.set_value(brightness)
 
+        # Video brightness (independent of theme-brightness; bridge-only)
+        if self._settings:
+            try:
+                video_brightness = self._settings.get_double("video-brightness")
+                video_brightness = max(0.1, min(1.0, video_brightness))
+            except Exception:
+                video_brightness = 1.0
+        else:
+            video_brightness = 1.0
+        self._video_brightness_scale.set_value(video_brightness)
+
         self._loading = False
         return False
 
@@ -342,3 +385,17 @@ class SetupView(Adw.PreferencesPage):
             self._theme.set_brightness(value, self._settings)
         if self._on_brightness_update:
             self._on_brightness_update(value)
+
+    def _on_video_brightness_changed(self, scale: Gtk.Scale) -> None:
+        # Video brightness is bridge-only — it doesn't touch the GTK theme, so
+        # persist straight to settings (no theme_service round-trip) and notify.
+        if self._loading:
+            return
+        value = scale.get_value()
+        if self._settings:
+            try:
+                self._settings.set_double("video-brightness", value)
+            except Exception:
+                pass
+        if self._on_video_brightness_update:
+            self._on_video_brightness_update(value)

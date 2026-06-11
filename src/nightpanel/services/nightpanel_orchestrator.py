@@ -194,6 +194,32 @@ class NightpanelOrchestrator:
         except OSError as e:
             _LOG.warning("nightpanel: brightness update failed: %s", e)
 
+    def update_video_brightness(self, video_brightness: float) -> None:
+        """Push a <video> brightness update to the Firefox extension.
+
+        Mirrors update_brightness for the dedicated "video brightness" slider.
+        Writes only the videoBrightness field — the extension keeps the last
+        page-brightness value (keep-last per field), so the two sliders don't
+        clobber each other. Uses its OWN rate-limit timestamp: sharing
+        _last_brightness_write would let a drag on one slider suppress writes
+        from the other.
+        """
+        if not _ACTIVE_FILE.exists():
+            return
+        import time
+
+        now = time.monotonic()
+        if now - getattr(self, "_last_video_brightness_write", 0.0) < self._BRIGHTNESS_MIN_INTERVAL:
+            return
+        self._last_video_brightness_write = now
+        try:
+            _NP_COMMAND.parent.mkdir(parents=True, exist_ok=True)
+            _NP_COMMAND.write_text(
+                json.dumps({"action": "apply", "videoBrightness": video_brightness})
+            )
+        except OSError as e:
+            _LOG.warning("nightpanel: video brightness update failed: %s", e)
+
     # ── Install (one-time setup, not part of apply/revert cycle) ──
 
     def install_gnome_extension(self) -> bool:

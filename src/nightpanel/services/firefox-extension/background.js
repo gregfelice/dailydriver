@@ -34,10 +34,23 @@ const HOST = 'nightpanel';
 // nightpanel.palette.NIGHTPANEL until we render this file from the palette
 // at build time.
 
-function makeCss(brightness) {
+function makeCss(brightness, videoBrightness) {
     // Images get aggressively dimmed — half the base brightness — so photos
     // and brand graphics don't pull the eye away from the muted text.
     const imgBrightness = (brightness * 0.5).toFixed(2);
+    // <video> brightness is a SEPARATE, opt-in control (the "video brightness"
+    // slider). Default 1.0 → emit `none`, not `brightness(1.0)`: a filter on
+    // <video> can disable Firefox's GPU video-overlay path (forces compositing,
+    // can break fullscreen/PiP), so the default must be a TRUE no-op that keeps
+    // the picture crisp — preserving the long-standing "video stays untouched"
+    // behavior. Only a user who drags the slider below 1.0 pays the filter cost.
+    // Applied to the <video> element ONLY (not the youtube/vimeo embed iframes):
+    // makeCss is injected allFrames, so an embedded player's inner youtube.com
+    // frame dims its own <video>; dimming the outer iframe too would compose
+    // multiplicatively (N²). A top-level youtube.com/watch page is a direct
+    // <video>, so the primary case is a single, reliable application.
+    const vb = typeof videoBrightness === 'number' ? videoBrightness : 1.0;
+    const videoFilter = vb >= 1.0 ? 'none' : `brightness(${vb.toFixed(2)})`;
     // Functional <canvas> surfaces (spreadsheet grids, maps, drawing apps) are
     // content the user reads, not decoration. The artistic desaturate+sepia+
     // hue-rotate that flatters photos turns a data grid into an unreadable
@@ -143,10 +156,13 @@ iframe[src*="player.vimeo.com"] {
     filter: none !important;
 }
 
-/* Defensive: <video> is already kept out of every rule above, but pin it to
- * no-filter in case a future rule or site wrapper would otherwise dim it. */
+/* <video> brightness is driven by the dedicated "video brightness" slider via
+ * videoFilter (see makeCss top). At the 1.0 default this is the keyword none — a
+ * true no-op that keeps the GPU overlay path and leaves the picture crisp, the
+ * long-standing default. Below 1.0 it dims the player (YouTube watch pages are
+ * a top-level video element; embedded players dim via their inner frame rule). */
 video {
-    filter: none !important;
+    filter: ${videoFilter} !important;
 }
 
 /* Selection: NP dark green bg, bright green text */
@@ -185,9 +201,14 @@ const META_REMOVE_JS = `
 
 // ── State ──────────────────────────────────────────────────────────────────
 
-let active     = false;
-let brightness = 0.9;
-let port       = null;
+let active          = false;
+let brightness      = 0.9;
+// <video> brightness, driven by the dedicated slider. 1.0 = untouched (default).
+// Held as a persistent global so a brightness-only command (or vice-versa)
+// doesn't clobber the other value — each apply command carries only the
+// field(s) that changed; we keep the last-applied value for the rest.
+let videoBrightness = 1.0;
+let port            = null;
 // Track the last-applied CSS per tab so we can removeCSS() with the same code.
 const appliedCss = new Map();
 // Handle to the registered content script that injects the darkreader-lock
@@ -222,14 +243,22 @@ function connect() {
 
 function onCommand(cmd) {
     if (!cmd || typeof cmd.action !== 'string') return;
-    if (cmd.action === 'apply')  activate(cmd.brightness ?? 0.9);
+    if (cmd.action === 'apply') {
+        // Keep-last per field: a command may carry brightness, videoBrightness,
+        // or both (slider drags send only the one that moved; the Firefox
+        // adapter's initial apply sends both). Update only what's present so a
+        // videoBrightness-only command can't reset brightness, and vice-versa.
+        if (typeof cmd.brightness === 'number')      brightness      = cmd.brightness;
+        if (typeof cmd.videoBrightness === 'number') videoBrightness = cmd.videoBrightness;
+        activate();
+    }
     if (cmd.action === 'revert') deactivate();
 }
 
 // ── CSS apply / remove (user-origin via tabs.insertCSS) ────────────────────
 
 async function injectTab(tabId, b) {
-    const css = makeCss(b);
+    const css = makeCss(b, videoBrightness);
     const previous = appliedCss.get(tabId);
     // Synchronization barrier: a no-op executeScript round-trip before
     // insertCSS. Empirically (Firefox ESR 140) tabs.insertCSS called from
@@ -365,13 +394,14 @@ async function applyToAllTabs(b) {
     }
 }
 
-async function activate(b) {
-    active     = true;
-    brightness = b;
+async function activate() {
+    // brightness / videoBrightness are set by onCommand before this runs; we
+    // render from the globals so a single-field command keeps the other value.
+    active = true;
     // Register the meta-tag content script FIRST so new navigations that
     // race with our applyToAllTabs pass still get the early-injection path.
     await registerMetaScript();
-    await applyToAllTabs(b);
+    await applyToAllTabs(brightness);
 }
 
 async function deactivate() {

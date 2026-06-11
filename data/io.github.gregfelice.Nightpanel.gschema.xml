@@ -56,6 +56,12 @@
       <summary>Panel glow intensity</summary>
       <description>Brightness multiplier for nightpanel foreground colors (0.3–1.5)</description>
     </key>
+    <key name="video-brightness" type="d">
+      <range min="0.1" max="1.0"/>
+      <default>1.0</default>
+      <summary>Video brightness</summary>
+      <description>Brightness multiplier the Firefox bridge applies to HTML5 &lt;video&gt; (YouTube etc.). 1.0 = untouched (default); lower dims the picture at night (0.1–1.0)</description>
+    </key>
     <key name="nightpanel-enabled" type="b">
       <default>true</default>
       <summary>Nightpanel theme enabled</summary>

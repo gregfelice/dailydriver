@@ -1,0 +1,66 @@
+---
+# nightpanel cross-distro VM test matrix — runs on a per-user libvirt instance
+# (qemu:///session): no root, no sudo, no group membership. Disks/ISOs are owned
+# by you. The only host requirement is /dev/kvm access (already granted via ACL).
+
+libvirt_uri: "qemu:///session"
+
+# VM disks + ISOs MUST live on the ZFS pool (rpool, ~1.5T). The repo's own
+# filesystem (root, /dev/nvme1n1p3) has only ~14G free — too small for VM images.
+vm_base:   "{{ lookup('env', 'HOME') }}/vm/nightpanel-test"
+iso_dir:   "{{ vm_base }}/iso"
+disk_dir:  "{{ vm_base }}/disks"
+stage_dir: "{{ playbook_dir }}/stage"
+repo_dir:  "{{ playbook_dir | dirname | dirname }}"
+
+# Artifact HTTP server. With qemu:///session usermode (SLIRP) networking the guest
+# reaches host services at 10.0.2.2. We bind the server to 0.0.0.0 so that maps through.
+http_port: 8099
+guest_sees_host_at: "10.0.2.2"
+
+# Sizing — RAM/disk per VM. Run ONE VM at a time (host has ~20G RAM free with
+# og-llama up; ZFS pool is roomy but desktop installs still cost ~10-15G actual each).
+default_ram_mb: 4096
+default_vcpus: 4
+default_disk_gb: 30
+
+# --- The matrix --------------------------------------------------------------
+# distro->GNOME/DE mapping VERIFIED 2026-06-03 (releases.ubuntu.com,
+# fedoraproject.org, en.wikipedia.org/wiki/GNOME_version_history). GNOME 49 (Sep
+# 2025) and GNOME 50 (Mar 2026, X11 removed) are current; the shell extension
+# caps at 48, so it is two majors behind. Re-verify ISO filenames before a run —
+# point releases drift; if a URL 404s, open its parent dir and grab the current file.
+#
+# GNOME 48 (the extension's declared ceiling) is testable on the HOST itself
+# (this machine runs GNOME Shell 48.7) — no VM needed for that boundary check.
+vms:
+  - key: ubuntu-lts
+    distro: ubuntu
+    release: "24.04"
+    target: "GNOME 46 / Wayland"
+    iso_url: "https://releases.ubuntu.com/24.04/ubuntu-24.04.4-desktop-amd64.iso"
+    purpose: "Happy-path baseline; extension IN-BAND (45-48); biggest install base; GNOME-on-Xorg still selectable at login"
+
+  - key: fedora-ws
+    distro: fedora
+    release: "43"
+    target: "GNOME 49 / Wayland"
+    iso_url: "https://download.fedoraproject.org/pub/fedora/linux/releases/43/Workstation/x86_64/iso/Fedora-Workstation-Live-43-1.6.x86_64.iso"
+    purpose: "Current GNOME; canonical Flatpak distro; FIRST version the extension is rejected"
+
+  - key: ubuntu-edge
+    distro: ubuntu
+    release: "26.04"
+    target: "GNOME 50 / Wayland-only"
+    iso_url: "https://releases.ubuntu.com/26.04/ubuntu-26.04-desktop-amd64.iso"
+    purpose: "Newest LTS; X11 removed from GNOME; extension two majors out of band; what upgraders land on"
+
+  - key: fedora-kde
+    distro: fedora
+    release: "43"
+    target: "KDE Plasma 6"
+    iso_url: "https://download.fedoraproject.org/pub/fedora/linux/releases/43/KDE/x86_64/iso/Fedora-KDE-Desktop-Live-43-1.6.x86_64.iso"
+    purpose: "KDE backend (kglobalshortcutsrc/qdbus) + the factory.py silent-fallback-to-GNOME bug"
+
+# Selected VM (override on the CLI: -e vm=fedora-ws). Resolved by the playbooks.
+vm: ""

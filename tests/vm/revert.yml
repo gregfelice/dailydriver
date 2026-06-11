@@ -1,0 +1,22 @@
+---
+# Revert a VM to a snapshot (default "clean") and leave it running.
+#   ansible-playbook revert.yml -e vm=ubuntu-lts
+- hosts: localhost
+  gather_facts: false
+  vars:
+    name: clean
+  tasks:
+    - ansible.builtin.assert:
+        that: vm in (vms | map(attribute='key') | list)
+        fail_msg: "pass -e vm=<key>"
+        quiet: true
+
+    - name: "Revert np-{{ vm }} -> '{{ name }}'"
+      ansible.builtin.command: >-
+        virsh -c {{ libvirt_uri }} snapshot-revert
+        --domain np-{{ vm }} --snapshotname {{ name }} --running
+      register: rev
+      changed_when: true
+
+    - ansible.builtin.debug:
+        msg: "np-{{ vm }} reverted to '{{ name }}' and running. Console: virt-viewer --connect {{ libvirt_uri }} np-{{ vm }}"

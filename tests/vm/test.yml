@@ -1,0 +1,73 @@
+---
+# Run the in-guest test suite against ONE booted, clean-snapshot guest, over the QEMU
+# guest agent (no ssh/network). Assumes artifacts are already being served (bin/test-vm
+# does revert + serve + this, in order).
+#   ansible-playbook test.yml -e vm=ubuntu-lts
+#
+# Prereqs IN the guest (baked into the clean snapshot — see CHECKLIST golden-image prep):
+#   - qemu-guest-agent installed + running
+#   - autologin enabled (so an active graphical session exists after boot/revert)
+- name: Register the guest as an agent-reachable host
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - ansible.builtin.assert:
+        that: vm in (vms | map(attribute='key') | list)
+        fail_msg: "pass -e vm=<key>"
+        quiet: true
+    - ansible.builtin.add_host:
+        name: "np-{{ vm }}"
+        groups: guests
+        ansible_connection: community.libvirt.libvirt_qemu
+        ansible_libvirt_uri: "{{ libvirt_uri }}"
+        ansible_host: "np-{{ vm }}"
+        ansible_python_interpreter: /usr/bin/python3
+
+- name: In-guest test suite
+  hosts: guests
+  gather_facts: false
+  vars:
+    http_base: "http://{{ guest_sees_host_at }}:{{ http_port }}"
+    results_dir: "{{ playbook_dir }}/results/{{ vm }}"
+  tasks:
+    - name: Push test scripts into the guest
+      ansible.builtin.copy:
+        src: "guest/{{ item }}"
+        dest: "/tmp/{{ item }}"
+        mode: "0755"
+      loop: [selftest.sh, screenshot.sh]
+
+    - name: Screenshot — before
+      ansible.builtin.command: "bash /tmp/screenshot.sh before"
+      register: shot_before
+      failed_when: false
+      changed_when: false
+
+    - name: Run the self-test (install -> version-gate -> toggle -> errors)
+      ansible.builtin.command: "bash /tmp/selftest.sh"
+      environment:
+        HTTP_BASE: "{{ http_base }}"
+      register: selftest
+      failed_when: false
+      changed_when: true
+
+    - name: Screenshot — after
+      ansible.builtin.command: "bash /tmp/screenshot.sh after"
+      register: shot_after
+      failed_when: false
+      changed_when: false
+
+    - name: Collect results + screenshots to the host
+      ansible.builtin.fetch:
+        src: "{{ item }}"
+        dest: "{{ results_dir }}/"
+        flat: true
+        fail_on_missing: false
+      loop:
+        - /tmp/np-selftest.json
+        - /tmp/np-shot-before.png
+        - /tmp/np-shot-after.png
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg: "{{ selftest.stdout_lines | default([]) }}"

@@ -1,0 +1,35 @@
+---
+# Snapshot a clean baseline. The VM MUST be powered off — a snapshot of a shut-off
+# VM captures disk only (no multi-GB RAM state), and reverts are trivial.
+#   ansible-playbook snapshot.yml -e vm=ubuntu-lts            # name defaults to "clean"
+#   ansible-playbook snapshot.yml -e vm=ubuntu-lts -e name=preinstall
+- hosts: localhost
+  gather_facts: false
+  vars:
+    name: clean
+  tasks:
+    - ansible.builtin.assert:
+        that: vm in (vms | map(attribute='key') | list)
+        fail_msg: "pass -e vm=<key>"
+        quiet: true
+
+    - name: Check power state
+      ansible.builtin.command: "virsh -c {{ libvirt_uri }} domstate np-{{ vm }}"
+      register: domstate
+      changed_when: false
+
+    - ansible.builtin.assert:
+        that: "'shut off' in domstate.stdout"
+        fail_msg: "np-{{ vm }} is '{{ domstate.stdout | trim }}' — power it off first: virsh -c {{ libvirt_uri }} shutdown np-{{ vm }}"
+        quiet: true
+
+    - name: "Create snapshot '{{ name }}'"
+      ansible.builtin.command: >-
+        virsh -c {{ libvirt_uri }} snapshot-create-as
+        --domain np-{{ vm }} --name {{ name }}
+        --description "nightpanel test baseline" --atomic
+      register: snap
+      changed_when: "'Domain snapshot' in snap.stdout"
+
+    - ansible.builtin.debug:
+        msg: "{{ snap.stdout | trim }}  (revert anytime: ansible-playbook revert.yml -e vm={{ vm }} -e name={{ name }})"

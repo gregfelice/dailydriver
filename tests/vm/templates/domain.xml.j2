@@ -1,0 +1,62 @@
+<domain type='kvm'>
+  <name>np-{{ v.key }}</name>
+  <title>nightpanel test: {{ v.distro }} {{ v.release }} — {{ v.target }}</title>
+  <description>{{ v.purpose }}</description>
+  <memory unit='MiB'>{{ v.ram_mb | default(default_ram_mb) }}</memory>
+  <vcpu placement='static'>{{ v.vcpus | default(default_vcpus) }}</vcpu>
+  <os firmware='efi'>
+    <type arch='x86_64' machine='q35'>hvm</type>
+    {# empty disk falls through to the cdrom on first boot; after install the disk boots first #}
+    <boot dev='hd'/>
+    <boot dev='cdrom'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough' check='none'/>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='{{ disk_dir }}/np-{{ v.key }}.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='{{ iso_dir }}/{{ v.iso_url | basename }}'/>
+      <target dev='sda' bus='sata'/>
+      <readonly/>
+    </disk>
+    <interface type='user'>
+      <model type='virtio'/>
+    </interface>
+    <graphics type='spice' autoport='yes'>
+      <listen type='address' address='127.0.0.1'/>
+      <image compression='off'/>
+    </graphics>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/>
+    </video>
+    <channel type='spicevmc'>
+      <target type='virtio' name='com.redhat.spice.0'/>
+    </channel>
+    {# QEMU guest agent: lets the host run commands + push/fetch files into the guest
+       (community.libvirt.libvirt_qemu) with NO ssh/network. Guest must run qemu-guest-agent. #}
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <controller type='virtio-serial' index='0'/>
+    <input type='tablet' bus='usb'/>
+    <input type='keyboard' bus='usb'/>
+    <sound model='ich9'/>
+    <redirdev bus='usb' type='spicevmc'/>
+    <memballoon model='virtio'/>
+    <rng model='virtio'>
+      <backend model='random'>/dev/urandom</backend>
+    </rng>
+  </devices>
+</domain>

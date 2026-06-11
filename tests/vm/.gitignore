@@ -1,0 +1,6 @@
+# VM test harness — local artifacts, never committed
+.venv-ansible/
+stage/
+iso/
+disks/
+*.retry

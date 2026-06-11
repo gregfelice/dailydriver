@@ -1,0 +1,37 @@
+---
+# Tear a VM all the way down: power off, undefine (incl. nvram + snapshot metadata),
+# and delete its disk + rendered XML. The ISO in iso_dir is kept (reuse it).
+#   ansible-playbook destroy.yml -e vm=ubuntu-lts
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - ansible.builtin.assert:
+        that: vm in (vms | map(attribute='key') | list)
+        fail_msg: "pass -e vm=<key>"
+        quiet: true
+
+    - name: Force power off (ignore if already off / absent)
+      community.libvirt.virt:
+        name: "np-{{ vm }}"
+        state: destroyed
+        uri: "{{ libvirt_uri }}"
+      failed_when: false
+
+    - name: Undefine domain (nvram + snapshot metadata)
+      ansible.builtin.command: >-
+        virsh -c {{ libvirt_uri }} undefine np-{{ vm }}
+        --nvram --snapshots-metadata
+      register: undef
+      failed_when: false
+      changed_when: "'has been undefined' in undef.stdout"
+
+    - name: Remove disk + rendered XML
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ disk_dir }}/np-{{ vm }}.qcow2"
+        - "{{ disk_dir }}/np-{{ vm }}.xml"
+
+    - ansible.builtin.debug:
+        msg: "np-{{ vm }} destroyed. ISO retained in {{ iso_dir }}."

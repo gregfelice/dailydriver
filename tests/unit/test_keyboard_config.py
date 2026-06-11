@@ -653,7 +653,10 @@ class TestModifierConfigApplication:
             ModifierConfig,
         )
 
-        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
+        with (
+            patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio,
+            patch("nightpanel.services.hid_apple_service.HidAppleService") as mock_hid,
+        ):
             mock_source = MagicMock()
             mock_source.lookup.return_value = MagicMock()
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
@@ -661,6 +664,9 @@ class TestModifierConfigApplication:
             mock_settings = MagicMock()
             mock_settings.get_strv.return_value = []
             mock_gio.Settings.new.return_value = mock_settings
+
+            # Isolate from host hardware: don't shell out to pkexec for hid_apple.
+            mock_hid.return_value.is_available.return_value = False
 
             service = KeyboardConfigService()
             config = ModifierConfig(caps_lock=CapsLockBehavior.ESCAPE)
@@ -677,11 +683,17 @@ class TestModifierConfigApplication:
             ModifierConfig,
         )
 
-        with patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio:
+        with (
+            patch("nightpanel.services.keyboard_config_service.Gio") as mock_gio,
+            patch("nightpanel.services.hid_apple_service.HidAppleService") as mock_hid,
+        ):
             mock_source = MagicMock()
             mock_source.lookup.return_value = None
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
             mock_gio.Settings.new.side_effect = Exception("No schema")
+
+            # Isolate from host hardware: don't shell out to pkexec for hid_apple.
+            mock_hid.return_value.is_available.return_value = False
 
             service = KeyboardConfigService()
             config = ModifierConfig()

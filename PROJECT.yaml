@@ -1,0 +1,27 @@
+project:
+  id: nightpanel
+  name: Nightpanel
+  shortdesc: Nightpanel
+  description:
+    "Two halves under one repo (post-rename from DailyDriver, commit `9e5f57c`):\
+    \ 1. **Theming / orchestrator layer** \u2014 palette-driven dark-mode that reaches\
+    \ across alacritty, tmux, nvim, emacs, claude-code"
+  category: app.utilities
+  lifecycle: incubator
+  layer: L3
+  technical:
+    languages:
+      - Python
+    implements: []
+    os:
+      - Linux/Debian
+  license: Proprietary
+  release:
+    revision: 0.1.0
+    date: "2026-05-31"
+  governance:
+    maintainer: operator
+    owner: Rizlabs
+  links:
+    docs: ""
+    repo: https://git.rizlabs.com/gregf/nightpanel

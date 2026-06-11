@@ -1,0 +1,79 @@
+---
+# Download the ISO, create the disk, define + boot the VM. The OS install itself is
+# interactive — virt-viewer opens; click through it once, then run snapshot.yml.
+#   ansible-playbook create.yml -e vm=ubuntu-lts
+- hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Validate VM key
+      ansible.builtin.assert:
+        that: vm in (vms | map(attribute='key') | list)
+        fail_msg: "pass -e vm=<key>; one of: {{ vms | map(attribute='key') | join(', ') }}"
+        quiet: true
+
+    - name: Resolve selected VM
+      ansible.builtin.set_fact:
+        v: "{{ vms | selectattr('key', 'equalto', vm) | first }}"
+
+    - name: Ensure pool directories exist (on the ZFS pool)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ iso_dir }}"
+        - "{{ disk_dir }}"
+
+    - name: Fail early if the domain already exists
+      community.libvirt.virt:
+        command: list_vms
+        uri: "{{ libvirt_uri }}"
+      register: existing
+    - ansible.builtin.assert:
+        that: ("np-" + v.key) not in existing.list_vms
+        fail_msg: "np-{{ v.key }} already defined — destroy it first: ansible-playbook destroy.yml -e vm={{ v.key }}"
+        quiet: true
+
+    - name: "Download ISO ({{ v.iso_url | basename }}) — large, resumable"
+      ansible.builtin.get_url:
+        url: "{{ v.iso_url }}"
+        dest: "{{ iso_dir }}/{{ v.iso_url | basename }}"
+        mode: "0644"
+        timeout: 60
+      register: iso_dl
+      until: iso_dl is succeeded
+      retries: 2
+      delay: 5
+
+    - name: Create the qcow2 system disk
+      ansible.builtin.command:
+        cmd: "qemu-img create -f qcow2 {{ disk_dir }}/np-{{ v.key }}.qcow2 {{ v.disk_gb | default(default_disk_gb) }}G"
+        creates: "{{ disk_dir }}/np-{{ v.key }}.qcow2"
+
+    - name: Render domain XML
+      ansible.builtin.template:
+        src: templates/domain.xml.j2
+        dest: "{{ disk_dir }}/np-{{ v.key }}.xml"
+        mode: "0644"
+
+    - name: Define the domain
+      community.libvirt.virt:
+        command: define
+        xml: "{{ lookup('file', disk_dir + '/np-' + v.key + '.xml') }}"
+        uri: "{{ libvirt_uri }}"
+
+    - name: Start the domain
+      community.libvirt.virt:
+        name: "np-{{ v.key }}"
+        state: running
+        uri: "{{ libvirt_uri }}"
+
+    - name: Next steps
+      ansible.builtin.debug:
+        msg:
+          - "np-{{ v.key }} is booting the installer. Open the console (either):"
+          - "    virt-viewer --connect {{ libvirt_uri }} np-{{ v.key }}     # if installed"
+          - "    virt-manager -c {{ libvirt_uri }}                          # then double-click np-{{ v.key }}"
+          - "Install the OS, reboot into the desktop, install spice-vdagent + (Fedora) flatpak/flathub,"
+          - "then power off and snapshot the clean baseline:"
+          - "    ansible-playbook snapshot.yml -e vm={{ v.key }}"

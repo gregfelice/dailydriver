@@ -1,0 +1,54 @@
+---
+# One-time, UNPRIVILEGED preflight. No become: qemu:///session runs as you, and
+# /dev/kvm is already reachable via ACL. This just verifies the toolchain and makes
+# the pool dirs on ZFS.
+#   ansible-playbook bootstrap.yml
+- hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: /dev/kvm is accessible (KVM acceleration)
+      ansible.builtin.command: "test -r /dev/kvm -a -w /dev/kvm"
+      changed_when: false
+
+    - name: Required host binaries present
+      ansible.builtin.command: "which {{ item }}"
+      changed_when: false
+      loop: [qemu-system-x86_64, qemu-img, virsh]
+
+    - name: Detect a graphical console viewer
+      ansible.builtin.shell: "command -v virt-viewer || command -v remote-viewer || command -v virt-manager"
+      register: viewer
+      changed_when: false
+      failed_when: false
+
+    - name: Warn if no SPICE viewer
+      ansible.builtin.debug:
+        msg:
+          - "No virt-viewer/remote-viewer found. You have virt-manager — open session VMs with:"
+          - "    virt-manager -c {{ libvirt_uri }}"
+          - "Or install the lighter viewer (one-time, distro pkg): virt-viewer"
+      when: viewer.stdout == ""
+
+    - name: Per-user libvirt (qemu:///session) is reachable
+      community.libvirt.virt:
+        command: list_vms
+        uri: "{{ libvirt_uri }}"
+      register: vms_now
+
+    - name: Create pool directories on the ZFS pool
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ iso_dir }}"
+        - "{{ disk_dir }}"
+        - "{{ stage_dir }}"
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg:
+          - "OK — qemu:///session reachable, no sudo required."
+          - "Pool: {{ vm_base }}  (ISOs: {{ iso_dir }}, disks: {{ disk_dir }})"
+          - "Existing np- domains: {{ vms_now.list_vms | select('match','^np-') | list | default([]) }}"
+          - "Next: ansible-playbook create.yml -e vm=ubuntu-lts"

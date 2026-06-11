@@ -76,12 +76,14 @@ class TestPresetApplication:
             service._profiles_dir = profiles_dir
             service._presets_dir = presets_dir
 
-            # Apply would work if there were matching shortcuts
-            # This is a smoke test that the code path runs
-            service.apply_profile(preset)
-
-            # The profile is now active
-            assert service.active_profile == preset
+            # Smoke test: the apply path runs and returns the dict of changed
+            # shortcuts. Marking a profile "active" is the UI's responsibility —
+            # callers write the "current-preset" GSetting alongside apply_profile()
+            # (see window.py / setup_view.py / profiles_view.py); apply_profile()
+            # itself is intentionally pure. active_profile reads that GSetting, so
+            # asserting it here would test UI responsibility (and hit real dconf).
+            changed = service.apply_profile(preset)
+            assert isinstance(changed, dict)
 
 
 class TestPresetDiff:

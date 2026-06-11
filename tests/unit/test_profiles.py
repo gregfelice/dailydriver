@@ -266,15 +266,23 @@ class TestProfileService:
         profiles_dir = tmp_path / "profiles"
         profiles_dir.mkdir(parents=True)
 
-        with patch("nightpanel.services.profile_service.GLib") as mock_glib:
+        with (
+            patch("nightpanel.services.profile_service.GLib") as mock_glib,
+            patch("gi.repository.Gio.Settings") as mock_settings_cls,
+        ):
             mock_glib.get_user_config_dir.return_value = str(tmp_path / "config")
             mock_glib.get_system_data_dirs.return_value = []
+            # active_profile reads Gio.Settings.new("io.github.gregfelice.Nightpanel").
+            # Hitting real GSettings/dconf here is non-hermetic (the gschema may not
+            # be compiled on the host) and crash-prone (real GIO is not fork/teardown
+            # safe — it SIGTRAPs when this runs after other gi-touching tests).
+            mock_settings_cls.new.return_value.get_string.return_value = ""
 
             service = ProfileService(gsettings_service=MagicMock())
             service._profiles_dir = profiles_dir
             service._presets_dir = tmp_path / "presets"
 
-            # Initially None
+            # Empty current-preset → no active profile.
             assert service.active_profile is None
 
     def test_reset_orphaned_shortcuts(self, tmp_path: Path) -> None:

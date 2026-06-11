@@ -1,0 +1,4 @@
+# Controller deps:  ansible-galaxy collection install -r requirements.yml
+collections:
+  - name: community.libvirt
+    version: ">=2.2.0"

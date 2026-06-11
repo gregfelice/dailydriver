@@ -5,6 +5,22 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _hermetic_schema_source():
+    """Pin TilingService._build_schema_source() to the mocked default source.
+
+    Like the GNOME backend, TilingService layers any installed extension
+    schemas onto the default source via glob. With Tiling Assistant actually
+    installed on the dev box, the composite source resolves the real schema
+    and tests that mock ``get_default()`` see a different object. Forcing the
+    glob empty keeps the composite source equal to the mocked default.
+    """
+    with patch("nightpanel.services.tiling_service.glob.glob", return_value=[]):
+        yield
+
 
 class TestTilingStatus:
     """Tests for TilingStatus enum."""
@@ -248,7 +264,9 @@ class TestTilingService:
             mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
 
             mock_settings = MagicMock()
-            mock_gio.Settings.new.return_value = mock_settings
+            # apply_tiling_assistant_defaults() opens the TA schema via the
+            # composite source with Gio.Settings.new_full(), not Settings.new().
+            mock_gio.Settings.new_full.return_value = mock_settings
 
             service = TilingService()
             result = service.apply_tiling_assistant_defaults()

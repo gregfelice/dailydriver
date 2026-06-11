@@ -1,0 +1,91 @@
+---
+# Collect nightpanel's three install artifacts into stage/ and print the one command
+# to serve them to the guests. (The HTTP server itself is long-running, so we don't
+# block Ansible on it — you run the printed command and Ctrl-C when done.)
+#   ansible-playbook serve.yml
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Ensure stage dir
+      ansible.builtin.file:
+        path: "{{ stage_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Stage repo source tarball (the toggle/theming path is NOT packaged — it needs the checkout + a venv)
+      ansible.builtin.command:
+        cmd: "git archive --format=tar.gz -o {{ stage_dir }}/nightpanel-src.tar.gz HEAD"
+        chdir: "{{ repo_dir }}"
+      changed_when: true
+
+    - name: Find the Flatpak bundle (built in the repo root)
+      ansible.builtin.find:
+        paths: "{{ repo_dir }}"
+        patterns: "*.flatpak"
+        recurse: false
+      register: bundles
+
+    - name: Pick newest bundle
+      ansible.builtin.set_fact:
+        chosen_bundle: "{{ bundles.files | sort(attribute='mtime') | last }}"
+      when: bundles.files | length > 0
+
+    - name: Stage the Flatpak bundle
+      ansible.builtin.copy:
+        src: "{{ chosen_bundle.path }}"
+        dest: "{{ stage_dir }}/"
+        mode: "0644"
+      when: bundles.files | length > 0
+
+    - name: "LOUD: confirm the bundle is current (do NOT test a stale build)"
+      ansible.builtin.debug:
+        msg:
+          - ">>> Staging Flatpak: {{ chosen_bundle.path | basename }}"
+          - ">>> Built: {{ '%Y-%m-%d %H:%M' | strftime(chosen_bundle.mtime) }}  ({{ ((bundles.files | map(attribute='mtime') | max) ) | int }} epoch)"
+          - ">>> If this predates your latest src/ changes, REBUILD before testing:"
+          - ">>>   flatpak-builder --force-clean --repo={{ repo_dir }}/repo {{ repo_dir }}/build-dir {{ repo_dir }}/io.github.gregfelice.DailyDriver.yml"
+          - ">>>   flatpak build-bundle {{ repo_dir }}/repo {{ repo_dir }}/nightpanel.flatpak io.github.gregfelice.DailyDriver"
+      when: bundles.files | length > 0
+
+    - name: Warn if no bundle
+      ansible.builtin.debug:
+        msg:
+          - "No *.flatpak in {{ repo_dir }}. Build one:"
+          - "  flatpak-builder --force-clean --repo={{ repo_dir }}/repo {{ repo_dir }}/build-dir {{ repo_dir }}/io.github.gregfelice.DailyDriver.yml"
+          - "  flatpak build-bundle {{ repo_dir }}/repo {{ repo_dir }}/nightpanel.flatpak io.github.gregfelice.DailyDriver"
+      when: bundles.files | length == 0
+
+    - name: Locate the GNOME Shell extension dir
+      ansible.builtin.find:
+        paths: "{{ repo_dir }}/src"
+        patterns: "nightpanel@*"
+        file_type: directory
+        recurse: true
+      register: extdir
+
+    - name: Zip the extension for `gnome-extensions install`
+      ansible.builtin.command:
+        cmd: "zip -qr {{ stage_dir }}/{{ (extdir.files | first).path | basename }}.shell-extension.zip ."
+        chdir: "{{ (extdir.files | first).path }}"
+      when: extdir.files | length > 0
+      changed_when: true
+
+    - name: Stage the Firefox bridge xpi (if built)
+      ansible.builtin.find:
+        paths: "{{ repo_dir }}/packaging/firefox"
+        patterns: "*.xpi"
+        recurse: true
+      register: xpis
+    - ansible.builtin.copy:
+        src: "{{ (xpis.files | first).path }}"
+        dest: "{{ stage_dir }}/"
+        mode: "0644"
+      when: xpis.files | length > 0
+
+    - name: How to serve + fetch
+      ansible.builtin.debug:
+        msg:
+          - "Staged into {{ stage_dir }}. Serve it (bind 0.0.0.0 so SLIRP maps it through):"
+          - "    ( cd {{ stage_dir }} && python3 -m http.server {{ http_port }} --bind 0.0.0.0 )"
+          - "Inside each guest, fetch from the host:"
+          - "    http://{{ guest_sees_host_at }}:{{ http_port }}/"

@@ -1,0 +1,98 @@
+#!/bin/bash
+# nightpanel-toggle — flip the system-wide nightpanel theme on/off.
+#
+# Invoked once per GNOME panel-button press (and by ~/.local/bin/nightpanel).
+# Implements the spurious-revert debounce the panel button needs: PanelMenu.Button
+# can re-dispatch a click within its stale-grab window, spawning this script twice.
+# The second (unintended) invocation arrives within a few tens of ms; we swallow
+# only those. A *deliberate* retap (on → look → off, ~200 ms+ apart) must always
+# toggle — a longer window is the "i have to click twice to toggle" bug, so the
+# guard is capped (see tests/unit/test_toggle_policy.py).
+#
+# Companion tooling: bin/analyze-toggle-log classifies the toggle.log this writes.
+#
+# Environment:
+#   NIGHTPANEL_HOME  project dir (default: derived from this script's own location)
+#   NP_CONFIG_DIR    state dir for nightpanel-active + toggle.log (default ~/.config/nightpanel)
+#   NP_DEBOUNCE_S    guard seconds; only ever *tightens* the cap below
+#   NP_TOGGLE_MOCK   "1" → decision state machine only, orchestrator never invoked (tests)
+set -euo pipefail
+
+# This script lives in <repo>/bin/. Resolve the repo root from its own real path
+# (following the deploy symlink) so it survives the project being moved/renamed,
+# which has already happened three times. Override with $NIGHTPANEL_HOME if needed.
+NIGHTPANEL_HOME="${NIGHTPANEL_HOME:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)}"
+export NIGHTPANEL_HOME
+
+PY="$NIGHTPANEL_HOME/.venv-dev/bin/python3"
+if [ ! -x "$PY" ]; then
+    PY="$(command -v python3 || true)"
+fi
+if [ -z "$PY" ]; then
+    echo "nightpanel-toggle: no python3 available" >&2
+    exit 1
+fi
+
+exec "$PY" - "$@" <<'PYEOF'
+import datetime
+import os
+import sys
+import time
+from pathlib import Path
+
+config_dir = Path(os.environ.get("NP_CONFIG_DIR") or (Path.home() / ".config" / "nightpanel"))
+config_dir.mkdir(parents=True, exist_ok=True)
+
+# nightpanel-active is the same file the GNOME shell extension polls; keep the name.
+active = config_dir / "nightpanel-active"
+log = config_dir / "toggle.log"
+mock = os.environ.get("NP_TOGGLE_MOCK") == "1"
+
+# Accidental-double-click guard. The ceiling is the longest gap that can only be
+# an accidental/re-dispatched double-tap; anything slower is a deliberate retap
+# and MUST toggle. NP_DEBOUNCE_S can tighten the guard but never loosen it past
+# the ceiling (loosening reintroduces the "click twice to toggle" UX bug).
+GUARD_CEIL_S = 0.2
+try:
+    guard_s = min(float(os.environ.get("NP_DEBOUNCE_S", GUARD_CEIL_S)), GUARD_CEIL_S)
+except ValueError:
+    guard_s = GUARD_CEIL_S
+
+
+def logline(msg: str) -> None:
+    ts = datetime.datetime.now().isoformat()
+    with log.open("a") as f:
+        f.write(f"{ts} pid={os.getpid()} ppid={os.getppid()} {msg}\n")
+
+
+def drive(method: str) -> None:
+    """Run the orchestrator (skipped in mock mode so tests exercise only policy)."""
+    if mock:
+        return
+    sys.path.insert(0, os.path.join(os.environ["NIGHTPANEL_HOME"], "src"))
+    from nightpanel.services.nightpanel_orchestrator import NightpanelOrchestrator
+
+    getattr(NightpanelOrchestrator(), method)()
+
+
+# argv repr is logged verbatim so bin/analyze-toggle-log can recover the event
+# metadata the shell extension forwards (--evt-time, --evt-button, ...).
+logline(f"=== invoked argv={sys.argv[1:]!r}")
+
+now = time.time()
+if not active.exists():
+    decision = "apply"
+    drive("apply")
+    active.touch()
+else:
+    age_s = now - active.stat().st_mtime
+    if age_s < guard_s:
+        # Spurious re-dispatch of the press that just turned us on — keep state.
+        decision = "debounce-revert"
+    else:
+        decision = "revert"
+        drive("revert")
+        active.unlink(missing_ok=True)
+
+logline(f"decision: {decision}")
+PYEOF

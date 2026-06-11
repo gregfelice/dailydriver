@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Drive the cross-distro VM test suite — the LIVE-SESSION plane (GNOME Shell extension,
+# gsettings, live-app adapters) that bin/test (headless pytest) can't cover.
+#
+# Estate-compliant per ADR-030: a portable bin/ script + ntfy, NOT a CI engine. Forgejo
+# Actions / act_runner were tried and rolled back (ADR-030); this plane is also inherently
+# self-hosted — it needs nested KVM + interactively-installed desktop golden images + the
+# ZFS pool, so no hosted runner (Forgejo or GitHub) can execute it. Any trigger that wants
+# it (cron, a local self-hosted runner, you at a prompt) just calls this script.
+#
+# Usage:
+#   bin/test-vm                 # run all matrix VMs synchronously, print pass/fail table
+#   bin/test-vm ubuntu-lts      # run one (or several) VM keys
+#   bin/test-vm --async [VM..]  # background + ntfy ops-high (pass) / ops-critical (fail)
+#   bin/test-vm --list          # show the matrix
+#
+# Per VM: revert to the 'clean' snapshot -> (re)serve artifacts -> run test.yml in-guest
+# over the qemu agent -> collect results/<vm>/np-selftest.json + screenshots.
+set -euo pipefail
+
+REPO="nightpanel"
+NTFY_URL="${NTFY_URL:-https://ntfy.rizlabs.com}"
+ROOT="$(git rev-parse --show-toplevel)"
+VMDIR="$ROOT/tests/vm"
+VENV="$VMDIR/.venv-ansible"
+HTTP_PORT="${NP_HTTP_PORT:-8099}"     # must match http_port in tests/vm/group_vars/all.yml
+LOG="/tmp/${REPO}-vm-tests.log"
+
+cd "$ROOT"
+[[ -x "$VENV/bin/ansible-playbook" ]] || { echo "✗ ansible venv missing at $VENV — see tests/vm/README.md" >&2; exit 1; }
+# shellcheck disable=SC1091
+source "$VENV/bin/activate"
+PLAY() { ansible-playbook "$VMDIR/$1" "${@:2}"; }
+
+matrix_keys() { grep -oP '^\s*-\s*key:\s*\K\S+' "$VMDIR/group_vars/all.yml"; }
+
+# --- flags ------------------------------------------------------------------
+ASYNC=0; ACTION=run
+case "${1:-}" in
+  --list) printf 'matrix: %s\n' "$(matrix_keys | tr '\n' ' ')"; exit 0 ;;
+  --async) ASYNC=1; shift ;;
+  -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+esac
+
+# selected VMs (default: whole matrix)
+mapfile -t VMS < <(if [[ $# -gt 0 ]]; then printf '%s\n' "$@"; else matrix_keys; fi)
+
+# --- async: re-exec in background, ntfy on completion (ADR-030 §4) ----------
+if [[ "$ASYNC" == 1 ]]; then
+  echo "→ ${REPO} VM tests running in background (log: ${LOG})"
+  nohup bash -c "
+    cd '${ROOT}'
+    if bin/test-vm ${VMS[*]} > '${LOG}' 2>&1; then
+      curl -s -H 'Priority: 3' -H 'Tags: white_check_mark' \
+        -d '${REPO} VM tests passed (${VMS[*]})' '${NTFY_URL}/ops-high' >/dev/null
+    else
+      TAIL=\$(tail -15 '${LOG}')
+      curl -s -H 'Priority: 5' -H 'Tags: x' \
+        -d \"${REPO} VM TESTS FAILED (${VMS[*]})
+
+\${TAIL}\" '${NTFY_URL}/ops-critical' >/dev/null
+    fi
+  " >/dev/null 2>&1 &
+  exit 0
+fi
+
+# --- serve artifacts for the duration --------------------------------------
+if python3 -c "import socket,sys; s=socket.socket(); sys.exit(0 if s.connect_ex(('127.0.0.1',$HTTP_PORT)) else 1)"; then
+  echo "✗ port $HTTP_PORT already in use — set NP_HTTP_PORT (and http_port in group_vars to match)" >&2; exit 1
+fi
+PLAY serve.yml >/dev/null
+SERVE_PID=""
+trap '[[ -n "$SERVE_PID" ]] && kill "$SERVE_PID" 2>/dev/null || true' EXIT
+( cd "$VMDIR/stage" && exec python3 -m http.server "$HTTP_PORT" --bind 0.0.0.0 ) >/dev/null 2>&1 &
+SERVE_PID=$!
+echo "→ serving artifacts on :$HTTP_PORT (pid $SERVE_PID)"
+
+# --- per-VM: revert clean, then test ---------------------------------------
+for vm in "${VMS[@]}"; do
+  echo "═══ $vm ═══"
+  if ! PLAY revert.yml -e "vm=$vm" >/dev/null 2>&1; then
+    echo "  ! no 'clean' snapshot (or revert failed) — testing current state of np-$vm"
+    virsh -c qemu:///session start "np-$vm" >/dev/null 2>&1 || true
+  fi
+  sleep 8   # let the reverted session settle
+  PLAY test.yml -e "vm=$vm" || echo "  ! test.yml returned non-zero for $vm"
+done
+
+# --- aggregate + verdict ----------------------------------------------------
+echo; echo "════════ RESULTS ════════"
+python3 - "$VMDIR/results" "${VMS[@]}" <<'PY'
+import sys, json, os
+base, vms = sys.argv[1], sys.argv[2:]
+not_green = False; rows = []
+for vm in vms:
+    p = os.path.join(base, vm, "np-selftest.json")
+    if not os.path.exists(p):
+        rows.append((vm, "NO RESULT", "", "guest unreachable / agent missing?")); not_green = True; continue
+    d = json.load(open(p)); s = d["summary"]
+    verdict = d.get("verdict", "fail" if s["fail"] else "pass").upper()
+    if verdict != "PASS": not_green = True   # FAIL or INCOMPLETE both fail the run
+    tally = f"{s['pass']}p/{s['fail']}f/{s['skip']}s/{s.get('manual',0)}m"
+    rows.append((vm, verdict, tally, ",".join(d.get("failed", []))))
+w = max((len(r[0]) for r in rows), default=4)
+for vm, verdict, tally, failed in rows:
+    print(f"  {vm:<{w}}  {verdict:<10} {tally:<16} {failed}")
+print("\n  * = critical check; INCOMPLETE = a critical check skipped/needs-manual (not a pass)")
+sys.exit(1 if not_green else 0)
+PY

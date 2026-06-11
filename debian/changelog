@@ -1,3 +1,13 @@
+nightpanel (0.2.5-5) unstable; urgency=low
+
+  * gnome adapter: restore the pure-black desktop background on apply (the Saab
+    design canvas), now configurable. Default blacks out the wallpaper (clears
+    picture-uri + picture-uri-dark, paints primary-color #0A0A0A); opt out by
+    creating <config-dir>/keep-wallpaper. Reverses the 0.2.x "keep wallpaper"
+    default; revert() still restores the wallpaper on toggle-off.
+
+ -- Greg Felice <greg@gregfelice.com>  Wed, 10 Jun 2026 20:08:23 -0400
+
 nightpanel (0.2.5-4) unstable; urgency=low
 
   * Recommend fonts-inter + fonts-jetbrains-mono — the UI is designed in Inter

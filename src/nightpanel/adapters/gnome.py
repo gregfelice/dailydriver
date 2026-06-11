@@ -30,6 +30,7 @@ Refs:
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -44,6 +45,15 @@ _LOG = logging.getLogger(__name__)
 
 _GTK4_CSS = Path.home() / ".config" / "gtk-4.0" / "gtk.css"
 _GTK3_CSS = Path.home() / ".config" / "gtk-3.0" / "gtk.css"
+
+
+def _keep_wallpaper() -> bool:
+    """Opt-out flag: if ``<config-dir>/keep-wallpaper`` exists, apply() leaves
+    the desktop background alone instead of blacking it out. Default (no file)
+    is to black out, per the design. NP_CONFIG_DIR-aware so it tracks the same
+    config dir the toggle uses."""
+    cfg = os.environ.get("NP_CONFIG_DIR") or str(Path.home() / ".config" / "nightpanel")
+    return (Path(cfg) / "keep-wallpaper").exists()
 
 
 def _run(cmd):
@@ -99,11 +109,18 @@ class GnomeAdapter(Adapter):
 
     def apply(self, palette: Palette) -> None:
         _gsettings_set("org.gnome.desktop.interface", "color-scheme", "prefer-dark")
-        # Leave the desktop wallpaper untouched. We used to clear picture-uri
-        # and paint primary-color black, but blacking out the wallpaper is too
-        # heavy-handed — the user keeps their chosen background. snapshot() and
-        # revert() still carry the bg keys so anyone toggled on under the old
-        # behaviour gets their wallpaper restored on the next toggle-off.
+        # Black out the desktop to the palette canvas by DEFAULT — the design is a
+        # pure black background (Saab night-panel aesthetic). Opt out by creating
+        # <config-dir>/keep-wallpaper (see _keep_wallpaper). Clear BOTH picture-uri
+        # and picture-uri-dark (dark mode reads the -dark key, so clearing only
+        # picture-uri leaves the wallpaper up) and set picture-options=none so the
+        # solid primary-color shows. snapshot()/revert() restore the user's
+        # wallpaper on toggle-off regardless.
+        if not _keep_wallpaper():
+            _gsettings_set("org.gnome.desktop.background", "picture-uri", "")
+            _gsettings_set("org.gnome.desktop.background", "picture-uri-dark", "")
+            _gsettings_set("org.gnome.desktop.background", "primary-color", palette.bg)
+            _gsettings_set("org.gnome.desktop.background", "picture-options", "none")
         self._apply_gtk_css(palette)
         _bounce_nautilus()
 

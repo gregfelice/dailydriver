@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Tests for the GNOME adapter's gsettings side effects.
 
-Focus: nightpanel must NOT blow away the user's desktop wallpaper. It used to
-clear ``picture-uri``/``picture-uri-dark`` and paint ``primary-color`` black on
-every apply; that was removed. These tests pin the contract so it can't quietly
-come back:
+Contract (configurable, default black — the Saab "pure black" design):
 
-  - apply(): sets dark color-scheme + GTK CSS, but touches NO
-    ``org.gnome.desktop.background`` key.
-  - revert(): still restores the background from the snapshot, so anyone who
-    toggled on under the old (wallpaper-blacking) build gets it back.
+  - apply(): sets dark color-scheme + GTK CSS, and by DEFAULT blacks out the
+    desktop (clears picture-uri + picture-uri-dark, paints primary-color the
+    palette canvas, picture-options=none).
+  - opt-out: a ``<config-dir>/keep-wallpaper`` sentinel makes apply() leave the
+    background untouched (for users who don't want their wallpaper nuked).
+  - revert(): always restores the background from the snapshot, so toggle-off
+    puts the user's wallpaper back regardless of which mode applied.
 
 The GTK-CSS file writes and the Nautilus bounce are out of scope here (covered
 by the renderer tests / manual matrix), so they're stubbed.
@@ -50,10 +50,22 @@ def gsettings_calls():
         yield calls
 
 
-def test_apply_does_not_touch_the_wallpaper(palette, gsettings_calls):
+def test_apply_blacks_out_wallpaper_by_default(palette, gsettings_calls, tmp_path, monkeypatch):
+    monkeypatch.setenv("NP_CONFIG_DIR", str(tmp_path))  # no keep-wallpaper sentinel
+    GnomeAdapter().apply(palette)
+    bg = {(k, v) for (s, k, v) in gsettings_calls if s == _BG_SCHEMA}
+    assert ("picture-uri", "") in bg
+    assert ("picture-uri-dark", "") in bg
+    assert ("primary-color", palette.bg) in bg
+    assert ("picture-options", "none") in bg
+
+
+def test_apply_keeps_wallpaper_when_opted_out(palette, gsettings_calls, tmp_path, monkeypatch):
+    monkeypatch.setenv("NP_CONFIG_DIR", str(tmp_path))
+    (tmp_path / "keep-wallpaper").touch()
     GnomeAdapter().apply(palette)
     bg_keys = [(s, k, v) for (s, k, v) in gsettings_calls if s == _BG_SCHEMA]
-    assert bg_keys == [], f"apply() must not write any background key, got {bg_keys}"
+    assert bg_keys == [], f"keep-wallpaper opt-out must leave the background alone, got {bg_keys}"
 
 
 def test_apply_still_sets_dark_color_scheme(palette, gsettings_calls):

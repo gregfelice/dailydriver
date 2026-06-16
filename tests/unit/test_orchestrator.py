@@ -278,6 +278,18 @@ def test_install_bridge_requires_consent():
         o.install_bridge()  # confirmed defaults to False
 
 
+def test_is_active_tracks_active_file(tmp_state):
+    """is_active() is the single source of truth for 'should we resume the
+    system theme' — gates launch-time apply so opening the config window
+    doesn't flip the session when nightpanel is off."""
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [FakeAdapter("a")])
+    assert o.is_active() is False
+    o.apply()
+    assert o.is_active() is True
+    o.revert()
+    assert o.is_active() is False
+
+
 def test_load_state_returns_empty_on_corrupt_file(tmp_state):
     tmp_state["state"].parent.mkdir(parents=True, exist_ok=True)
     tmp_state["state"].write_text("{ broken json")

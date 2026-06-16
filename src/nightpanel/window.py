@@ -53,12 +53,17 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         # Apply dark theme + stored accent before first paint
         self._theme_service.apply_from_settings(self._settings)
 
-        # Apply system-wide nightpanel if it was active at last exit.
-        # NB: orchestrator.apply() returns a {adapter: success} dict that
-        # is truthy; GLib.idle_add interprets a truthy return as "stay in
-        # the idle queue" and re-invokes the callback forever. Wrap so the
-        # callback returns False after one apply.
-        if self._theme_service.enabled:
+        # Resume the system-wide nightpanel ONLY if it was genuinely active at
+        # last exit (the ACTIVE_FILE sentinel). Gating on theme_service.enabled
+        # was a footgun: that flag is the in-app GTK theme (defaults on), so
+        # merely opening the configurator flipped the whole session — blacked
+        # out the desktop, changed color-scheme, poked extensions — even when
+        # nightpanel was off. Opening the config window must not touch the
+        # session unless nightpanel was already on.
+        # NB: orchestrator.apply() returns a truthy {adapter: success} dict;
+        # GLib.idle_add treats a truthy return as "stay queued" and re-fires
+        # forever, so the wrapper returns False after one apply.
+        if self._orchestrator.is_active():
 
             def _apply_once() -> bool:
                 self._orchestrator.apply()
@@ -132,10 +137,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._nightpanel_btn.set_icon_name("night-light-symbolic")
         self._nightpanel_btn.set_tooltip_text("nightpanel")
         self._nightpanel_btn.add_css_class("nightpanel-toggle")
-        from pathlib import Path
-
-        _active = (Path.home() / ".config" / "nightpanel" / "nightpanel-active").exists()
-        self._nightpanel_btn.set_active(_active)
+        self._nightpanel_btn.set_active(self._orchestrator.is_active())
         self._nightpanel_btn.connect("toggled", self._on_nightpanel_toggled)
 
         # Menu button
@@ -964,14 +966,12 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
     def _on_nightpanel_toggled(self, btn: Gtk.ToggleButton) -> None:
         """Handle nightpanel on/off toggle."""
-        from pathlib import Path
-
-        active = Path.home() / ".config" / "nightpanel" / "nightpanel-active"
-        if active.exists():
+        if self._orchestrator.is_active():
             self._orchestrator.revert()
         else:
             self._orchestrator.apply()
-        self._theme_service.set_enabled(active.exists(), self._settings)
+        # Re-read after the op: apply() created the sentinel, revert() removed it.
+        self._theme_service.set_enabled(self._orchestrator.is_active(), self._settings)
 
     def _on_keyboard_toggled(self, button: Gtk.ToggleButton) -> None:
         """Handle keyboard view toggle."""

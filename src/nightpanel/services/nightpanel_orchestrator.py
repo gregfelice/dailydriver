@@ -166,6 +166,16 @@ class NightpanelOrchestrator:
         """Return ``{adapter_name: matches_expected}`` for every active adapter."""
         return {a.name: a.verify(expected) for a in self._active_adapters()}
 
+    def is_active(self) -> bool:
+        """Whether nightpanel is currently engaged system-wide.
+
+        Source of truth = the ACTIVE_FILE sentinel, written by apply() and
+        removed by revert(). Callers use this to decide whether to *resume*
+        the system theme (e.g. re-apply on launch) — distinct from the in-app
+        GTK theme flag, which only styles the config window itself.
+        """
+        return _ACTIVE_FILE.exists()
+
     _BRIGHTNESS_MIN_INTERVAL = 0.1  # seconds; rate-limit FF command writes to 10/s
 
     def update_brightness(self, brightness: float) -> None:

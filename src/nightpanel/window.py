@@ -177,8 +177,7 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         self._view_stack.add_named(self._cheatsheet_view, "cheatsheet")
 
         # Land on Setup by default
-        self._view_stack.set_visible_child_name("setup")
-        self._tab_buttons["setup"].set_active(True)
+        self._switch_tab("setup")
 
     def _build_tab_bar(self) -> Gtk.Box:
         """Custom tab bar: ALLCAPS text, light rounded borders, no icons."""
@@ -194,6 +193,8 @@ class DailyDriverWindow(Adw.ApplicationWindow):
             ("appearance", "Appearance"),
             ("cheatsheet", "Cheat Sheet"),
         ]
+        # Bar order — single source of truth for Ctrl+Tab cycling.
+        self._tab_order = [name for name, _ in tabs]
 
         first_btn = None
         for name, label_text in tabs:
@@ -213,6 +214,15 @@ class DailyDriverWindow(Adw.ApplicationWindow):
     def _on_tab_toggled(self, btn: Gtk.ToggleButton, name: str) -> None:
         if btn.get_active():
             self._view_stack.set_visible_child_name(name)
+
+    def _switch_tab(self, name: str) -> None:
+        """Switch to a tab via its button so the tab-bar highlight stays in
+        sync with the visible stack child. The toggle group drives the stack
+        through ``_on_tab_toggled`` — never poke ``_view_stack`` directly, or
+        the highlight desyncs from the content (the old ESC-toggle bug)."""
+        btn = self._tab_buttons.get(name)
+        if btn is not None:
+            btn.set_active(True)
 
     def _build_profiles_view(self) -> Gtk.Widget:
         """Build the profiles management panel."""
@@ -758,7 +768,8 @@ class DailyDriverWindow(Adw.ApplicationWindow):
         export_action.connect("activate", self._on_export_profile)
         self.add_action(export_action)
 
-        # Escape key to toggle views (capture phase to get it before focused widgets)
+        # Window-level keys. Capture phase so we see them before a focused
+        # widget (e.g. a Gtk.Notebook-style default Tab handler) consumes them.
         key_controller = Gtk.EventControllerKey()
         key_controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         key_controller.connect("key-pressed", self._on_key_pressed)
@@ -767,25 +778,37 @@ class DailyDriverWindow(Adw.ApplicationWindow):
     def _on_key_pressed(
         self, controller: Gtk.EventControllerKey, keyval: int, keycode: int, state: int
     ) -> bool:
-        """Handle key press events."""
+        """Handle window-level key presses.
+
+        Escape closes the window (standard GNOME behavior; also dismisses the
+        ``--cheat-sheet`` overlay). Ctrl+Tab / Ctrl+Shift+Tab cycle through the
+        tabs in bar order.
+        """
         from gi.repository import Gdk
 
-        # Escape toggles views
         if keyval == Gdk.KEY_Escape:
-            self._toggle_view()
+            self.close()
+            return True
+
+        # Ctrl+Tab → next tab, Ctrl+Shift+Tab → previous. GTK delivers
+        # Shift+Tab as ISO_Left_Tab, so treat that as backward too.
+        ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
+        if ctrl and keyval in (Gdk.KEY_Tab, Gdk.KEY_ISO_Left_Tab):
+            backward = bool(state & Gdk.ModifierType.SHIFT_MASK) or keyval == Gdk.KEY_ISO_Left_Tab
+            self._cycle_tab(-1 if backward else 1)
             return True
 
         return False
 
-    def _toggle_view(self) -> None:
-        """Toggle between shortcuts and cheat sheet views."""
+    def _cycle_tab(self, direction: int) -> None:
+        """Move to the next (+1) or previous (-1) tab in bar order, wrapping."""
         current = self._view_stack.get_visible_child_name()
-        if current == "shortcuts":
-            self._view_stack.set_visible_child_name("cheatsheet")
-        else:
-            self._view_stack.set_visible_child_name("shortcuts")
-
-        return True
+        order = self._tab_order
+        try:
+            idx = order.index(current)
+        except ValueError:
+            idx = 0
+        self._switch_tab(order[(idx + direction) % len(order)])
 
     def _restore_window_state(self) -> None:
         """Restore window size and state from settings."""
@@ -1245,4 +1268,4 @@ class DailyDriverWindow(Adw.ApplicationWindow):
 
     def show_cheat_sheet(self) -> None:
         """Show the cheat sheet view."""
-        self._view_stack.set_visible_child_name("cheatsheet")
+        self._switch_tab("cheatsheet")

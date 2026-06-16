@@ -29,9 +29,11 @@ class FakeAdapter(Adapter):
         self.snapshots_taken = 0
         self.applies = 0
         self.reverts = 0
+        self.last_revert_snapshot: dict | None = None
+        self._installed = True
 
     def installed(self) -> bool:
-        return True
+        return self._installed
 
     def snapshot(self) -> dict:
         self.snapshots_taken += 1
@@ -45,6 +47,7 @@ class FakeAdapter(Adapter):
 
     def revert(self, snapshot: dict) -> None:
         self.reverts += 1
+        self.last_revert_snapshot = snapshot
         self._applied = False
 
     def verify(self, expected: Literal["on", "off"]) -> bool:
@@ -144,3 +147,139 @@ def test_snapshot_taken_fresh_when_world_off(tmp_state):
     # World is off (revert just ran). Apply again — should re-snapshot.
     o.apply()
     assert a.snapshots_taken == snapshot_count_after_first_cycle + 1
+
+
+# ── revert restores per-adapter snapshots ────────────────────────────────
+
+
+def test_revert_passes_saved_snapshot_to_each_adapter(tmp_state):
+    a = FakeAdapter("a")
+    b = FakeAdapter("b")
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [a, b])
+
+    o.apply()
+    o.revert()
+
+    # Each adapter's saved snapshot (namespaced by name) is handed back to it.
+    assert a.last_revert_snapshot == {"name": "a", "captured": True}
+    assert b.last_revert_snapshot == {"name": "b", "captured": True}
+    assert a.reverts == 1 and b.reverts == 1
+    assert not tmp_state["active"].exists(), "revert must clear ACTIVE_FILE"
+
+
+def test_revert_with_missing_state_passes_empty_dict(tmp_state):
+    """No state file (or unknown adapter) → adapter gets {} rather than KeyError."""
+    a = FakeAdapter("a")
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [a])
+    o.revert()  # never applied → no state file
+    assert a.last_revert_snapshot == {}
+
+
+def test_revert_continues_after_one_adapter_raises(tmp_state, monkeypatch):
+    a = FakeAdapter("a")
+    b = FakeAdapter("b")
+
+    def boom(_snap):
+        raise RuntimeError("a revert boom")
+
+    monkeypatch.setattr(a, "revert", boom)
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [a, b])
+    o.apply()
+    o.revert()  # must not propagate
+    assert b.reverts == 1, "b should still revert even though a raised"
+
+
+# ── verify() aggregates per-adapter state ────────────────────────────────
+
+
+def test_verify_returns_dict_for_active_adapters(tmp_state):
+    a = FakeAdapter("a", verify_on=True)
+    b = FakeAdapter("b", verify_on=False)
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [a, b])
+    assert o.verify("on") == {"a": True, "b": False}
+    assert o.verify("off") == {"a": False, "b": True}
+
+
+def test_uninstalled_adapters_are_skipped(tmp_state):
+    a = FakeAdapter("a")
+    b = FakeAdapter("b")
+    b._installed = False
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [a, b])
+
+    outcomes = o.apply()
+    assert outcomes == {"a": True}, "uninstalled adapter must not appear in outcomes"
+    assert b.applies == 0 and b.snapshots_taken == 0
+
+
+# ── brightness updates: gated on ACTIVE_FILE + rate-limited ──────────────
+
+
+@pytest.fixture
+def tmp_command(tmp_path, monkeypatch):
+    cmd = tmp_path / "np-command.json"
+    monkeypatch.setattr(orch, "_NP_COMMAND", cmd)
+    return cmd
+
+
+def test_update_brightness_noops_when_inactive(tmp_state, tmp_command):
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [FakeAdapter("a")])
+    # ACTIVE_FILE absent → no command written (nothing is listening).
+    o.update_brightness(0.8)
+    assert not tmp_command.exists()
+
+
+def test_update_brightness_writes_when_active(tmp_state, tmp_command):
+    import json as _json
+
+    tmp_state["active"].parent.mkdir(parents=True, exist_ok=True)
+    tmp_state["active"].touch()
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [FakeAdapter("a")])
+
+    o.update_brightness(0.8)
+    payload = _json.loads(tmp_command.read_text())
+    assert payload == {"action": "apply", "brightness": 0.8}
+
+
+def test_update_brightness_rate_limited(tmp_state, tmp_command):
+    import json as _json
+
+    tmp_state["active"].parent.mkdir(parents=True, exist_ok=True)
+    tmp_state["active"].touch()
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [FakeAdapter("a")])
+
+    o.update_brightness(0.8)
+    o.update_brightness(0.2)  # within the 0.1s window → suppressed
+    assert _json.loads(tmp_command.read_text())["brightness"] == 0.8
+
+
+def test_video_brightness_uses_independent_rate_limit(tmp_state, tmp_command):
+    """A drag on the page-brightness slider must not suppress the video
+    slider — they keep separate timestamps."""
+    import json as _json
+
+    tmp_state["active"].parent.mkdir(parents=True, exist_ok=True)
+    tmp_state["active"].touch()
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [FakeAdapter("a")])
+
+    o.update_brightness(0.8)
+    o.update_video_brightness(0.3)  # different timestamp → not suppressed
+    assert _json.loads(tmp_command.read_text()) == {
+        "action": "apply",
+        "videoBrightness": 0.3,
+    }
+
+
+# ── install_bridge consent gate ──────────────────────────────────────────
+
+
+def test_install_bridge_requires_consent():
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [FakeAdapter("a")])
+    with pytest.raises(orch.ConsentRequired):
+        o.install_bridge()  # confirmed defaults to False
+
+
+def test_load_state_returns_empty_on_corrupt_file(tmp_state):
+    tmp_state["state"].parent.mkdir(parents=True, exist_ok=True)
+    tmp_state["state"].write_text("{ broken json")
+    o = orch.NightpanelOrchestrator(NIGHTPANEL, [FakeAdapter("a")])
+    assert o._load_state() == {}

@@ -1,3 +1,19 @@
+nightpanel (0.2.7-1) unstable; urgency=low
+
+  * configurator: Escape now closes the window. Previously it bounced only
+    between the Shortcuts and Cheat Sheet tabs (legacy cheat-sheet-overlay
+    behavior) and set the stack child directly, leaving the tab-bar highlight
+    out of sync with the visible page.
+  * configurator: Ctrl+Tab / Ctrl+Shift+Tab cycle through the tabs in bar
+    order, wrapping. All tab switches now route through the toggle group so
+    the highlight always matches the visible page.
+  * tests: substantial new coverage for the theming layer — tmux, firefox,
+    emacs, nvim and gws adapters, expanded orchestrator state-machine tests,
+    theme_service colour/brightness-clamp math, and a display-gated render
+    gate for the setup-view sliders (424 tests passing).
+
+ -- Greg Felice <greg@gregfelice.com>  Mon, 15 Jun 2026 21:59:34 -0400
+
 nightpanel (0.2.6-1) unstable; urgency=low
 
   * gnome adapter: force color-shading-type=solid (and pin secondary-color to

@@ -209,11 +209,51 @@ let brightness      = 0.9;
 // field(s) that changed; we keep the last-applied value for the rest.
 let videoBrightness = 1.0;
 let port            = null;
-// Track the last-applied CSS per tab so we can removeCSS() with the same code.
-const appliedCss = new Map();
+// Track currently-attached user-origin sheet codes per tab so we can
+// removeCSS() with the exact code. A LIST, not a single value: revert peels
+// off *every* sheet, so even if a prior race ever stacked more than one, the
+// page still clears completely on toggle-off (the belt to the per-tab queue's
+// suspenders).
+const appliedCss = new Map();   // tabId -> string[]
+// Per-tab promise chain. Every insertCSS/removeCSS for a tab runs through this
+// so the calls never overlap. Overlapping injects were the root cause of the
+// CSS-switch bugs: two in-flight injectTab calls would both read the same
+// `previous`, both insert, and only one removeCSS would match — stranding the
+// other sheet (stacked dimming on drag; CSS that won't clear on toggle-off).
+const tabQueues  = new Map();   // tabId -> Promise (chain tail)
+// Drag coalescing. A slider drag fires many brightness updates; we keep only
+// the LATEST target per tab and collapse the burst into at most one in-flight
+// + one queued injection instead of running every intermediate value.
+const pendingB     = new Map(); // tabId -> latest brightness awaiting injection
+const injectQueued = new Set(); // tabIds that already have an injection queued
 // Handle to the registered content script that injects the darkreader-lock
 // meta tag at document_start on every page. Held while active === true.
 let darkReaderLockScript = null;
+// Global chain for state TOGGLES (activate/deactivate) so rapid ON/OFF clicks
+// resolve in receipt order regardless of each pass's internal awaits. Plain
+// brightness updates while active bypass this (per-tab coalesced reinject) so a
+// slider drag isn't serialized behind a full all-tabs pass per tick.
+let toggleChain = Promise.resolve();
+
+// Run an async op for a tab strictly after the tab's previous op finishes.
+function enqueue(tabId, fn) {
+    const tail = tabQueues.get(tabId) || Promise.resolve();
+    const run = tail.then(fn, fn);          // run regardless of prior outcome
+    tabQueues.set(tabId, run.catch(() => {}));
+    return run;
+}
+
+// Expected, non-actionable failures: discarded/privileged/gone/not-yet-scriptable
+// tabs. tabs.insertCSS/removeCSS/executeScript reject on these (Mozilla bugs
+// 1611878 / 1450371 and friends); the onUpdated listener re-covers them on their
+// next real load. Swallow these quietly; log everything else.
+function isBenign(e) {
+    const m = (e && e.message) || String(e || '');
+    return /no window matching|discarded|missing host permission|cannot? .*access|no tab(?: with id)?|invalid tab|frame not found|cannot be scripted|moz-extension:|about:|chrome:|resource:/i.test(m);
+}
+function warnReal(label, tabId, e) {
+    if (!isBenign(e)) console.warn(`nightpanel: ${label} for tab`, tabId, e);
+}
 
 // ── Install notice ─────────────────────────────────────────────────────────
 
@@ -250,74 +290,102 @@ function onCommand(cmd) {
         // videoBrightness-only command can't reset brightness, and vice-versa.
         if (typeof cmd.brightness === 'number')      brightness      = cmd.brightness;
         if (typeof cmd.videoBrightness === 'number') videoBrightness = cmd.videoBrightness;
-        activate();
+        if (!active) {
+            // Toggle ON — serialize against other toggles so a racing OFF can't
+            // land out of order.
+            toggleChain = toggleChain.then(activate).catch(() => {});
+        } else {
+            // Brightness/video update while already on — lightweight per-tab,
+            // coalesced reinject. No full activate() (no meta re-register, no
+            // toggle-chain wait), so drags stay responsive.
+            reinjectAllTabs();
+        }
+    } else if (cmd.action === 'revert') {
+        toggleChain = toggleChain.then(deactivate).catch(() => {});
     }
-    if (cmd.action === 'revert') deactivate();
 }
 
 // ── CSS apply / remove (user-origin via tabs.insertCSS) ────────────────────
 
-async function injectTab(tabId, b) {
+// Internal: do one injection. Always runs inside the per-tab queue (via
+// injectTab), so it never overlaps another op on the same tab — which is what
+// makes the read-of-`previous` / set-of-appliedCss / remove-of-previous
+// sequence atomic and keeps sheets from stacking.
+async function doInjectTab(tabId, b) {
     const css = makeCss(b, videoBrightness);
-    const previous = appliedCss.get(tabId);
+    const previous = appliedCss.get(tabId) || [];
     // Synchronization barrier: a no-op executeScript round-trip before
     // insertCSS. Empirically (Firefox ESR 140) tabs.insertCSS called from
-    // the onUpdated 'loading' branch can silently fail to apply — the
-    // call resolves but the user-origin stylesheet never attaches to the
-    // document. A prior executeScript blocks until the tab's
-    // content-script world is initialized, after which insertCSS lands
-    // reliably. Without this barrier the E2E test (np-marionette-test2.py)
-    // observes html bg = rgba(0,0,0,0) on a freshly-loaded page; with it,
-    // html bg = rgb(10,10,10) as designed.
+    // the onUpdated 'loading' branch can silently fail to apply — the call
+    // resolves but the user-origin stylesheet never attaches. A prior
+    // executeScript blocks until the tab's content-script world is
+    // initialized, after which insertCSS lands reliably.
     try { await browser.tabs.executeScript(tabId, { code: '1' }); } catch (_) {}
     try {
-        // Insert NEW CSS first, then remove the previous block. During the
-        // brief overlap, both stylesheets are active; the new one wins on
-        // same-origin same-specificity (last-declared rule). Order matters:
-        // doing remove-then-insert with an await between them leaves one
-        // paint cycle where the user-origin override is gone, which is the
-        // visible flash users see during slider drags.
+        // Insert NEW CSS first, then peel off the previous block(s). During the
+        // brief overlap both are active and the new one wins (last-declared,
+        // same origin/specificity). Remove-then-insert would leave one unstyled
+        // paint cycle — the flash users saw on slider drags.
         await browser.tabs.insertCSS(tabId, {
             code:      css,
             cssOrigin: 'user',          // beats inline !important from the page
             allFrames: true,
             runAt:     'document_start',
         });
-        appliedCss.set(tabId, css);
-        if (previous) {
-            try {
-                await browser.tabs.removeCSS(tabId, {
-                    code:      previous,
-                    cssOrigin: 'user',
-                    allFrames: true,
-                });
-            } catch (e) {
-                console.warn('nightpanel: removeCSS failed for tab', tabId, e);
-            }
-        }
     } catch (e) {
-        // tabs.insertCSS silently rejects on discarded tabs and on tabs
-        // whose document hasn't created a window global yet (Mozilla bugs
-        // 1611878 and 1450371). The onUpdated listener picks them up on
-        // their next real load, so this is non-fatal — but we log it so
-        // the next debug session doesn't have to rediscover the failure.
-        console.warn('nightpanel: insertCSS failed for tab', tabId, e);
+        // New sheet never attached — leave `previous` in place so the page
+        // isn't stripped bare, and don't record a phantom sheet.
+        warnReal('insertCSS failed', tabId, e);
+        return;
+    }
+    appliedCss.set(tabId, [css]);
+    for (const prev of previous) {
+        try {
+            await browser.tabs.removeCSS(tabId, { code: prev, cssOrigin: 'user', allFrames: true });
+        } catch (e) {
+            warnReal('removeCSS(prev) failed', tabId, e);
+        }
     }
 }
 
-async function removeTab(tabId) {
-    const css = appliedCss.get(tabId);
-    if (!css) return;
-    try {
-        await browser.tabs.removeCSS(tabId, {
-            code:      css,
-            cssOrigin: 'user',
-            allFrames: true,
-        });
-        appliedCss.delete(tabId);
-    } catch (e) {
-        console.warn('nightpanel: removeCSS failed for tab', tabId, e);
+// Internal: remove every sheet currently attached to a tab. Runs inside the
+// per-tab queue. Clearing the WHOLE list (not a single code) is what guarantees
+// a page fully reverts on toggle-off even if it ever ended up multi-layered.
+async function doRemoveTab(tabId) {
+    const list = appliedCss.get(tabId);
+    appliedCss.delete(tabId);
+    if (!list || !list.length) return;
+    for (const css of list) {
+        try {
+            await browser.tabs.removeCSS(tabId, { code: css, cssOrigin: 'user', allFrames: true });
+        } catch (e) {
+            warnReal('removeCSS failed', tabId, e);
+        }
     }
+}
+
+// Public: queue a (coalesced) injection for a tab. A burst of calls collapses
+// to at most one in-flight + one queued op; the queued op applies the LATEST
+// requested brightness. Returns the tab's chain tail so callers/tests can await.
+function injectTab(tabId, b) {
+    pendingB.set(tabId, b);
+    if (injectQueued.has(tabId)) return tabQueues.get(tabId) || Promise.resolve();
+    injectQueued.add(tabId);
+    return enqueue(tabId, async () => {
+        injectQueued.delete(tabId);
+        if (!pendingB.has(tabId)) return;       // cancelled by removeTab
+        const latest = pendingB.get(tabId);
+        pendingB.delete(tabId);
+        await doInjectTab(tabId, latest);
+    });
+}
+
+// Public: queue a full clear for a tab, cancelling any pending injection so we
+// don't re-apply CSS we're about to remove.
+function removeTab(tabId) {
+    pendingB.delete(tabId);
+    injectQueued.delete(tabId);
+    return enqueue(tabId, () => doRemoveTab(tabId));
 }
 
 async function injectMeta(tabId) {
@@ -378,7 +446,7 @@ function isInjectable(url) {
            !url.startsWith('resource:');
 }
 
-async function applyToAllTabs(b) {
+async function applyToAllTabs() {
     const tabs = await browser.tabs.query({});
     for (const tab of tabs) {
         // Skip discarded tabs. tabs.insertCSS rejects on them (Mozilla bug
@@ -389,8 +457,19 @@ async function applyToAllTabs(b) {
         // the meta) handles the tab from there.
         if (tab.discarded) continue;
         if (!isInjectable(tab.url)) continue;
-        injectTab(tab.id, b);
+        injectTab(tab.id, brightness);
         injectMeta(tab.id);
+    }
+}
+
+// Brightness/video changed while already active: re-apply the CSS (coalesced
+// per tab) without re-registering the meta script or touching the toggle chain.
+async function reinjectAllTabs() {
+    const tabs = await browser.tabs.query({});
+    for (const tab of tabs) {
+        if (tab.discarded) continue;
+        if (!isInjectable(tab.url)) continue;
+        injectTab(tab.id, brightness);
     }
 }
 
@@ -401,7 +480,7 @@ async function activate() {
     // Register the meta-tag content script FIRST so new navigations that
     // race with our applyToAllTabs pass still get the early-injection path.
     await registerMetaScript();
-    await applyToAllTabs(brightness);
+    await applyToAllTabs();
 }
 
 async function deactivate() {
@@ -448,11 +527,24 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
-// Clean up our per-tab state when a tab closes.
+// Clean up all per-tab state when a tab closes (don't leak queue/coalesce
+// entries for dead tabs).
 browser.tabs.onRemoved.addListener((tabId) => {
     appliedCss.delete(tabId);
+    tabQueues.delete(tabId);
+    pendingB.delete(tabId);
+    injectQueued.delete(tabId);
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 
 connect();
+
+// Test hook: inert in the browser (no CommonJS `module`), but lets the node
+// harness in tests/unit/test_firefox_switch.py drive the switch machinery.
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        makeCss, onCommand, injectTab, removeTab, activate, deactivate,
+        appliedCss, tabQueues,
+    };
+}

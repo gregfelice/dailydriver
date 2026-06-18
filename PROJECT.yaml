@@ -7,7 +7,7 @@ project:
     \ 1. **Theming / orchestrator layer** \u2014 palette-driven dark-mode that reaches\
     \ across alacritty, tmux, nvim, emacs, claude-code"
   category: app.utilities
-  lifecycle: incubator
+  lifecycle: garage
   layer: L3
   technical:
     languages:

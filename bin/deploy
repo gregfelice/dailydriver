@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# bin/deploy — build the nightpanel .deb and feed it to the rizlabs apt repo.
+#
+# Two stages, mirroring docs/runbook/change/publish-apt-repo.md (ADR-048):
+#   1. dpkg-buildpackage -us -uc -b      → the binary .deb (source/changes left
+#      unsigned; the apt Release is what gets GPG-signed in stage 2).
+#   2. ~/ops/ansible/scripts/build-apt-repo → assemble dists/+pool/, sign
+#      Release into InRelease/Release.gpg with the dedicated repo key, and
+#      (only with --publish) rsync the tree to dweezil's static_root.
+#
+# DEFAULT IS A LOCAL DRY RUN. apt.rizlabs.com is a PUBLIC surface; publishing to
+# it is a deliberate act, so the rsync is gated behind --publish (or PUBLISH=1).
+# Without it, the signed repo tree is built under STAGE and nothing leaves this
+# machine.
+#
+# Usage:
+#   bin/deploy            # build .deb + sign repo tree locally, DO NOT push
+#   bin/deploy --publish  # ...and rsync the signed tree to apt.rizlabs.com
+#
+# Env (override as needed):
+#   GPG_KEY          repo signing key id/email  (default: apt@rizlabs.com)
+#   BUILD_APT_REPO   path to the ops publisher  (default: ~/ops/ansible/scripts/build-apt-repo)
+#   DIST COMPONENT ARCH STAGE DEST   passed through to build-apt-repo (own defaults)
+set -euo pipefail
+
+PUBLISH="${PUBLISH:-0}"
+case "${1:-}" in
+    --publish) PUBLISH=1 ;;
+    -h | --help)
+        sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'
+        exit 0
+        ;;
+    "") ;;
+    *)
+        echo "usage: bin/deploy [--publish]" >&2
+        exit 2
+        ;;
+esac
+
+GPG_KEY="${GPG_KEY:-apt@rizlabs.com}"
+BUILD_APT_REPO="${BUILD_APT_REPO:-$HOME/ops/ansible/scripts/build-apt-repo}"
+
+cd "$(git rev-parse --show-toplevel)"
+
+# --- preflight: fail early + loud, never half-publish ---
+for t in dpkg-buildpackage dpkg-parsechangelog dpkg-architecture gpg; do
+    command -v "$t" >/dev/null || {
+        echo "✗ missing required tool: $t (apt install dpkg-dev gnupg)" >&2
+        exit 1
+    }
+done
+[ -x "$BUILD_APT_REPO" ] || {
+    echo "✗ apt publisher not found/executable: $BUILD_APT_REPO" >&2
+    echo "   it lives in ~/ops (the estate ops repo); set BUILD_APT_REPO to override." >&2
+    exit 1
+}
+gpg --list-secret-keys "$GPG_KEY" >/dev/null 2>&1 || {
+    echo "✗ no secret GPG key for '$GPG_KEY' in this keyring" >&2
+    echo "   the dedicated repo key (see runbook publish-apt-repo.md) must be imported." >&2
+    exit 1
+}
+
+VERSION="$(dpkg-parsechangelog -SVersion)"
+ARCH="$(dpkg-architecture -qDEB_HOST_ARCH)"
+
+echo "→ building nightpanel ${VERSION} (${ARCH}) .deb"
+# Artifacts land in the parent dir by dpkg convention; that parent is shared with
+# sibling projects, so we corral them into dist/ (gitignored) immediately after.
+dpkg-buildpackage -us -uc -b
+
+mkdir -p dist
+for f in ../nightpanel_"${VERSION}"_"${ARCH}".deb \
+    ../nightpanel_"${VERSION}"_"${ARCH}".buildinfo \
+    ../nightpanel_"${VERSION}"_"${ARCH}".changes; do
+    [ -e "$f" ] && mv -f "$f" dist/
+done
+
+DEB="dist/nightpanel_${VERSION}_${ARCH}.deb"
+[ -f "$DEB" ] || {
+    echo "✗ expected $DEB was not produced by dpkg-buildpackage" >&2
+    exit 1
+}
+DEB="$(readlink -f "$DEB")" # absolute — build-apt-repo cp's it from its own CWD
+echo "→ built $DEB"
+
+echo "→ assembling + signing apt repo (key=$GPG_KEY, publish=$PUBLISH)"
+GPG_KEY="$GPG_KEY" PUBLISH="$PUBLISH" "$BUILD_APT_REPO" "$DEB"
+
+if [ "$PUBLISH" = 1 ]; then
+    cat <<EOF
+
+✓ published nightpanel ${VERSION} to apt.rizlabs.com
+  verify:  curl -fsSL http://apt.rizlabs.com/dists/trixie/InRelease | head
+EOF
+else
+    cat <<EOF
+
+✓ built + signed locally — NOT published (public surface is gated)
+  re-run with --publish to rsync the signed tree to apt.rizlabs.com
+EOF
+fi

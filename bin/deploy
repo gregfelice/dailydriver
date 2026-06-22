@@ -15,7 +15,13 @@
 #
 # Usage:
 #   bin/deploy            # build .deb + sign repo tree locally, DO NOT push
-#   bin/deploy --publish  # ...and rsync the signed tree to apt.rizlabs.com
+#   bin/deploy --publish  # run the proof run, then rsync the signed tree to apt
+#
+# --publish first runs the proof run (bin/validate, ADR-073 DA1): the .deb is
+# built in a clean container and the INSTALLED package is smoke-tested. Publish
+# aborts if the proof fails. docker is required so the proof actually runs — a
+# docker-less validate SKIPs the packaging layer, which must never green-light a
+# public publish.
 #
 # Env (override as needed):
 #   GPG_KEY          repo signing key id/email  (default: apt@rizlabs.com)
@@ -59,6 +65,25 @@ gpg --list-secret-keys "$GPG_KEY" >/dev/null 2>&1 || {
     echo "   the dedicated repo key (see runbook publish-apt-repo.md) must be imported." >&2
     exit 1
 }
+
+# Publish gate: the proof run MUST pass before anything reaches the public apt
+# surface (ADR-073 DA1). Require docker so bin/validate's packaging proof actually
+# RUNS — a docker-less validate SKIPs that layer and passes vacuously, which must
+# never green-light a publish. Run it before building/publishing so a bad package
+# is caught up front.
+if [ "$PUBLISH" = 1 ]; then
+    command -v docker >/dev/null || {
+        echo "✗ --publish requires docker: the proof run (bin/validate) must build +" >&2
+        echo "   smoke-test the package in a clean container before it ships to apt.rizlabs.com." >&2
+        exit 1
+    }
+    echo "→ proof run (bin/validate) — gating publish"
+    if ! bin/validate; then
+        echo "✗ proof run failed — refusing to publish to apt.rizlabs.com" >&2
+        exit 1
+    fi
+    echo "→ proof run passed — proceeding to publish"
+fi
 
 VERSION="$(dpkg-parsechangelog -SVersion)"
 ARCH="$(dpkg-architecture -qDEB_HOST_ARCH)"

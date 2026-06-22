@@ -6,7 +6,7 @@
 # with auto-generated notes (.github/workflows/release.yml). Forgejo just
 # stores the tag — no CI engine per ADR-030. AUR PKGBUILD update and
 # extensions.gnome.org submission are separate manual steps; see
-# aur/MIGRATION.md and dist/extensions-gnome-org/SUBMISSION_CHECKLIST.md.
+# aur/MIGRATION.md and packaging/extensions-gnome-org/SUBMISSION_CHECKLIST.md.
 set -euo pipefail
 
 VERSION="${1:?usage: bin/release VERSION (e.g. v0.2.1)}"
@@ -53,5 +53,5 @@ Next steps (manual, not automated):
   https://github.com/gregfelice/nightpanel/releases
 - After the source tarball lands, update AUR PKGBUILD sha256sum + push.
   See aur/MIGRATION.md.
-- e.g.o. submission: see dist/extensions-gnome-org/SUBMISSION_CHECKLIST.md
+- e.g.o. submission: see packaging/extensions-gnome-org/SUBMISSION_CHECKLIST.md
 EOF

@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# bin/validate — the proof run (ADR-073 DA1): does nightpanel conform to the
+# standard project form AND actually package + run?
+#
+# Two layers:
+#   1. Standard project form — PROJECT.yaml required keys, README, CLAUDE.md
+#      sections, docs/adr.
+#   2. The PACKAGING PROOF — build the .deb in a CLEAN debian:trixie container
+#      (the apt channel's target distro), install it, and smoke-test the
+#      INSTALLED package (tests/smoke/gui-smoke.sh). This is the real-stack gate:
+#      it catches what unit tests can't — missing-module packaging gaps,
+#      undeclared build/runtime deps, app-construction failures, a broken
+#      extension manifest, missing design fonts.
+#
+# Exit code == number of failed checks (0 = proof passed), per the estate bin/
+# validate convention (lib-validate.sh). Run locally before `bin/deploy`; CI
+# runs the same command on v* tags (one shape everywhere, ADR-030).
+#
+# The packaging proof needs docker (a clean target-distro env). Without it that
+# layer is skipped — loudly — so the cheap form checks still run.
+set -u
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib-validate.sh"
+cd "$ROOT"
+
+# Build the .deb in a clean debian:trixie container and smoke-test the installed
+# package. Tars the WORKING tree (what you're about to ship) into the container —
+# excluding .git/.venv-dev/dist + stale build dirs — so the host tree stays clean
+# and build-deps come from debian/control (apt-get build-dep, ADR-073 DA4).
+validate_package() {
+    tar --exclude=.git --exclude=.venv-dev --exclude=dist \
+        --exclude='debian/.debhelper' --exclude='debian/nightpanel' --exclude='obj-*' \
+        -cf - . | docker run --rm -i debian:trixie bash -euo pipefail -c '
+      mkdir /src && cd /src && tar xf -
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update -qq
+      apt-get install -y --no-install-recommends ca-certificates dpkg-dev >/dev/null
+      apt-get build-dep -y . >/dev/null
+      dpkg-buildpackage -us -uc -b
+      apt-get install -y --no-install-recommends /nightpanel_*.deb fonts-inter fonts-jetbrains-mono
+      bash tests/smoke/gui-smoke.sh
+    '
+}
+
+echo "validate: nightpanel — DA proof run (ADR-073)"
+
+# --- 1. Standard project form ------------------------------------------------
+echo
+echo ">>> PROJECT.yaml"
+if [[ -f "$ROOT/PROJECT.yaml" ]]; then
+    ok "PROJECT.yaml present"
+    if command -v python3 >/dev/null 2>&1 && python3 -c 'import yaml' 2>/dev/null; then
+        missing="$(python3 - "$ROOT/PROJECT.yaml" <<'PY'
+import sys, yaml
+required = ["id", "name", "shortdesc", "description", "category", "lifecycle", "layer"]
+try:
+    d = (yaml.safe_load(open(sys.argv[1])) or {}).get("project", {}) or {}
+except Exception as e:
+    print("PARSE_ERROR:%s" % e); sys.exit(0)
+print(" ".join(k for k in required if not d.get(k)))
+PY
+)"
+        if [[ "$missing" == PARSE_ERROR:* ]]; then
+            fail "PROJECT.yaml parses (${missing#PARSE_ERROR:})"
+        elif [[ -z "$missing" ]]; then
+            ok "PROJECT.yaml has all required keys"
+        else
+            fail "PROJECT.yaml missing required keys: $missing"
+        fi
+    else
+        skip "PROJECT.yaml key check (python3 + pyyaml not available)"
+    fi
+else
+    fail "PROJECT.yaml present"
+fi
+
+echo
+echo ">>> Standard form"
+check "README.md present" test -f "$ROOT/README.md"
+check "docs/adr/ present" test -d "$ROOT/docs/adr"
+if [[ -f "$ROOT/CLAUDE.md" ]]; then
+    ok "CLAUDE.md present"
+    for section in "Quick Reference" "Architecture" "Conventions" "Key Documentation" "Status"; do
+        if grep -qiE "^#{1,6}[[:space:]].*${section}" "$ROOT/CLAUDE.md"; then
+            ok "CLAUDE.md § ${section}"
+        else
+            fail "CLAUDE.md missing section: ${section}"
+        fi
+    done
+else
+    fail "CLAUDE.md present"
+fi
+
+# --- 2. Packaging proof (DA1 deep gate) --------------------------------------
+echo
+echo ">>> Packaging proof — .deb build + installed-package smoke (debian:trixie)"
+if command -v docker >/dev/null 2>&1; then
+    if validate_package; then
+        ok "deb builds in clean trixie + installed-package smoke passes"
+    else
+        fail "packaging proof failed (see output above)"
+    fi
+else
+    skip "packaging proof NOT run — docker unavailable (clean target-distro env required)"
+fi
+
+summary
+exit "$FAILS"

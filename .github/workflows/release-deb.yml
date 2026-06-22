@@ -1,19 +1,15 @@
-# Build the nightpanel .deb in a clean debian:trixie container and smoke-test the
-# INSTALLED package on every v* tag.
+# Proof run for the .deb on every v* tag: build the package in a clean
+# debian:trixie container, install it, and smoke-test the INSTALLED package.
 #
-# This is a PROOF run only — it deliberately does NOT publish. Shipping the .deb
-# to the apt channel (apt.rizlabs.com) is a gated, manual act via
-# `bin/deploy --publish` (ADR-073 DA6: public publish is explicit; CI must never
-# auto-push to the public apt surface). Runs on the GitHub mirror — the estate's
-# sanctioned runner (ADR-030); Forgejo stays git-only. This replaces the retired
-# .forgejo/workflows/release-deb.yml, which both duplicated the apt channel and
-# ran a Forgejo CI engine (ADR-030 violation).
+# This runs the SAME command developers run locally — `bin/validate` (ADR-073
+# DA1, the proof run) — so there is one shape everywhere (ADR-030); the container
+# build + smoke logic lives only in bin/validate, never duplicated here.
 #
-# Native packaging: GitHub's runner is Ubuntu, so the build + install-smoke run
-# INSIDE a debian:trixie container (the target distro). The host runner has node
-# for actions/checkout; the container only runs shell, so checkout stays on the
-# host and the workspace is mounted in.
-name: release-deb
+# It deliberately does NOT publish. Shipping the .deb to the apt channel
+# (apt.rizlabs.com) is the gated, manual `bin/deploy --publish` (DA6: CI never
+# auto-pushes to the public apt surface). Runs on the GitHub mirror — the
+# estate's sanctioned runner (ADR-030); Forgejo stays git-only.
+name: release-deb (proof run)
 
 on:
   push:
@@ -21,26 +17,11 @@ on:
       - 'v*'
 
 jobs:
-  build-smoke:
-    name: Build .deb + smoke-test (debian:trixie)
+  validate:
+    name: bin/validate — .deb build + installed-package smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build + smoke-test the package in a clean debian:trixie container
-        run: |
-          set -eux
-          docker run --rm -v "$GITHUB_WORKSPACE:/w/src" -w /w/src debian:trixie bash -euxc '
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -qq
-            apt-get install -y --no-install-recommends ca-certificates dpkg-dev
-            # Build-deps come from debian/control (the single declared source) — not
-            # a hand-maintained list that silently drifts out of sync (ADR-073 DA4).
-            apt-get build-dep -y .
-            dpkg-buildpackage -us -uc -b
-            # Artifacts land in the parent of the build dir (/w). Install the built
-            # package + design fonts, then smoke-test the INSTALLED package.
-            apt-get install -y --no-install-recommends \
-              /w/nightpanel_*.deb fonts-inter fonts-jetbrains-mono
-            bash tests/smoke/gui-smoke.sh
-          '
+      - name: Run the DA proof run
+        run: bin/validate

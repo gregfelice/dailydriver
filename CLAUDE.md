@@ -84,7 +84,7 @@ Key patterns:
 ## Key Documentation
 
 - `docs/BACKLOG.md` — Prioritized backlog (P0-P3) for both layers
-- `docs/RELEASING.md` — Version numbering and release process
+- `docs/SDLC.md` — **the** end-to-end flow: test → validate → deploy → release (and the `bin/` scripts)
 - `docs/FLATPAK_SUBMISSION_GUIDE.md` — Flathub submission reference
 - `docs/adr/` — Architecture decision records
 - `docs/research/` — Research notes

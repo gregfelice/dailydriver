@@ -12,7 +12,9 @@ Build-Depends: debhelper-compat (= 13),
                libgtk-4-dev,
                libadwaita-1-dev,
                gobject-introspection,
-               libgirepository1.0-dev
+               libgirepository1.0-dev,
+               gettext,
+               desktop-file-utils
 Standards-Version: 4.6.2
 Homepage: https://github.com/gregfelice/nightpanel
 Rules-Requires-Root: no

@@ -46,6 +46,16 @@ configure_file(
   install_mode: 'rwxr-xr-x'
 )
 
+# Player launcher - the standalone theme-synced mini-player (Super+P target).
+configure_file(
+  input: 'src/nightpanel-player.in',
+  output: 'nightpanel-player',
+  configuration: conf,
+  install: true,
+  install_dir: get_option('bindir'),
+  install_mode: 'rwxr-xr-x'
+)
+
 # GNOME Shell extension - the panel button. Installed system-wide; it resolves
 # the toggle binary via PATH at runtime (see extension.js).
 install_subdir(

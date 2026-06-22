@@ -1065,6 +1065,44 @@ class GnomeShortcutsBackend(ShortcutsBackend):
 
         return None
 
+    def detect_np_player(self) -> str | None:
+        """Detect how to launch nightpanel's own theme-synced mini-player.
+
+        Mirrors detect_nightpanel(): Flatpak first (app ID intentionally kept as
+        DailyDriver — see CLAUDE.md), then the dedicated ``nightpanel-player``
+        binary, then ``nightpanel --player``, then a dev checkout's run-dev.sh.
+        All route to the standalone PlayerApp (the flag forms via
+        ``application.main()``'s ``--player`` intercept). Returns the launch
+        command, or None if nightpanel isn't found.
+        """
+        try:
+            result = subprocess.run(
+                ["flatpak", "info", "io.github.gregfelice.DailyDriver"],
+                capture_output=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                return "flatpak run io.github.gregfelice.DailyDriver --player"
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+        if shutil.which("nightpanel-player"):
+            return "nightpanel-player"
+
+        if shutil.which("nightpanel"):
+            return "nightpanel --player"
+
+        from pathlib import Path
+
+        curr = Path.cwd()
+        for _ in range(3):
+            dev_script = curr / "run-dev.sh"
+            if dev_script.exists():
+                return f"{dev_script} --player"
+            curr = curr.parent
+
+        return None
+
     # --- Workspace Management ---
 
     def get_workspace_count(self) -> int:
@@ -1197,8 +1235,10 @@ class GnomeShortcutsBackend(ShortcutsBackend):
         else:
             results["browser"] = "No browser found"
 
-        # Music player
-        music = self.detect_music_player()
+        # Music player — prefer nightpanel's own theme-synced mini-player so
+        # Super+P opens the NP player; fall back to a detected external player
+        # (Spotify/rhythmbox/…) where the NP player isn't installed.
+        music = self.detect_np_player() or self.detect_music_player()
         if music:
             existing = self.find_custom_keybinding_by_type("music")
             if existing:

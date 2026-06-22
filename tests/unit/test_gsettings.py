@@ -1242,6 +1242,82 @@ class TestAppDetection:
 
             assert dd == "nightpanel --cheat-sheet"
 
+    def testdetect_np_player_flatpak(self) -> None:
+        """detect_np_player finds the Flatpak install and uses --player."""
+        from nightpanel.services.gsettings_service import GSettingsService
+
+        with (
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
+            patch("subprocess.run") as mock_run,
+            patch("shutil.which") as mock_which,
+        ):
+            mock_source = MagicMock()
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_result = MagicMock()
+            mock_result.returncode = 0  # flatpak info success
+            mock_run.return_value = mock_result
+            mock_which.return_value = None
+
+            service = GSettingsService()
+            cmd = service.detect_np_player()
+
+            assert cmd == "flatpak run io.github.gregfelice.DailyDriver --player"
+
+    def testdetect_np_player_dedicated_binary(self) -> None:
+        """detect_np_player prefers the dedicated `nightpanel-player` binary."""
+        from nightpanel.services.gsettings_service import GSettingsService
+
+        with (
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
+            patch("subprocess.run") as mock_run,
+            patch("shutil.which") as mock_which,
+        ):
+            mock_source = MagicMock()
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_result = MagicMock()
+            mock_result.returncode = 1  # flatpak not found
+            mock_run.return_value = mock_result
+
+            def which_side_effect(cmd: str) -> str | None:
+                return "/usr/bin/nightpanel-player" if cmd == "nightpanel-player" else None
+
+            mock_which.side_effect = which_side_effect
+
+            service = GSettingsService()
+            cmd = service.detect_np_player()
+
+            assert cmd == "nightpanel-player"
+
+    def testdetect_np_player_flag_fallback(self) -> None:
+        """Without the dedicated binary, detect_np_player falls back to
+        `nightpanel --player` (which routes through the main() intercept)."""
+        from nightpanel.services.gsettings_service import GSettingsService
+
+        with (
+            patch("nightpanel.services.backends.gnome.Gio") as mock_gio,
+            patch("subprocess.run") as mock_run,
+            patch("shutil.which") as mock_which,
+        ):
+            mock_source = MagicMock()
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_result = MagicMock()
+            mock_result.returncode = 1  # flatpak not found
+            mock_run.return_value = mock_result
+
+            def which_side_effect(cmd: str) -> str | None:
+                # No dedicated binary; only the main `nightpanel` exists.
+                return "/usr/bin/nightpanel" if cmd == "nightpanel" else None
+
+            mock_which.side_effect = which_side_effect
+
+            service = GSettingsService()
+            cmd = service.detect_np_player()
+
+            assert cmd == "nightpanel --player"
+
 
 class TestSetupDefaultCustomShortcuts:
     """Tests for setup_default_custom_shortcuts method."""
@@ -1268,6 +1344,7 @@ class TestSetupDefaultCustomShortcuts:
                 patch.object(service, "detect_file_manager", return_value="nautilus --new-window"),
                 patch.object(service, "detect_browser", return_value="firefox --new-window"),
                 patch.object(service, "detect_music_player", return_value=None),
+                patch.object(service, "detect_np_player", return_value=None),
                 patch.object(service, "detect_nightpanel", return_value=None),
                 patch.object(service, "find_custom_keybinding_by_type", return_value=None),
                 patch.object(
@@ -1279,6 +1356,76 @@ class TestSetupDefaultCustomShortcuts:
                 assert "terminal" in results
                 assert "Added" in results["terminal"]
                 mock_add.assert_any_call("Launch Terminal", "kitty", "<Super>Return")
+
+    def test_setup_binds_np_player_to_super_p(self) -> None:
+        """Super+P binds to nightpanel's own player, preferred over an external
+        player even when one is detected."""
+        from nightpanel.services.gsettings_service import GSettingsService
+
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_main_settings = MagicMock()
+            mock_main_settings.get_strv.return_value = []
+            mock_gio.Settings.new_full.side_effect = _dispatch_new_full(main=mock_main_settings)
+
+            service = GSettingsService()
+
+            with (
+                patch.object(service, "detect_terminal", return_value=None),
+                patch.object(service, "detect_file_manager", return_value=None),
+                patch.object(service, "detect_browser", return_value=None),
+                # External player present, but the NP player must win.
+                patch.object(service, "detect_music_player", return_value="spotify"),
+                patch.object(service, "detect_np_player", return_value="nightpanel --player"),
+                patch.object(service, "detect_nightpanel", return_value=None),
+                patch.object(service, "find_custom_keybinding_by_type", return_value=None),
+                patch.object(
+                    service, "add_custom_keybinding", return_value="/path/custom0/"
+                ) as mock_add,
+            ):
+                results = service.setup_default_custom_shortcuts()
+
+                assert "Added" in results["music"]
+                assert "nightpanel --player" in results["music"]
+                mock_add.assert_any_call("Launch Music", "nightpanel --player", "<Super>p")
+
+    def test_setup_falls_back_to_external_player(self) -> None:
+        """When the NP player isn't installed, Super+P still binds the detected
+        external player so the key does something useful."""
+        from nightpanel.services.gsettings_service import GSettingsService
+
+        with patch("nightpanel.services.backends.gnome.Gio") as mock_gio:
+            mock_source = MagicMock()
+            mock_schema = MagicMock()
+            mock_source.lookup.return_value = mock_schema
+            mock_gio.SettingsSchemaSource.get_default.return_value = mock_source
+
+            mock_main_settings = MagicMock()
+            mock_main_settings.get_strv.return_value = []
+            mock_gio.Settings.new_full.side_effect = _dispatch_new_full(main=mock_main_settings)
+
+            service = GSettingsService()
+
+            with (
+                patch.object(service, "detect_terminal", return_value=None),
+                patch.object(service, "detect_file_manager", return_value=None),
+                patch.object(service, "detect_browser", return_value=None),
+                patch.object(service, "detect_music_player", return_value="rhythmbox"),
+                patch.object(service, "detect_np_player", return_value=None),
+                patch.object(service, "detect_nightpanel", return_value=None),
+                patch.object(service, "find_custom_keybinding_by_type", return_value=None),
+                patch.object(
+                    service, "add_custom_keybinding", return_value="/path/custom0/"
+                ) as mock_add,
+            ):
+                results = service.setup_default_custom_shortcuts()
+
+                assert "rhythmbox" in results["music"]
+                mock_add.assert_any_call("Launch Music", "rhythmbox", "<Super>p")
 
     def test_setup_updates_existing(self) -> None:
         """Test that setup updates existing shortcuts."""
@@ -1308,6 +1455,7 @@ class TestSetupDefaultCustomShortcuts:
                 patch.object(service, "detect_file_manager", return_value=None),
                 patch.object(service, "detect_browser", return_value=None),
                 patch.object(service, "detect_music_player", return_value=None),
+                patch.object(service, "detect_np_player", return_value=None),
                 patch.object(service, "detect_nightpanel", return_value=None),
                 patch.object(
                     service,
@@ -1340,6 +1488,7 @@ class TestSetupDefaultCustomShortcuts:
                 patch.object(service, "detect_file_manager", return_value=None),
                 patch.object(service, "detect_browser", return_value=None),
                 patch.object(service, "detect_music_player", return_value=None),
+                patch.object(service, "detect_np_player", return_value=None),
                 patch.object(service, "detect_nightpanel", return_value=None),
             ):
                 results = service.setup_default_custom_shortcuts()

@@ -102,6 +102,17 @@ def main(version: str | None = None) -> int:
         version: Version string. If None, reads from package metadata.
             The meson launcher script passes the version from configure_file.
     """
+    # --player launches nightpanel's standalone theme-synced mini-player instead
+    # of the keyboard-config UI. It is a SEPARATE Adw.Application (app id
+    # io.github.gregfelice.NightpanelPlayer), so we run it directly. Every
+    # install path funnels through here — `nightpanel`, the Flatpak, and
+    # run-dev.sh — so this single intercept makes Super+P work everywhere,
+    # mirroring how --cheat-sheet is handled in the window. Pass only the program
+    # name: PlayerApp doesn't parse --player and would reject the unknown option.
+    if "--player" in sys.argv:
+        from nightpanel.player_app import PlayerApp
+
+        return PlayerApp().run([sys.argv[0]])
     if version is None:
         try:
             from importlib.metadata import version as get_version

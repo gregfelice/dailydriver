@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+# nightpanel-player - nightpanel's theme-synced MPRIS mini-player
+#
+# Copyright 2025 Greg Felice
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Standalone Adw.Application (app id io.github.gregfelice.NightpanelPlayer),
+# separate from the keyboard-config UI. This is the binary the Super+P keybinding
+# can target directly; `nightpanel --player` reaches the same PlayerApp via the
+# application.main() intercept. Needs gi (GTK4/Adw) but NO gresource — the player
+# renders its CSS from the palette. Mirrors nightpanel-toggle.in's @pythondir@
+# insert so the installed package imports regardless of prefix.
+
+import os
+import signal
+import sys
+
+# Configure dconf/GIO for Flatpak BEFORE any gi imports
+if "FLATPAK_ID" in os.environ:
+    home = os.environ.get("HOME", os.path.expanduser("~"))
+    os.environ["XDG_CONFIG_HOME"] = f"{home}/.config"
+    os.environ.setdefault("GIO_EXTRA_MODULES", "/app/lib/gio/modules")
+
+sys.path.insert(1, '@pythondir@')
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+if __name__ == '__main__':
+    import gi
+
+    gi.require_version('Gtk', '4.0')
+    gi.require_version('Adw', '1')
+
+    from nightpanel import player_app
+    sys.exit(player_app.main())

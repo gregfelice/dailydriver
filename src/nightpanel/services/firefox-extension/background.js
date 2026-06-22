@@ -76,16 +76,35 @@ html {
     color-scheme: dark !important;
 }
 
-/* Kill every non-media background so html's black shows through uniformly */
+/* Repaint every non-media background to the NP canvas black. We use a SOLID
+ * color (not transparent): transparent let floating overlays — dropdowns,
+ * menus, autocomplete popups, sticky/fixed headers — show the page content
+ * behind them, which read as "broken/see-through" overlays. Painting them the
+ * same solid #0A0A0A keeps the uniform-black canvas AND makes overlays opaque,
+ * so stacked content no longer bleeds through. */
 body, body *:not(img):not(video):not(svg):not(picture):not(canvas):not(iframe):not(embed):not(object) {
-    background-color: transparent !important;
+    background-color: #0A0A0A !important;
     background-image: none !important;
 }
 
-/* Default text: instrument-scale green + Inter Light (matches the player) */
+/* Default text color + borders: instrument-scale green on everything, icon
+ * glyphs included (a green icon is on-theme). Font is handled separately below
+ * so we can spare icon fonts. */
 body, body * {
     color: #7DB890 !important;
     border-color: #2A2A2A !important;
+}
+
+/* Text font: Inter Light (matches the player) — but NOT on icon-font elements.
+ * Icon fonts (Font Awesome, Material Icons/Symbols, Glyphicons, Bootstrap
+ * Icons) map glyphs to private-use codepoints or ligatures; forcing Inter onto
+ * them replaces the icon with tofu (□) or its raw ligature text ("home"). That
+ * is the "broken fonts" symptom. By simply NOT matching these elements, their
+ * own icon-font declaration wins the cascade and the glyph survives. Multi-line
+ * selector on purpose: keeps the single-line "body, body star :not(...)" prefix
+ * unique to the background rule above. */
+body,
+body *:not([class*="icon"]):not([class*="Icon"]):not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fab):not(.fad):not([class*="material-symbols"]):not([class*="glyphicon"]):not([class*="bi-"]):not(.bi) {
     font-family: 'Inter', sans-serif !important;
     font-weight: 300 !important;
 }

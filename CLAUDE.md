@@ -84,7 +84,6 @@ Key patterns:
 ## Key Documentation
 
 - `docs/BACKLOG.md` — Prioritized backlog (P0-P3) for both layers
-- `docs/STATUS.md` — Project status and last session notes
 - `docs/RELEASING.md` — Version numbering and release process
 - `docs/FLATPAK_SUBMISSION_GUIDE.md` — Flathub submission reference
 - `docs/adr/` — Architecture decision records

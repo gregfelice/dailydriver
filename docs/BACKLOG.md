@@ -54,10 +54,6 @@ GPG-signed Release; served by droplet nginx). Live + verified on rivulet
 - [x] **Panel button chip background when NP active** — transparent so only NIGHT PANEL text floats on the black panel. (f7df0d5)
 - [x] **gws adapter** — new tier-1 adapter writing `theme:Nightpanel` to `~/.gws/todo.state`; matching `Nightpanel` theme added to gws Rust source (`gtd/gws@34c4386`). (fdfe760)
 
-**Still open:**
-
-- [ ] **`docs/STATUS.md` describes DailyDriver** — CLAUDE.md was rewritten but STATUS.md is still stale.
-
 ## Theming layer — P0.5 (UX surfacing)
 
 - [ ] **Add gws status row to the Setup tab.** Analogous to the existing Tiling Assistant status row in `views/setup_view.py`. Should show: binary present (`shutil.which("gws")`), state file present (`~/.gws/todo.state`), current theme name from snapshot, and whether NP is currently driving it (`adapter.verify("on")`). Makes the new gws adapter discoverable in the UI rather than buried in the orchestrator's adapter list.

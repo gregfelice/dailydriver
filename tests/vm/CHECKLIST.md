@@ -31,7 +31,7 @@ bridge. Test each:
 - [ ] **Flatpak app**: `flatpak install --user nightpanel.flatpak` → launches, main window renders
 - [ ] **GNOME Shell extension**: `gnome-extensions install nightpanel@nightpanel.shell-extension.zip` then logout/login → `gnome-extensions enable nightpanel@nightpanel` → **panel button appears**
 - [ ] **Firefox bridge**: install the `.xpi`; confirm the native-messaging host path resolves under Flatpak sandboxing
-- [ ] (secondary, distro-specific) AUR `PKGBUILD` / `debian/` deb / `flake.nix` — note if attempted
+- [ ] (secondary, distro-specific) AUR `PKGBUILD` / `debian/` deb — note if attempted
 
 ---
 

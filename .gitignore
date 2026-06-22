@@ -6,6 +6,7 @@ repo/
 .flatpak-builder/
 
 # Debian packaging build artifacts (dpkg-buildpackage)
+obj-*/
 debian/.debhelper/
 debian/debhelper-build-stamp
 debian/files
@@ -49,20 +50,10 @@ coverage.xml
 .ruff_cache/
 .mypy_cache/
 
-# AppImage build artifacts + downloaded tooling
-*.AppImage
-*.AppDir/
-linuxdeploy-*
-
-# Snap build artifacts (snapcraft writes to parts/stage/prime at build time)
-parts/
-stage/
-prime/
-*.snap
-
 # Scratch/debug output
 app_log*.txt
 final_check.txt
+MagicMock/        # stray dir a mis-targeted test mock can create
 
 # Misc
 *.log

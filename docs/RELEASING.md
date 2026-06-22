@@ -93,10 +93,6 @@ Every tagged release creates a GitHub Release with downloadable Flatpak.
 - Create a `beta` branch in the Flathub repo
 - Users opt-in with `flatpak remote-add flathub-beta`
 
-### Snap Store (Optional)
-
-Create `snapcraft.yaml` and publish to Snap Store.
-
 ### AUR (Community)
 
 Create PKGBUILD for Arch Linux users.

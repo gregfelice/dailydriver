@@ -58,17 +58,17 @@ Choose from curated shortcut profiles
 
 The theming side is built around the **Adapter** contract — one Python class per tool that knows how to snapshot, apply, revert, and verify its piece of the palette. Adding a new tool is one class + one list append. Currently bundled:
 
-| Tool | Mechanism |
-|---|---|
-| alacritty | Flips the `import` line in `alacritty.toml` to a rendered NP theme. |
-| tmux | Sources a palette overlay; revert re-sources `~/.tmux.conf`. |
-| nvim | Drops an `after/plugin/nightpanel_active.lua`; talks to live instances over `--server`. |
-| emacs | Renders `nightpanel-theme.el`, drives daemons via `emacsclient`. |
-| GNOME (GTK CSS + background) | Writes a sentinel-wrapped block into `~/.config/gtk-{3,4}.0/gtk.css`; swaps `color-scheme` + background color via `gsettings`. |
-| Claude Code | Flips `theme` in `~/.claude/settings.json`; installs a `~/.local/bin/claude` wrapper that strips `COLORTERM` while NP is active. |
-| Gemini CLI | Writes a custom theme to `~/.gemini/settings.json` + installs a `~/.local/bin/gemini` wrapper that strips `COLORTERM` (mirrors the Claude Code strategy). |
-| Firefox | Installs a tiny extension + native-messaging host; CSS overrides via `tabs.insertCSS` with `cssOrigin: "user"`. **Opt-in** — bridge install requires explicit consent because it lowers `xpinstall.signatures.required`. |
-| gws | Flips the `theme:` line in *Getting Work Sorted*'s state file (`~/.gws/todo.state`) to its bundled `Nightpanel` theme. |
+| Tool                         | Mechanism                                                                                                                                                                                                                |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| alacritty                    | Flips the `import` line in `alacritty.toml` to a rendered NP theme.                                                                                                                                                      |
+| tmux                         | Sources a palette overlay; revert re-sources `~/.tmux.conf`.                                                                                                                                                             |
+| nvim                         | Drops an `after/plugin/nightpanel_active.lua`; talks to live instances over `--server`.                                                                                                                                  |
+| emacs                        | Renders `nightpanel-theme.el`, drives daemons via `emacsclient`.                                                                                                                                                         |
+| GNOME (GTK CSS + background) | Writes a sentinel-wrapped block into `~/.config/gtk-{3,4}.0/gtk.css`; swaps `color-scheme` + background color via `gsettings`.                                                                                           |
+| Claude Code                  | Flips `theme` in `~/.claude/settings.json`; installs a `~/.local/bin/claude` wrapper that strips `COLORTERM` while NP is active.                                                                                         |
+| Gemini CLI                   | Writes a custom theme to `~/.gemini/settings.json` + installs a `~/.local/bin/gemini` wrapper that strips `COLORTERM` (mirrors the Claude Code strategy).                                                                |
+| Firefox                      | Installs a tiny extension + native-messaging host; CSS overrides via `tabs.insertCSS` with `cssOrigin: "user"`. **Opt-in** — bridge install requires explicit consent because it lowers `xpinstall.signatures.required`. |
+| gws                          | Flips the `theme:` line in *Getting Work Sorted*'s state file (`~/.gws/todo.state`) to its bundled `Nightpanel` theme.                                                                                                   |
 
 Want to add an adapter for kitty / wezterm / ghostty / helix / chromium / your editor? See `src/nightpanel/adapters/base.py` for the contract and any of the existing adapters for shape. PRs welcome.
 
@@ -112,12 +112,12 @@ nightpanel-toggle   # engage/disengage theming
 
 ## Platform Support
 
-| Platform         | Status                 |
-| ---------------- | ---------------------- |
-| GNOME on Wayland | Primary target |
-| GNOME on X11     | Should work (untested) |
+| Platform         | Status                         |
+|------------------|--------------------------------|
+| GNOME on Wayland | Primary target                 |
+| GNOME on X11     | Should work (untested)         |
 | KDE Plasma       | Planned (adapter shape exists) |
-| Hyprland         | Planned |
+| Hyprland         | Planned                        |
 
 ### Requirements
 
@@ -127,11 +127,11 @@ nightpanel-toggle   # engage/disengage theming
 
 ## Built-in Presets (keyboard layer)
 
-| Preset | Description |
-|---|---|
+| Preset             | Description                                                              |
+|--------------------|--------------------------------------------------------------------------|
 | **Hyprland Style** | Keyboard-centric: Super+Q close, Super+hjkl tiling, Super+1-0 workspaces |
-| **GNOME + Tiling** | Standard GNOME with Tiling Assistant snap zones |
-| **Vanilla GNOME**  | Pure GNOME Shell defaults |
+| **GNOME + Tiling** | Standard GNOME with Tiling Assistant snap zones                          |
+| **Vanilla GNOME**  | Pure GNOME Shell defaults                                                |
 
 Presets use a "clean slate" model: every shortcut is cleared first, then only the ones in the preset TOML are applied. Your cheat sheet shows exactly what's in your config — no inherited defaults.
 

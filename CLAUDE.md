@@ -1,3 +1,6 @@
+> **Estate project** — follows the estate standard work: the law is
+> `~/development/rizlabs/docs/RIZLABS-INDEX.md`. Read it first; only local deltas below.
+
 # Nightpanel
 
 Two halves under one repo (post-rename from DailyDriver, commit `9e5f57c`):

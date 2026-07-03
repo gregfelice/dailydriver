@@ -107,10 +107,10 @@ See `docs/BACKLOG.md` for current priorities.
 
 ## Platform Compliance
 
-Per **ADR-030** (`~/ops/docs/adr/030-retire-woodpecker-slim-forgejo.md`) the estate has retired all CI engines. Forgejo is git-only; each repo standardizes on portable `bin/` scripts; async feedback via ntfy. The pattern transfers to public-shipping projects like nightpanel: GitHub Actions on the mirror acts as a free runner that calls the same portable scripts.
+Per **ADR-030** (`~/foundations/docs/adr/030-retire-woodpecker-slim-forgejo.md`) the estate has retired all CI engines. Forgejo is git-only; each repo standardizes on portable `bin/` scripts; async feedback via ntfy. The pattern transfers to public-shipping projects like nightpanel: GitHub Actions on the mirror acts as a free runner that calls the same portable scripts.
 
 - [x] GitHub Actions workflow exists (`.github/workflows/`) — currently lint + test + Flatpak build inline
-- [ ] Write `bin/test`, `bin/test-async`, `bin/deploy`, `bin/release VERSION` per `~/ops/templates/sdlc/`
+- [ ] Write `bin/test`, `bin/test-async`, `bin/deploy`, `bin/release VERSION` per `~/foundations/templates/sdlc/`
 - [ ] Refactor `.github/workflows/` to call `bin/` scripts instead of inlining build steps
 - [ ] Set up Forgejo push-mirror to `github.com/gregfelice/nightpanel` (public discoverability + Issues)
 - [ ] `bin/release` dual-publishes to Forgejo Releases + GitHub Releases on tag

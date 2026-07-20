@@ -73,14 +73,21 @@ def render(p: Palette) -> str:
     pointer-events: none !important;
 }}
 
-/* 2. New sidebar revamp + vertical tabs: the always-on left strip. */
-#sidebar-main,
-sidebar-main,
-#sidebar-box,
-#sidebar-header,
-#sidebar-splitter,
-#vertical-tabs,
-vertical-tabs {{
+/* 2. Vertical-tabs sidebar = the tab list. INTENTIONALLY KEPT (not hidden):
+      it rides as a thin favicon rail on the left and expands to full tab
+      titles + group names on Ctrl+Alt+Z (Firefox's native collapse/expand
+      shortcut), toggling back with the same key. Native Tab Groups live
+      here and persist across sessions + crashes via session restore.
+
+      Only the non-tab sidebar tools (panel icons) are hidden, for a leaner
+      rail. Selectors are best-effort across versions; harmless if they miss.
+      Requires sidebar.revamp + sidebar.verticalTabs + sidebar.visibility=
+      always-show, and sidebar.expandOnHover=false (expandOnHover is mutually
+      exclusive with the manual toggle — leaving it on no-ops Ctrl+Alt+Z). */
+#sidebar-main #sidebar-box,
+#sidebar-main toolbarbutton[data-l10n-id="sidebar-menu-history-label"],
+#sidebar-main toolbarbutton[data-l10n-id="sidebar-menu-synced-tabs-label"],
+#sidebar-main toolbarbutton[data-l10n-id="sidebar-menu-bookmarks-label"] {{
     display: none !important;
 }}
 

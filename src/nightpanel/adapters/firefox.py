@@ -22,6 +22,38 @@ _COMMAND_FILE = Path.home() / ".config" / "nightpanel" / "np-command.json"
 _FF_ROOT = Path.home() / ".mozilla" / "firefox"
 _CHROME_PREF = "toolkit.legacyUserProfileCustomizations.stylesheets"
 
+_MARK_BEGIN = "/* >>> nightpanel managed — do not edit between markers <<< */"
+_MARK_END = "/* <<< nightpanel managed end >>> */"
+
+# Prefs the chrome CSS depends on. The userChrome rules keep the vertical-tabs
+# rail visible, which only exists when the sidebar revamp is on — so nightpanel
+# owns these rather than inheriting them from slimfox's user.js block.
+_MANAGED_PREFS = f"""\
+{_MARK_BEGIN}
+user_pref("{_CHROME_PREF}", true);
+// tab management: native vertical-tabs rail, expanded via Ctrl+Alt+Z.
+// expandOnHover is OFF on purpose: it is mutually exclusive with the
+// manual/keyboard expand toggle, and enabling it makes Ctrl+Alt+Z a no-op.
+user_pref("sidebar.revamp", true);
+user_pref("sidebar.verticalTabs", true);
+user_pref("sidebar.visibility", "always-show");
+user_pref("sidebar.expandOnHover", false);
+{_MARK_END}
+"""
+
+
+def _strip_managed_block(text: str) -> str:
+    """Drop every prior nightpanel block, keeping the rest of user.js intact."""
+    out, skip = [], False
+    for line in text.splitlines(keepends=True):
+        if _MARK_BEGIN in line:
+            skip = True
+        if not skip:
+            out.append(line)
+        if _MARK_END in line:
+            skip = False
+    return "".join(out)
+
 
 def find_default_profile(ff_root: Path = _FF_ROOT) -> Path | None:
     """Locate the default Firefox profile dir from ``profiles.ini``.
@@ -156,8 +188,8 @@ class FirefoxAdapter(Adapter):
             return
         try:
             existing = user_js.read_text() if user_js.exists() else ""
-            if f'user_pref("{_CHROME_PREF}"' not in existing:
-                with user_js.open("a") as f:
-                    f.write(f'\nuser_pref("{_CHROME_PREF}", true);\n')
+            desired = _strip_managed_block(existing).rstrip("\n") + "\n" + _MANAGED_PREFS
+            if desired != existing:
+                user_js.write_text(desired)
         except OSError as e:
             _LOG.warning("nightpanel: user.js update failed: %s", e)

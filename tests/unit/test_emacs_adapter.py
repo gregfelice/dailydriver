@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""EmacsAdapter — theme file + sentinel + emacsclient round-trip.
+"""EmacsAdapter — sentinel + emacsclient round-trip.
 
-apply() writes ``nightpanel-theme.el``, drops a sentinel (the only signal
-that survives across daemon restarts), and tells any live daemon to load the
-theme. revert() removes the sentinel and disables the theme. verify() keys
-purely off the sentinel.
+apply() drops a sentinel (the only signal that survives across daemon
+restarts) and tells any live daemon to load the installed nightpanel theme.
+It no longer writes ``nightpanel-theme.el``: that ships as its own package.
+revert() removes the sentinel and disables the theme. verify() keys purely
+off the sentinel.
 """
 
 from __future__ import annotations
@@ -20,21 +21,21 @@ from nightpanel.palette import NIGHTPANEL
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
-    theme_dir = tmp_path / "emacs.d" / "themes"
-    theme_file = theme_dir / "nightpanel-theme.el"
     sentinel = tmp_path / "config" / "emacs-active"
-    monkeypatch.setattr(emacs_mod, "_THEME_DIR", theme_dir)
-    monkeypatch.setattr(emacs_mod, "_THEME_FILE", theme_file)
     monkeypatch.setattr(emacs_mod, "_SENTINEL", sentinel)
 
     forms: list[str] = []
 
     def fake_client(form: str):
         forms.append(form)
-        return "(doom-one)" if form == "custom-enabled-themes" else ""
+        if form == "custom-enabled-themes":
+            return "(doom-one)"
+        # The load form is wrapped in condition-case and yields t on success —
+        # i.e. this daemon has nightpanel-theme installed.
+        return "t" if "load-theme" in form else ""
 
     monkeypatch.setattr(emacs_mod, "_emacsclient", fake_client)
-    return SimpleNamespace(theme_file=theme_file, sentinel=sentinel, forms=forms)
+    return SimpleNamespace(sentinel=sentinel, forms=forms)
 
 
 def test_installed_follows_which(monkeypatch):
@@ -44,14 +45,37 @@ def test_installed_follows_which(monkeypatch):
     assert EmacsAdapter().installed() is False
 
 
-def test_apply_writes_theme_sentinel_and_loads(env):
+def test_apply_writes_sentinel_and_loads(env):
     EmacsAdapter().apply(NIGHTPANEL)
 
-    assert env.theme_file.exists()
-    assert "deftheme nightpanel" in env.theme_file.read_text()
     assert env.sentinel.exists()
     # A daemon was asked to load the theme.
     assert any("load-theme (quote nightpanel)" in f for f in env.forms)
+
+
+def test_apply_does_not_write_a_theme_file(env, monkeypatch):
+    # The theme is an installed package; rendering it here is what caused the
+    # two copies to drift, so apply() must not put any .el on disk.
+    written: list[str] = []
+    monkeypatch.setattr(
+        emacs_mod.Path, "write_text", lambda self, *a, **k: written.append(str(self))
+    )
+    EmacsAdapter().apply(NIGHTPANEL)
+    assert not [p for p in written if p.endswith(".el")]
+
+
+def test_apply_warns_when_theme_is_not_installed(env, monkeypatch, caplog):
+    # condition-case swallowed a load failure -> nil, not t.
+    monkeypatch.setattr(emacs_mod, "_emacsclient", lambda form: "nil")
+    EmacsAdapter().apply(NIGHTPANEL)
+    assert "not loaded" in caplog.text
+
+
+def test_apply_is_quiet_when_no_daemon_is_running(env, monkeypatch, caplog):
+    # _emacsclient returns None with no daemon — the common case, not an error.
+    monkeypatch.setattr(emacs_mod, "_emacsclient", lambda form: None)
+    EmacsAdapter().apply(NIGHTPANEL)
+    assert "not loaded" not in caplog.text
 
 
 def test_verify_tracks_sentinel(env):
@@ -78,11 +102,11 @@ def test_revert_removes_sentinel_and_disables(env):
     assert any("disable-theme (quote nightpanel)" in f for f in env.forms)
 
 
-def test_apply_survives_theme_write_failure(env, monkeypatch):
+def test_apply_survives_sentinel_write_failure(env, monkeypatch):
     def boom(*_a, **_k):
         raise OSError("read-only fs")
 
-    monkeypatch.setattr(emacs_mod.Path, "write_text", boom)
+    monkeypatch.setattr(emacs_mod.Path, "touch", boom)
     EmacsAdapter().apply(NIGHTPANEL)  # logged, not raised
 
 

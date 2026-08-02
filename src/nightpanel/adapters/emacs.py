@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Emacs adapter — renders nightpanel-theme.el and toggles it via emacsclient.
+"""Emacs adapter — toggles the nightpanel theme via emacsclient.
 
-The theme file lives in ~/.emacs.d/themes/ (default `custom-theme-load-path`).
+The theme itself is no longer generated here. `nightpanel-theme.el` is a
+standalone package (https://github.com/gregfelice/nightpanel-theme) and is
+installed like any other theme, so package.el or the user's init owns
+`custom-theme-load-path`. Rendering it from the palette as well produced two
+copies that drifted apart, which is why that path was dropped.
+
 Apply writes a sentinel + tells any running daemons to load the theme; revert
 removes the sentinel + tells daemons to disable it. `verify()` keys off the
 sentinel (the only signal that survives across daemon restarts).
@@ -16,13 +21,10 @@ from pathlib import Path
 from typing import Literal
 
 from ..palette import Palette
-from ..renderers import emacs as _renderer
 from .base import Adapter
 
 _LOG = logging.getLogger(__name__)
 
-_THEME_DIR = Path.home() / ".emacs.d" / "themes"
-_THEME_FILE = _THEME_DIR / "nightpanel-theme.el"
 _SENTINEL = Path.home() / ".config" / "nightpanel" / "emacs-active"
 _NP_THEME = "nightpanel"
 
@@ -57,27 +59,29 @@ class EmacsAdapter(Adapter):
         return {"enabled_themes": themes}
 
     def apply(self, palette: Palette) -> None:
-        # 1. Write the theme file from the palette.
-        try:
-            _THEME_DIR.mkdir(parents=True, exist_ok=True)
-            _THEME_FILE.write_text(_renderer.render(palette))
-        except OSError as e:
-            _LOG.warning("nightpanel: emacs theme write failed: %s", e)
+        # `palette` is unused: the Adapter protocol passes it, but the theme is
+        # an installed package now rather than something rendered from it.
 
-        # 2. Drop the sentinel so verify() can answer even when no daemon runs.
+        # 1. Drop the sentinel so verify() can answer even when no daemon runs.
         try:
             _SENTINEL.parent.mkdir(parents=True, exist_ok=True)
             _SENTINEL.touch()
         except OSError as e:
             _LOG.warning("nightpanel: emacs sentinel write failed: %s", e)
 
-        # 3. Tell any live daemon to load the theme. The theme dir path is
-        #    absolute (no tilde) so add-to-list works in every daemon context.
-        theme_dir = str(_THEME_DIR).rstrip("/") + "/"
-        _emacsclient(
-            f'(progn (add-to-list (quote custom-theme-load-path) "{theme_dir}") '
-            f"(load-theme (quote {_NP_THEME}) t))"
+        # 2. Tell any live daemon to load the installed theme. Wrapped in
+        #    condition-case so a machine without nightpanel-theme installed
+        #    still toggles every other adapter instead of erroring out here.
+        #    No daemon at all -> _emacsclient returns None -> stay quiet.
+        loaded = _emacsclient(
+            f"(condition-case nil (progn (load-theme (quote {_NP_THEME}) t) t) (error nil))"
         )
+        if loaded is not None and loaded != "t":
+            _LOG.warning(
+                "nightpanel: theme not loaded — install nightpanel-theme "
+                "(M-x package-install RET nightpanel-theme) or put it on "
+                "custom-theme-load-path"
+            )
 
     def revert(self, snapshot: dict) -> None:
         # 1. Remove sentinel first so verify("off") returns True immediately.

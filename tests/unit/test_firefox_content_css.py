@@ -346,7 +346,7 @@ def test_stress_brightness_range_invariants():
     values = [round(0.30 + i * 0.01, 2) for i in range(121)]
     sheets = render_many(values)
     prev_img = -1.0
-    for b, css in zip(values, sheets):
+    for b, css in zip(values, sheets, strict=True):
         assert "npnonce" in css
         img = winning_filter(css, _Element("img"))
         cur = _brightness_of(img)

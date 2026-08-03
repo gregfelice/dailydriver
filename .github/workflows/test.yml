@@ -48,8 +48,13 @@ jobs:
             gir1.2-adw-1
 
       - name: Install Python dependencies
+        # NOTE: this list duplicates pyproject.toml's `dependencies` by hand, so
+        # a new runtime import has to be added in both places or collection
+        # fails here only. That is how tomlkit went missing. PyGObject comes
+        # from apt above (python3-gi), which is why this is not `pip install -e
+        # ".[dev]"` — pip would try to build it from source.
         run: |
-          pip install --break-system-packages pytest pytest-cov pytest-mock pydantic tomli tomli-w
+          pip install --break-system-packages pytest pytest-cov pytest-mock pydantic tomli tomli-w tomlkit
 
       - name: Run unit tests
         run: PYTHONPATH=src pytest tests/unit/ -v --cov=nightpanel --cov-report=term-missing --cov-report=xml

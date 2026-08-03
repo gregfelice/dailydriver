@@ -66,9 +66,7 @@ def script_exists():
 
 
 def _invoke(env, *args):
-    r = subprocess.run(
-        [str(SCRIPT), *args], env=env, capture_output=True, text=True, timeout=10
-    )
+    r = subprocess.run([str(SCRIPT), *args], env=env, capture_output=True, text=True, timeout=10)
     assert r.returncode == 0, f"toggle script failed: {r.stderr}"
     return r
 
@@ -80,9 +78,7 @@ def _active(tmp_path) -> bool:
 def _decisions(tmp_path) -> list[str]:
     text = (tmp_path / "toggle.log").read_text()
     return [
-        line.split("decision:", 1)[1].strip()
-        for line in text.splitlines()
-        if "decision:" in line
+        line.split("decision:", 1)[1].strip() for line in text.splitlines() if "decision:" in line
     ]
 
 

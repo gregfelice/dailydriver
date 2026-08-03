@@ -94,9 +94,7 @@ class SetupView(Adw.PreferencesPage):
         # scroll passing through the parent ActionRow drifts the slider
         # without user intent — observed as continuous brightness updates
         # being written even when the user isn't touching the slider.
-        _no_scroll = Gtk.EventControllerScroll.new(
-            Gtk.EventControllerScrollFlags.BOTH_AXES
-        )
+        _no_scroll = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.BOTH_AXES)
         _no_scroll.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         _no_scroll.connect("scroll", lambda *_: True)
         self._brightness_scale.add_controller(_no_scroll)
@@ -119,14 +117,10 @@ class SetupView(Adw.PreferencesPage):
         self._video_brightness_scale.set_size_request(200, -1)
         self._video_brightness_scale.add_mark(0.1, Gtk.PositionType.BOTTOM, None)
         self._video_brightness_scale.add_mark(1.0, Gtk.PositionType.BOTTOM, None)
-        self._video_brightness_scale.connect(
-            "value-changed", self._on_video_brightness_changed
-        )
+        self._video_brightness_scale.connect("value-changed", self._on_video_brightness_changed)
         # Same scroll-capture guard as the brightness slider above — stops
         # wheel/touchpad scroll passing through the row from drifting the value.
-        _no_scroll_video = Gtk.EventControllerScroll.new(
-            Gtk.EventControllerScrollFlags.BOTH_AXES
-        )
+        _no_scroll_video = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.BOTH_AXES)
         _no_scroll_video.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         _no_scroll_video.connect("scroll", lambda *_: True)
         self._video_brightness_scale.add_controller(_no_scroll_video)

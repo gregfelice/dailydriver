@@ -148,9 +148,7 @@ class GnomeAdapter(Adapter):
         if snapshot.get("bg_color"):
             _gsettings_set("org.gnome.desktop.background", "primary-color", snapshot["bg_color"])
         if snapshot.get("bg_color2"):
-            _gsettings_set(
-                "org.gnome.desktop.background", "secondary-color", snapshot["bg_color2"]
-            )
+            _gsettings_set("org.gnome.desktop.background", "secondary-color", snapshot["bg_color2"])
         if snapshot.get("bg_shading"):
             _gsettings_set(
                 "org.gnome.desktop.background", "color-shading-type", snapshot["bg_shading"]

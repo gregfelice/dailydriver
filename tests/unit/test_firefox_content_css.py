@@ -254,9 +254,7 @@ def test_video_excluded_from_background_transparent_rule():
     """The bg-flattening rule must keep :not(video) so the player surface
     isn't painted over."""
     css = render_css(0.9)
-    body_rule = next(
-        line for line in css.splitlines() if line.startswith("body, body *:not(")
-    )
+    body_rule = next(line for line in css.splitlines() if line.startswith("body, body *:not("))
     assert ":not(video)" in body_rule
 
 

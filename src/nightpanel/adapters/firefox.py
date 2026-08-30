@@ -37,7 +37,11 @@ user_pref("{_CHROME_PREF}", true);
 // manual/keyboard expand toggle, and enabling it makes Ctrl+Alt+Z a no-op.
 user_pref("sidebar.revamp", true);
 user_pref("sidebar.verticalTabs", true);
-user_pref("sidebar.visibility", "always-show");
+// hide-sidebar + verticalTabs = launcher hidden at startup, summoned with
+// Ctrl+Alt+Z. Under this value Firefox's toggleSidebarKb handler takes the
+// show/hide branch rather than the expand/collapse one, so the key is a
+// visibility toggle. always-show would pin the rail on screen permanently.
+user_pref("sidebar.visibility", "hide-sidebar");
 user_pref("sidebar.expandOnHover", false);
 // always restore the previous window/tab set on launch. Native tab groups
 // live in the session store, so this is what makes them persist.

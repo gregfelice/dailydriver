@@ -73,33 +73,28 @@ def render(p: Palette) -> str:
     pointer-events: none !important;
 }}
 
-/* 2. Vertical-tabs sidebar = the tab list. INTENTIONALLY KEPT (not hidden):
-      it rides as a thin favicon rail on the left and expands to full tab
-      titles + group names on Ctrl+Alt+Z (Firefox's native collapse/expand
-      shortcut), toggling back with the same key. Native Tab Groups live
-      here and persist across sessions + crashes via session restore.
+/* 2. Vertical-tabs sidebar = the tab list. NOT hidden by CSS, on purpose.
+      Visibility is Firefox's job here, driven by sidebar.visibility=
+      hide-sidebar: the launcher starts hidden every session and Ctrl+Alt+Z
+      summons it. A `display:none` rule here would defeat that key, since
+      CSS cannot respond to a keypress — that was the pre-0.2.8 bug, where
+      the sidebar read as permanently disabled.
+
+      Do NOT pin a min-width on #sidebar-main either. That forces the rail
+      back on screen and re-breaks hide-sidebar.
 
       Only the non-tab sidebar tool buttons (history/synced/bookmarks panel
-      icons) are hidden, for a leaner rail. We deliberately do NOT hide
-      #sidebar-box: in the ESR 140 revamp layout it contains the vertical-tabs
-      launcher, so hiding it takes the tab rail with it. Selectors are
-      best-effort across versions; harmless if they miss.
-      Requires sidebar.revamp + sidebar.verticalTabs + sidebar.visibility=
-      always-show, and sidebar.expandOnHover=false (expandOnHover is mutually
-      exclusive with the manual toggle — leaving it on no-ops Ctrl+Alt+Z). */
+      icons) are hidden, for a leaner rail once summoned. We deliberately do
+      NOT hide #sidebar-box: in the ESR 140 revamp layout it contains the
+      vertical-tabs launcher, so hiding it takes the tab rail with it.
+      Selectors are best-effort across versions; harmless if they miss.
+      Requires sidebar.revamp + sidebar.verticalTabs + sidebar.expandOnHover
+      =false (expandOnHover is mutually exclusive with the manual toggle —
+      leaving it on no-ops Ctrl+Alt+Z). */
 #sidebar-main toolbarbutton[data-l10n-id="sidebar-menu-history-label"],
 #sidebar-main toolbarbutton[data-l10n-id="sidebar-menu-synced-tabs-label"],
 #sidebar-main toolbarbutton[data-l10n-id="sidebar-menu-bookmarks-label"] {{
     display: none !important;
-}}
-
-/* Pin a resting width for the vertical-tabs launcher. On ESR 140.12 the
-   sidebar.visibility=always-show pref does NOT keep the rail on screen — the
-   launcher rests collapsed to 0px, so the tab list looks "missing" even
-   though it renders. Forcing a favicon-rail minimum guarantees it is always
-   visible; Ctrl+Alt+Z still expands it to full titles + group names. */
-#sidebar-main {{
-    min-width: 3.4em !important;
 }}
 
 /* 3. Bookmarks toolbar, regardless of its show/hide state. */

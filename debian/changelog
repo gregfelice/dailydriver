@@ -1,3 +1,22 @@
+nightpanel (0.2.8-1) unstable; urgency=low
+
+  * firefox: the vertical-tabs sidebar was hidden by a `display: none` rule on
+    #sidebar-main/#sidebar-box, which read as the sidebar being disabled
+    outright — no keybinding could bring it back, because CSS cannot respond
+    to a keypress. The rule is gone. Visibility is now Firefox's job:
+    sidebar.visibility flips from always-show to hide-sidebar, so the launcher
+    starts hidden each session and Ctrl+Alt+Z summons it. Under hide-sidebar
+    Firefox's toggleSidebarKb handler takes the show/hide branch rather than
+    the expand/collapse one, which is what makes the key a visibility toggle.
+  * firefox: dropped the min-width pin on #sidebar-main. It existed to force
+    the rail on screen under always-show, and it re-breaks hide-sidebar.
+  * firefox: browser.startup.page, browser.ctrlTab.sortByRecentlyUsed and
+    browser.sessionstore.interval move into the nightpanel-managed user.js
+    block. They were the last prefs owned solely by the retired slimfox
+    project, which is now uninstalled.
+
+ -- Greg Felice <gregfelice@gmail.com>  Sun, 30 Aug 2026 10:15:00 -0400
+
 nightpanel (0.2.7-1) unstable; urgency=low
 
   * configurator: Escape now closes the window. Previously it bounced only

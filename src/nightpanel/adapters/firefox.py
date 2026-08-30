@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Firefox adapter — writes the command JSON the native host polls, plus
-manages userChrome.css (the chrome styling absorbed from the old slimfox
-project)."""
+manages userChrome.css and the user.js pref block (the chrome styling and
+session prefs absorbed from the retired slimfox project)."""
 
 from __future__ import annotations
 
@@ -26,8 +26,9 @@ _MARK_BEGIN = "/* >>> nightpanel managed — do not edit between markers <<< */"
 _MARK_END = "/* <<< nightpanel managed end >>> */"
 
 # Prefs the chrome CSS depends on. The userChrome rules keep the vertical-tabs
-# rail visible, which only exists when the sidebar revamp is on — so nightpanel
-# owns these rather than inheriting them from slimfox's user.js block.
+# rail visible, which only exists when the sidebar revamp is on. The session
+# prefs below came from slimfox's user.js block, absorbed here 2026-08-30 when
+# slimfox was uninstalled — nightpanel is now the sole owner of all of them.
 _MANAGED_PREFS = f"""\
 {_MARK_BEGIN}
 user_pref("{_CHROME_PREF}", true);
@@ -38,6 +39,13 @@ user_pref("sidebar.revamp", true);
 user_pref("sidebar.verticalTabs", true);
 user_pref("sidebar.visibility", "always-show");
 user_pref("sidebar.expandOnHover", false);
+// always restore the previous window/tab set on launch. Native tab groups
+// live in the session store, so this is what makes them persist.
+user_pref("browser.startup.page", 3);
+// Ctrl+Tab = most-recently-used thumbnail switcher (reveals no chrome)
+user_pref("browser.ctrlTab.sortByRecentlyUsed", true);
+// tighten crash-safety of tab groups (default 15000ms -> 5000ms)
+user_pref("browser.sessionstore.interval", 5000);
 {_MARK_END}
 """
 
@@ -152,8 +160,8 @@ class FirefoxAdapter(Adapter):
     def revert(self, snapshot: dict) -> None:
         self._write({"action": "revert", "brightness": 0.9})
         # Leave userChrome.css in place — it's not a per-toggle concern. To
-        # fully revert chrome styling, the user removes the file manually or
-        # runs the slimfox uninstall script (which still works for now).
+        # fully revert chrome styling, remove the file and strip the managed
+        # block from user.js. (The old slimfox uninstall script is gone.)
 
     def verify(self, expected: Literal["on", "off"]) -> bool:
         try:

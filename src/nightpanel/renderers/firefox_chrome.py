@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Render Firefox's userChrome.css from a Palette.
 
-Absorbs the old `slimfox` project (`~/development/gtd/slimfox/userChrome.css`)
-plus nightpanel's sharp-corner + thin-border rules. nightpanel is now the
-single owner of Firefox chrome styling; the slimfox project stays installed
-but its userChrome.css content has moved here.
+Absorbs the retired `slimfox` project (`~/development/utilities/slimfox`)
+plus nightpanel's sharp-corner + thin-border rules. nightpanel is the single
+owner of Firefox chrome styling. slimfox was uninstalled from the live profile
+on 2026-08-30; only its Tab Session Manager policy scripts survive.
 
 The chrome rules are NOT toggleable per-NP-state — Firefox can't reload
 userChrome.css at runtime, only on full restart. The styling is therefore

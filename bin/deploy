@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# bin/deploy — build the nightpanel .deb and feed it to the rizlabs apt repo.
+# bin/deploy — build the nightpanel .deb and feed it to the estate apt repo.
 #
 # Two stages, mirroring docs/runbook/change/publish-apt-repo.md (ADR-048):
 #   1. dpkg-buildpackage -us -uc -b      → the binary .deb (source/changes left
 #      unsigned; the apt Release is what gets GPG-signed in stage 2).
-#   2. ~/ops/ansible/scripts/build-apt-repo → assemble dists/+pool/, sign
+#   2. /srv/estate/infrastructure/ansible/scripts/build-apt-repo → assemble dists/+pool/, sign
 #      Release into InRelease/Release.gpg with the dedicated repo key, and
-#      (only with --publish) rsync the tree to dweezil's static_root.
+#      (only with --publish) rsync the tree to the nginx static_root on droplet.
+#      (ADR-048 proposed dweezil; the shipped outcome serves it from droplet, which
+#      is also where the tree is built, so the rsync is local.)
 #
-# DEFAULT IS A LOCAL DRY RUN. apt.rizlabs.com is a PUBLIC surface; publishing to
+# DEFAULT IS A LOCAL DRY RUN. apt.tigermountain.ai is a PUBLIC surface; publishing to
 # it is a deliberate act, so the rsync is gated behind --publish (or PUBLISH=1).
 # Without it, the signed repo tree is built under STAGE and nothing leaves this
 # machine.
@@ -25,7 +27,11 @@
 #
 # Env (override as needed):
 #   GPG_KEY          repo signing key id/email  (default: apt@rizlabs.com)
-#   BUILD_APT_REPO   path to the ops publisher  (default: ~/ops/ansible/scripts/build-apt-repo)
+#                    The KEY UID keeps the old brand deliberately. Renaming a uid mints a
+#                    new fingerprint, and every client keyring would need redistributing
+#                    before apt could verify anything. The fingerprint survived the domain
+#                    rename, so /etc/apt/keyrings/nightpanel.gpg still verifies the repo.
+#   BUILD_APT_REPO   path to the ops publisher  (default: /srv/estate/infrastructure/ansible/scripts/build-apt-repo)
 #   DIST COMPONENT ARCH STAGE DEST   passed through to build-apt-repo (own defaults)
 set -euo pipefail
 
@@ -44,7 +50,7 @@ case "${1:-}" in
 esac
 
 GPG_KEY="${GPG_KEY:-apt@rizlabs.com}"
-BUILD_APT_REPO="${BUILD_APT_REPO:-$HOME/ops/ansible/scripts/build-apt-repo}"
+BUILD_APT_REPO="${BUILD_APT_REPO:-/srv/estate/infrastructure/ansible/scripts/build-apt-repo}"
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -57,7 +63,7 @@ for t in dpkg-buildpackage dpkg-parsechangelog dpkg-architecture gpg; do
 done
 [ -x "$BUILD_APT_REPO" ] || {
     echo "✗ apt publisher not found/executable: $BUILD_APT_REPO" >&2
-    echo "   it lives in ~/ops (the estate ops repo); set BUILD_APT_REPO to override." >&2
+    echo "   it lives in /srv/estate/infrastructure (the estate ops repo); set BUILD_APT_REPO to override." >&2
     exit 1
 }
 gpg --list-secret-keys "$GPG_KEY" >/dev/null 2>&1 || {
@@ -74,12 +80,12 @@ gpg --list-secret-keys "$GPG_KEY" >/dev/null 2>&1 || {
 if [ "$PUBLISH" = 1 ]; then
     command -v docker >/dev/null || {
         echo "✗ --publish requires docker: the proof run (bin/validate) must build +" >&2
-        echo "   smoke-test the package in a clean container before it ships to apt.rizlabs.com." >&2
+        echo "   smoke-test the package in a clean container before it ships to apt.tigermountain.ai." >&2
         exit 1
     }
     echo "→ proof run (bin/validate) — gating publish"
     if ! bin/validate; then
-        echo "✗ proof run failed — refusing to publish to apt.rizlabs.com" >&2
+        echo "✗ proof run failed — refusing to publish to apt.tigermountain.ai" >&2
         exit 1
     fi
     echo "→ proof run passed — proceeding to publish"
@@ -114,13 +120,13 @@ GPG_KEY="$GPG_KEY" PUBLISH="$PUBLISH" "$BUILD_APT_REPO" "$DEB"
 if [ "$PUBLISH" = 1 ]; then
     cat <<EOF
 
-✓ published nightpanel ${VERSION} to apt.rizlabs.com
-  verify:  curl -fsSL http://apt.rizlabs.com/dists/trixie/InRelease | head
+✓ published nightpanel ${VERSION} to apt.tigermountain.ai
+  verify:  curl -fsSL http://apt.tigermountain.ai/dists/trixie/InRelease | head
 EOF
 else
     cat <<EOF
 
 ✓ built + signed locally — NOT published (public surface is gated)
-  re-run with --publish to rsync the signed tree to apt.rizlabs.com
+  re-run with --publish to rsync the signed tree to apt.tigermountain.ai
 EOF
 fi

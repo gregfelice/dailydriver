@@ -1,5 +1,6 @@
 > **Estate project** — follows the estate standard work: the law is
-> `~/development/rizlabs/docs/RIZLABS-INDEX.md`. Read it first; only local deltas below.
+> `/srv/estate/CLAUDE.md` (= `/srv/estate/docs/05-estate-operating-rules.md`).
+> Read it first; only local deltas below.
 
 # Nightpanel
 

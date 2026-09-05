@@ -10,15 +10,15 @@ Scope of latest audit (2026-05-25, extended through 2026-05-26 by testing): orch
 
 ---
 
-## Distribution / packaging — apt.rizlabs.com (ADR-048 in ~/ops)
+## Distribution / packaging — apt.tigermountain.ai (ADR-048 in /srv/estate/infrastructure)
 
-Ships as a signed `.deb` from the public repo `http://apt.rizlabs.com` (HTTP +
+Ships as a signed `.deb` from the public repo `http://apt.tigermountain.ai` (HTTP +
 GPG-signed Release; served by droplet nginx). Live + verified on rivulet
 2026-06-10. Forgejo registry stays private. Open follow-ups:
 
-- [ ] **CI auto-publish to apt.rizlabs.com** — `.forgejo/workflows/release-deb.yml`
+- [ ] **CI auto-publish to apt.tigermountain.ai** — `.forgejo/workflows/release-deb.yml`
   still uploads only to the private Forgejo registry; add a step running
-  `~/ops/ansible/scripts/build-apt-repo` into `/srv/apt/nightpanel` on `v*` tags
+  `/srv/estate/infrastructure/ansible/scripts/build-apt-repo` into `/srv/apt/nightpanel` on `v*` tags
   (needs signing key + write access on the droplet runner).
 - [ ] **Signing key → Ansible vault** — `apt@rizlabs.com` (ed25519) private half is
   only in droplet `~/.gnupg`; lose droplet → can't sign updates. Store as
@@ -28,7 +28,7 @@ GPG-signed Release; served by droplet nginx). Live + verified on rivulet
   pokes extensions) rather than just opening the config window. Confirm intended —
   the config UI probably shouldn't flip the whole session on open. (`window.py` /
   `services/theme_service.py`, still unaudited.)
-- [ ] **HTTPS for apt.rizlabs.com** (optional, low) — currently HTTP + GPG (signature
+- [ ] **HTTPS for apt.tigermountain.ai** (optional, low) — currently HTTP + GPG (signature
   is the trust anchor). Would need the domain added to the SAN cert via
   `ssl_wildcard` on wasa.
 

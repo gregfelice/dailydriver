@@ -17,9 +17,9 @@ Register the apt repo and install — copy-paste, no account or token needed. Th
 
 ```bash
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL http://apt.rizlabs.com/nightpanel.gpg \
+curl -fsSL http://apt.tigermountain.ai/nightpanel.gpg \
   | sudo tee /etc/apt/keyrings/nightpanel.gpg >/dev/null
-echo "deb [signed-by=/etc/apt/keyrings/nightpanel.gpg] http://apt.rizlabs.com trixie main" \
+echo "deb [signed-by=/etc/apt/keyrings/nightpanel.gpg] http://apt.tigermountain.ai trixie main" \
   | sudo tee /etc/apt/sources.list.d/nightpanel.list >/dev/null
 sudo apt update
 sudo apt install nightpanel

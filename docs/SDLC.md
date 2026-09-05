@@ -24,7 +24,7 @@ Nightpanel ships through **two separate channels that do not depend on each othe
    bin/release vX.Y.Z                       bin/deploy --publish
    • git tag + push to Forgejo + GitHub     • build the .deb
    • GitHub Actions → GH Release + notes     • sign the apt repo
-   • CI re-runs the proof run on the tag     • rsync to apt.rizlabs.com
+   • CI re-runs the proof run on the tag     • rsync to apt.tigermountain.ai
             │                                       │
             ▼                                       ▼
    source tarball, GH Release page          what users `apt install`
@@ -32,7 +32,7 @@ Nightpanel ships through **two separate channels that do not depend on each othe
 ```
 
 - **`bin/release`** is about the **git tag and the GitHub Release** (source-level). It does
-  *not* put a `.deb` on `apt.rizlabs.com`.
+  *not* put a `.deb` on `apt.tigermountain.ai`.
 - **`bin/deploy --publish`** is about the **`.deb` users actually install**. It does *not*
   create a git tag.
 
@@ -47,12 +47,12 @@ container, install it, smoke-test the installed thing). Nothing public ships unl
 
 There is no single version constant; the same number is repeated and **must match**:
 
-| File | Read by | Purpose |
-|------|---------|---------|
-| `pyproject.toml` (`version = "X.Y.Z"`) | `bin/release` (enforces tag == this) | the package version |
-| `debian/changelog` (top: `nightpanel (X.Y.Z-1) …`) | `bin/deploy` (names the `.deb`) | the **apt-channel** version of record |
-| `meson.build` (`version: 'X.Y.Z'`) | the build | install/build metadata |
-| `data/io.github.gregfelice.Nightpanel.metainfo.xml.in` (`<release version="X.Y.Z" …>`) | software centers, AppStream CI | the user-facing changelog |
+| File                                                                                   | Read by                              | Purpose                               |
+|----------------------------------------------------------------------------------------|--------------------------------------|---------------------------------------|
+| `pyproject.toml` (`version = "X.Y.Z"`)                                                 | `bin/release` (enforces tag == this) | the package version                   |
+| `debian/changelog` (top: `nightpanel (X.Y.Z-1) …`)                                     | `bin/deploy` (names the `.deb`)      | the **apt-channel** version of record |
+| `meson.build` (`version: 'X.Y.Z'`)                                                     | the build                            | install/build metadata                |
+| `data/io.github.gregfelice.Nightpanel.metainfo.xml.in` (`<release version="X.Y.Z" …>`) | software centers, AppStream CI       | the user-facing changelog             |
 
 `bin/release` will refuse to tag if `pyproject.toml` ≠ the tag. Nothing auto-checks the other
 three, so **bump all four in one commit** (and add a real `<release>` entry to the metainfo —
@@ -122,20 +122,25 @@ bin/deploy               # DEFAULT: build .deb + sign the apt repo tree LOCALLY.
                          # Nothing leaves this machine. Use it to dry-run / inspect.
 
 bin/deploy --publish     # build, then run the proof run (bin/validate) as a GATE,
-                         # then rsync the signed repo tree to apt.rizlabs.com.
+                         # then rsync the signed repo tree to apt.tigermountain.ai.
 ```
 
-`apt.rizlabs.com` is a **public surface**, so publishing is deliberate and gated:
+`apt.tigermountain.ai` is a **public surface**, so publishing is deliberate and gated:
 `--publish` aborts unless `bin/validate` passes first. The signing key (`apt@rizlabs.com` by
-default, override with `GPG_KEY`) and the publisher script (`~/ops/ansible/scripts/build-apt-repo`,
+default, override with `GPG_KEY`) and the publisher script (`/srv/estate/infrastructure/ansible/scripts/build-apt-repo`,
 override with `BUILD_APT_REPO`) live in the ops repo — see the runbook
-`~/ops/docs/runbook/change/publish-apt-repo.md` (ADR-048). Build artifacts are corralled into
+`/srv/estate/infrastructure/docs/runbook/change/publish-apt-repo.md` (ADR-048). Build artifacts are corralled into
 `dist/` (gitignored).
+
+The signing key's uid still reads `apt@rizlabs.com`, from before the brand rename. Leave it.
+A uid rename mints a new key fingerprint, and apt trusts the fingerprint. Every client would
+need a fresh `/etc/apt/keyrings/nightpanel.gpg` before it could verify the repo again. The
+fingerprint is unaffected by the domain rename, so the keyring already on hosts still works.
 
 Verify a publish landed:
 
 ```bash
-curl -fsSL http://apt.rizlabs.com/dists/trixie/InRelease | head
+curl -fsSL http://apt.tigermountain.ai/dists/trixie/InRelease | head
 ```
 
 Users install per the README's [Quick install](../README.md#quick-install-debian--ubuntu):
@@ -205,14 +210,14 @@ checklist:
 
 ## Quick reference
 
-| I want to… | Run |
-|------------|-----|
-| run unit tests | `bin/test` |
-| test the live GNOME extension / adapters | `bin/test-vm` |
-| prove it packages + runs (the gate) | `bin/validate` |
-| build the `.deb` without publishing | `bin/deploy` |
-| publish the `.deb` to apt.rizlabs.com | `bin/deploy --publish` |
-| tag + GitHub Release | `bin/release vX.Y.Z` |
+| I want to…                               | Run                    |
+|------------------------------------------|------------------------|
+| run unit tests                           | `bin/test`             |
+| test the live GNOME extension / adapters | `bin/test-vm`          |
+| prove it packages + runs (the gate)      | `bin/validate`         |
+| build the `.deb` without publishing      | `bin/deploy`           |
+| publish the `.deb` to apt.tigermountain.ai    | `bin/deploy --publish` |
+| tag + GitHub Release                     | `bin/release vX.Y.Z`   |
 
 **ADRs that govern this:** ADR-030 (retire CI engines → portable `bin/` + ntfy),
 ADR-073 (the DA proof run / packaging gate), ADR-048 (apt-repo publish runbook).

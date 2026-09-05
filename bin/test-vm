@@ -19,7 +19,7 @@
 set -euo pipefail
 
 REPO="nightpanel"
-NTFY_URL="${NTFY_URL:-https://ntfy.rizlabs.com}"
+NTFY_URL="${NTFY_URL:-https://ntfy.tigermountain.ai}"
 ROOT="$(git rev-parse --show-toplevel)"
 VMDIR="$ROOT/tests/vm"
 VENV="$VMDIR/.venv-ansible"

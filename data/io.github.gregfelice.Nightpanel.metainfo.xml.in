@@ -59,6 +59,14 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.2.9" date="2026-09-05">
+      <description>
+        <p>Packaging only, with no change to the application itself. The
+        release restores the path that publishes Nightpanel to its apt
+        repository, and makes that repository reachable from outside the
+        local network again.</p>
+      </description>
+    </release>
     <release version="0.2.8" date="2026-08-30">
       <description>
         <p>Firefox: the vertical-tabs sidebar is hidden at startup again and

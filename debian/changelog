@@ -1,3 +1,21 @@
+nightpanel (0.2.9-1) unstable; urgency=low
+
+  * No functional change. The packaged payload is byte-identical to 0.2.8-1:
+    all 73 files the .deb ships were verified to match, md5 for md5. This
+    release re-cuts the version on a publishing path that works.
+  * packaging: the publisher `bin/deploy` shells out to had been lost, which
+    left 0.2.8 unpublished for six days. It has been restored, and the repo now
+    refuses to overwrite a published version with different bytes or to publish
+    an index that silently omits a package it could not read.
+  * packaging: the three hostnames this repo named had all stopped resolving
+    after the estate's rename — the apt repo, the git remote, and the ntfy
+    endpoint. `bin/deploy` verified and reported a domain with no DNS.
+  * packaging: the apt repo is reachable from off-LAN again. The public edge
+    301'd it to HTTPS and then 502'd, so `apt install` only ever worked on the
+    LAN. Both schemes now serve the repo.
+
+ -- Greg Felice <gregfelice@gmail.com>  Sat, 05 Sep 2026 11:24:44 -0400
+
 nightpanel (0.2.8-1) unstable; urgency=low
 
   * firefox: the vertical-tabs sidebar was hidden by a `display: none` rule on

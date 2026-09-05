@@ -19,10 +19,12 @@ GPG-signed Release; served by droplet nginx). Live + verified on rivulet
 - [ ] **CI auto-publish to apt.tigermountain.ai** — `.forgejo/workflows/release-deb.yml`
   still uploads only to the private Forgejo registry; add a step running
   `/srv/estate/infrastructure/ansible/scripts/build-apt-repo` into `/srv/apt/nightpanel` on `v*` tags
-  (needs signing key + write access on the droplet runner).
-- [ ] **Signing key → Ansible vault** — `apt@rizlabs.com` (ed25519) private half is
-  only in droplet `~/.gnupg`; lose droplet → can't sign updates. Store as
-  `nightpanel_apt_signing_key` for DR + CI. (ADR-048 checklist.)
+  (needs write access on the droplet runner; the signing key is now vaulted, see below).
+- [x] **Signing key → Ansible vault** — DONE 2026-09-05. Stored as
+  `nightpanel_apt_signing_key` (plus `..._fpr`) in the ops repo's SOPS-encrypted
+  secret store, readable by more than one operator key rather than living on a
+  single machine. Restore procedure and the end-to-end proof are in the runbook.
+  (ADR-048 checklist.)
 - [ ] **GUI applies theme on launch** — starting `nightpanel` runs the orchestrator
   apply path (sets `org.gnome.desktop.interface color-scheme`, kills Nautilus,
   pokes extensions) rather than just opening the config window. Confirm intended —
